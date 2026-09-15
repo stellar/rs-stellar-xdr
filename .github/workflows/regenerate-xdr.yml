@@ -10,8 +10,8 @@ on:
           stellar-xdr ref to regenerate against - a branch, tag, SHA, or
           refs/pull/<n>/head for an unmerged PR. Blank (the default, and what
           the daily schedule uses) tracks main. A non-blank ref regenerates
-          onto its own branch instead of the rolling one, so an unmerged
-          upstream never lands on the branch that tracks main.
+          onto a branch marked as pinned, so an unmerged upstream is never
+          mistaken for a main-tracking regeneration.
         required: false
         default: ''
 
@@ -102,16 +102,16 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          # Tracking main: one rolling branch, force-pushed, permanently one open PR.
-          # Regenerating against an explicit ref: a branch named for the upstream commit,
-          # so re-running the same ref refreshes that branch and never disturbs the rolling
-          # one. It is also stable enough to pin — same name only ever means same upstream
-          # commit, where the rolling branch's head moves daily.
+          # Every run gets its own branch, named for the upstream commit it regenerates.
+          # Nothing is ever rewritten with different content, so a downstream consumer can
+          # pin a branch and have it keep meaning what it meant. `-main-` marks a run that
+          # tracked stellar-xdr@main; without it, the run was pinned to an explicit ref.
           if [ -n "$XDR_REF" ]; then
             BRANCH="auto/regenerate-xdr-$SHA"
           else
-            BRANCH=auto/regenerate-xdr
+            BRANCH="auto/regenerate-xdr-main-$SHA"
           fi
+          export BRANCH
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
@@ -131,8 +131,9 @@ jobs:
             DRAFT=--draft
           fi
           git commit -m "Regenerate XDR from $(echo "$SOURCE" | tr -d '`') ($SHA)"
-          # Force-push: for the rolling branch this refreshes the open PR as upstream
-          # advances; for a per-commit branch it just makes a re-run idempotent.
+          # Force-push only makes re-running the same upstream commit idempotent; it can
+          # never replace one commit's regeneration with another's, since the branch name
+          # carries the commit.
           git push --force origin "$BRANCH"
           body=$(printf '%s\n' \
             "Automated regeneration of the Rust XDR bindings from" \
@@ -149,8 +150,22 @@ jobs:
           else
             echo "Existing PR for $BRANCH refreshed by force-push."
           fi
+          # One branch per run would otherwise leave a daily PR open forever. Close the
+          # main-tracking ones this run supersedes, pointing at the replacement. Pinned-ref
+          # PRs are left alone: they track different upstreams, not older versions of this
+          # one. The branches stay — deleting one breaks any pin already taken on it.
+          if [ -z "$XDR_REF" ]; then
+            NEW_URL="$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json url --jq '.[0].url // empty')"
+            gh pr list -R "$GITHUB_REPOSITORY" --state open --json number,headRefName \
+              --jq '.[] | select(.headRefName | startswith("auto/regenerate-xdr-main-")) | select(.headRefName != env.BRANCH) | .number' \
+            | while read -r n; do
+                gh pr comment "$n" -R "$GITHUB_REPOSITORY" --body "Superseded by ${NEW_URL:-a newer regeneration}."
+                gh pr close "$n" -R "$GITHUB_REPOSITORY"
+              done
+          fi
+
           # Consumers pin the head SHA, so state it where a caller can read it back without
-          # re-deriving it from the branch (which moves).
+          # re-deriving it from the branch name alone.
           {
             echo "- branch: \`$BRANCH\`"
             echo "- head: \`$(git rev-parse HEAD)\`"

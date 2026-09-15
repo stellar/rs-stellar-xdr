@@ -17,20 +17,6 @@ libfuzzer-sys = "0.4"
 stellar-xdr = { path = "..", features = ["const", "arbitrary"] }
 
 [[bin]]
-name = "transaction-envelope"
-path = "fuzz_targets/transaction-envelope.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "ledger-close-meta"
-path = "fuzz_targets/ledger-close-meta.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
 name = "spec-entry"
 path = "fuzz_targets/spec-entry.rs"
 test = false

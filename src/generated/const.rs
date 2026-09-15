@@ -929,6 +929,7 @@ pub use super::ScMetaKind;
 pub use sc_meta_kind::*;
 mod sc_meta_entry;
 pub use super::SC_SPEC_DOC_LIMIT;
+pub use super::SC_SPEC_TYPE_NAME_LIMIT;
 #[allow(unused_imports)]
 pub use sc_meta_entry::*;
 mod sc_spec_type;
@@ -1465,6 +1466,12 @@ pub use ledger_close_value_signature::*;
 mod stellar_value_proposed_value;
 #[allow(unused_imports)]
 pub use stellar_value_proposed_value::*;
+mod stellar_value_signed_ms_value;
+#[allow(unused_imports)]
+pub use stellar_value_signed_ms_value::*;
+mod stellar_value_proposed_ms_value;
+#[allow(unused_imports)]
+pub use stellar_value_proposed_ms_value::*;
 mod stellar_value_ext;
 #[allow(unused_imports)]
 pub use stellar_value_ext::*;
@@ -2399,6 +2406,11 @@ mod duration;
 pub use super::Duration;
 #[allow(unused_imports)]
 pub use duration::*;
+mod time_point_milliseconds;
+#[cfg(feature = "ms_close_time")]
+pub use super::TimePointMilliseconds;
+#[allow(unused_imports)]
+pub use time_point_milliseconds::*;
 mod extension_point;
 pub use super::ExtensionPoint;
 #[allow(unused_imports)]

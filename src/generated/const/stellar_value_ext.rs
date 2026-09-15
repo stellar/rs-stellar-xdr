@@ -10,6 +10,10 @@ pub enum StellarValueExt {
     Basic,
     Signed(LedgerCloseValueSignature),
     EmptyTxSet(StellarValueProposedValue),
+    #[cfg(feature = "ms_close_time")]
+    SignedMs(StellarValueSignedMsValue),
+    #[cfg(feature = "ms_close_time")]
+    EmptyTxSetMs(StellarValueProposedMsValue),
 }
 
 impl StellarValueExt {
@@ -20,6 +24,10 @@ impl StellarValueExt {
             Self::Basic => StellarValueType::Basic,
             Self::Signed(_) => StellarValueType::Signed,
             Self::EmptyTxSet(_) => StellarValueType::EmptyTxSet,
+            #[cfg(feature = "ms_close_time")]
+            Self::SignedMs(_) => StellarValueType::SignedMs,
+            #[cfg(feature = "ms_close_time")]
+            Self::EmptyTxSetMs(_) => StellarValueType::EmptyTxSetMs,
         }
     }
 }
@@ -74,6 +82,14 @@ impl ConstWriter<'_> {
             }
             StellarValueExt::EmptyTxSet(value) => {
                 self.write_type_stellar_value_proposed_value(value);
+            }
+            #[cfg(feature = "ms_close_time")]
+            StellarValueExt::SignedMs(value) => {
+                self.write_type_stellar_value_signed_ms_value(value);
+            }
+            #[cfg(feature = "ms_close_time")]
+            StellarValueExt::EmptyTxSetMs(value) => {
+                self.write_type_stellar_value_proposed_ms_value(value);
             }
         }
     }

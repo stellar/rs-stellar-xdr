@@ -152,15 +152,7 @@ jobs:
     - run: rustup install nightly
     - run: rustup default nightly
     - name: Run fuzz corpus
-      env:
-        # Disable leak detection because the fuzzer tests the const impls that
-        # contain &'static data and so their Arbitrary impls explicitly leak.
-        ASAN_OPTIONS: detect_leaks=0
-      run: |
-        cd fuzz
-        for target in $(cargo fuzz list); do
-          cargo fuzz run $target -- -runs=0 -rss_limit_mb=0
-        done
+      run: make fuzz
     - name: Check no diffs exist
       run: git add -N . && git diff HEAD --exit-code
 

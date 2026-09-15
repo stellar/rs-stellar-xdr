@@ -19,6 +19,12 @@ permissions:
   contents: write
   pull-requests: write
 
+# Runs that target the same upstream mutate the same branch and the same set of PRs,
+# so let one finish before the next starts rather than have them race each other.
+concurrency:
+  group: regenerate-xdr-${{ inputs.xdr_ref || 'main' }}
+  cancel-in-progress: false
+
 jobs:
   regenerate:
     runs-on: ubuntu-latest
@@ -112,6 +118,19 @@ jobs:
             BRANCH="auto/regenerate-xdr-main-$SHA"
           fi
           export BRANCH
+          # A branch is only ever written once. Re-running the same upstream commit from a
+          # moved base would otherwise force-push a different tree onto a name something
+          # downstream may already have pinned; publish-once keeps the name honest. To
+          # redo a regeneration, delete the branch first.
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "$BRANCH already published for $SHA; leaving it untouched."
+            {
+              echo "- branch: \`$BRANCH\` (already published, not rewritten)"
+              echo "- head: \`$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)\`"
+              echo "- pr: $(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state all --limit 1 --json url --jq '.[0].url // empty')"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
@@ -131,10 +150,8 @@ jobs:
             DRAFT=--draft
           fi
           git commit -m "Regenerate XDR from $(echo "$SOURCE" | tr -d '`') ($SHA)"
-          # Force-push only makes re-running the same upstream commit idempotent; it can
-          # never replace one commit's regeneration with another's, since the branch name
-          # carries the commit.
-          git push --force origin "$BRANCH"
+          # Plain push: the branch is new by construction, guarded above.
+          git push origin "$BRANCH"
           body=$(printf '%s\n' \
             "Automated regeneration of the Rust XDR bindings from" \
             "$SOURCE (\`$SHA\`)." \
@@ -144,19 +161,19 @@ jobs:
             "Steps that ran: \`make generate-files xdr-definitions-json\`, feature-flag sync, \`make xdr-json\`," \
             "\`cargo test --all-features\`. Any new feature gates were registered in" \
             "\`Cargo.toml\` and \`src/lib.rs\` automatically — please sanity-check.")
-          if [ -z "$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number --jq '.[0].number // empty')" ]; then
+          if [ -z "$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --limit 1 --json number --jq '.[0].number // empty')" ]; then
             gh pr create -R "$GITHUB_REPOSITORY" --base main --head "$BRANCH" $DRAFT \
               --title "Regenerate XDR from $(echo "$SOURCE" | tr -d '`') ($SHA)" --body "$body"
           else
-            echo "Existing PR for $BRANCH refreshed by force-push."
+            echo "PR for $BRANCH already open."
           fi
           # One branch per run would otherwise leave a daily PR open forever. Close the
           # main-tracking ones this run supersedes, pointing at the replacement. Pinned-ref
           # PRs are left alone: they track different upstreams, not older versions of this
           # one. The branches stay — deleting one breaks any pin already taken on it.
           if [ -z "$XDR_REF" ]; then
-            NEW_URL="$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json url --jq '.[0].url // empty')"
-            gh pr list -R "$GITHUB_REPOSITORY" --state open --json number,headRefName \
+            NEW_URL="$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --limit 1 --json url --jq '.[0].url // empty')"
+            gh pr list -R "$GITHUB_REPOSITORY" --state open --limit 200 --json number,headRefName \
               --jq '.[] | select(.headRefName | startswith("auto/regenerate-xdr-main-")) | select(.headRefName != env.BRANCH) | .number' \
             | while read -r n; do
                 gh pr comment "$n" -R "$GITHUB_REPOSITORY" --body "Superseded by ${NEW_URL:-a newer regeneration}."
@@ -170,5 +187,5 @@ jobs:
             echo "- branch: \`$BRANCH\`"
             echo "- head: \`$(git rev-parse HEAD)\`"
             echo "- xdr: \`$(git -C xdr rev-parse HEAD)\`"
-            echo "- pr: $(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json url --jq '.[0].url // empty')"
+            echo "- pr: $(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --limit 1 --json url --jq '.[0].url // empty')"
           } >> "$GITHUB_STEP_SUMMARY"

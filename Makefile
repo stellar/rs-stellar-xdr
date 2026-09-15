@@ -73,11 +73,7 @@ CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519
 
 generate-files: src/generated.rs
 
-# The generator's own sources are prerequisites too: the output changes when a
-# template changes, not only when the XDR does.
-GENERATOR_SOURCES=$(sort $(wildcard xdr-generator-rust/generator/*.rs xdr-generator-rust/generator/src/*.rs xdr-generator-rust/generator/templates/*.jinja))
-
-src/generated.rs: $(sort $(wildcard xdr/*.x)) $(GENERATOR_SOURCES)
+src/generated.rs: $(sort $(wildcard xdr/*.x))
 	cargo run --manifest-path xdr-generator-rust/generator/Cargo.toml -- \
 		$(addprefix --input ,$(sort $(wildcard xdr/*.x))) \
 		--output $@ \

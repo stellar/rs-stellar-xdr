@@ -48,7 +48,7 @@ fuzz-corpus-json:
 	@mkdir -p fuzz/corpus-json/spec-entry
 	for f in fuzz/corpus/spec-entry; do \
 		cargo run --quiet --features cli -- generate arbitrary --type ScSpecEntry --entropy $$f --output json-formatted > fuzz/corpus-json/$$TARGET/$$(basename $$ENTRY).json; \
-	done; \
+	done
 
 fuzz-coverage:
 	rustup component add --toolchain nightly llvm-tools-preview

@@ -1,4 +1,4 @@
-.PHONY: all test build doc install readme fuzz fuzz-reduce fuzz-corpus-json watch generate generate-files clean fmt publish
+.PHONY: all test build doc install readme fuzz fuzz-reduce watch generate generate-files clean fmt publish
 
 export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 

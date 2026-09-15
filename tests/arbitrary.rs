@@ -1,6 +1,7 @@
 #![cfg(feature = "arbitrary")]
 
 use arbitrary::{Arbitrary, Unstructured};
+use rand::{rngs::StdRng, RngCore, SeedableRng};
 use stellar_xdr::{BytesM, ScMap, ScSpecEntry, StringM, VecM, SCSYMBOL_LIMIT};
 
 #[test]
@@ -18,7 +19,8 @@ fn arb() {
 /// would, because the limit lives in a const parameter the derive cannot see.
 #[test]
 fn arbitrary_stays_within_max() {
-    let bytes: Vec<u8> = (0..4096u32).map(|i| (i * 31 % 251) as u8).collect();
+    let mut bytes = [0u8; 4096];
+    StdRng::seed_from_u64(0).fill_bytes(&mut bytes);
     for start in 0..bytes.len() / 2 {
         let mut u = Unstructured::new(&bytes[start..]);
         assert!(StringM::<3>::arbitrary(&mut u).unwrap().len() <= 3);
@@ -48,7 +50,8 @@ fn arbitrary_does_not_consume_past_max() {
 /// name at most 30.
 #[test]
 fn arbitrary_generated_type_stays_within_max() {
-    let bytes: Vec<u8> = (0..8192u32).map(|i| (i * 17 % 253) as u8).collect();
+    let mut bytes = [0u8; 8192];
+    StdRng::seed_from_u64(0).fill_bytes(&mut bytes);
     for start in 0..bytes.len() / 2 {
         let mut u = Unstructured::new(&bytes[start..]);
         let Ok(entry) = ScSpecEntry::arbitrary(&mut u) else {

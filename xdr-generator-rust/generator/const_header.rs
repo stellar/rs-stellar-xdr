@@ -670,6 +670,7 @@ impl<const MAX: u32> TryFrom<&'static str> for StringM<MAX> {
 #[cfg(feature = "arbitrary")]
 mod arbitrary_impls {
     use super::{BytesM, StringM, VecM};
+    use crate::generated::arbitrary_max_len;
     use arbitrary::{Arbitrary, Result, Unstructured};
 
     /// Builds an arbitrary `T` behind a `&'static` reference, mirroring
@@ -704,19 +705,76 @@ mod arbitrary_impls {
 
     impl<'a, T: Arbitrary<'a> + 'static, const MAX: u32> Arbitrary<'a> for VecM<T, MAX> {
         fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
-            Ok(Self(Vec::leak(Vec::<T>::arbitrary(u)?)))
+            // Capped at MAX, and consuming the same bytes as the owned
+            // type's impl does, so both forms hold the same value.
+            let v = u
+                .arbitrary_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<Result<Vec<T>>>()?;
+            // The leak is required because the type holds a static lifetime
+            // reference to a slice. Even if the ref was not static but some
+            // other lifetime, the API does not provide any way to pass in an
+            // arena or similar memory management component to own the
+            // underlying memory.
+            Ok(Self(Vec::leak(v)))
+        }
+
+        fn arbitrary_take_rest(u: Unstructured<'a>) -> Result<Self> {
+            let v = u
+                .arbitrary_take_rest_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<Result<Vec<T>>>()?;
+            Ok(Self(Vec::leak(v)))
+        }
+
+        fn size_hint(depth: usize) -> (usize, Option<usize>) {
+            Vec::<T>::size_hint(depth)
         }
     }
 
     impl<'a, const MAX: u32> Arbitrary<'a> for BytesM<MAX> {
         fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
-            Ok(Self(Vec::leak(Vec::<u8>::arbitrary(u)?)))
+            let v = u
+                .arbitrary_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<Result<Vec<u8>>>()?;
+            // Leaked for the same reason as VecM above.
+            Ok(Self(Vec::leak(v)))
+        }
+
+        fn arbitrary_take_rest(u: Unstructured<'a>) -> Result<Self> {
+            let v = u
+                .arbitrary_take_rest_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<Result<Vec<u8>>>()?;
+            Ok(Self(Vec::leak(v)))
+        }
+
+        fn size_hint(depth: usize) -> (usize, Option<usize>) {
+            Vec::<u8>::size_hint(depth)
         }
     }
 
     impl<'a, const MAX: u32> Arbitrary<'a> for StringM<MAX> {
         fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
-            Ok(Self(Vec::leak(Vec::<u8>::arbitrary(u)?)))
+            let v = u
+                .arbitrary_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<Result<Vec<u8>>>()?;
+            // Leaked for the same reason as VecM above.
+            Ok(Self(Vec::leak(v)))
+        }
+
+        fn arbitrary_take_rest(u: Unstructured<'a>) -> Result<Self> {
+            let v = u
+                .arbitrary_take_rest_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<Result<Vec<u8>>>()?;
+            Ok(Self(Vec::leak(v)))
+        }
+
+        fn size_hint(depth: usize) -> (usize, Option<usize>) {
+            Vec::<u8>::size_hint(depth)
         }
     }
 }

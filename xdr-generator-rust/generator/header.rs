@@ -982,15 +982,56 @@ impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
     serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize)
 )]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct VecM<T, const MAX: u32 = { u32::MAX }>(Vec<T>);
 
 #[cfg(not(feature = "alloc"))]
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct VecM<T, const MAX: u32 = { u32::MAX }>(Vec<T>)
 where
     T: 'static;
+
+/// `MAX` as a length, saturating where `usize` is narrower than `u32`.
+///
+/// Shared with the const types' `Arbitrary` impls, which must truncate exactly
+/// as these do for the two forms to hold the same value.
+#[cfg(feature = "arbitrary")]
+pub(crate) const fn arbitrary_max_len(max: u32) -> usize {
+    if max as u64 > usize::MAX as u64 {
+        usize::MAX
+    } else {
+        max as usize
+    }
+}
+
+/// The length limit is an invariant of the type, and a derived impl would
+/// produce values outside it, because `MAX` lives in a const parameter the
+/// derive cannot see.
+///
+/// `Vec`'s own impl reads a continuation byte before each element, so capping
+/// the iterator stops at `MAX` without reading, and then discarding, the
+/// elements past it.
+#[cfg(feature = "arbitrary")]
+impl<'a, T: Arbitrary<'a>, const MAX: u32> Arbitrary<'a> for VecM<T, MAX> {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(
+            u.arbitrary_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<arbitrary::Result<Vec<T>>>()?,
+        ))
+    }
+
+    fn arbitrary_take_rest(u: arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(
+            u.arbitrary_take_rest_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<arbitrary::Result<Vec<T>>>()?,
+        ))
+    }
+
+    fn size_hint(depth: usize) -> (usize, Option<usize>) {
+        Vec::<T>::size_hint(depth)
+    }
+}
 
 impl<T, const MAX: u32> Deref for VecM<T, MAX> {
     type Target = Vec<T>;
@@ -1513,13 +1554,35 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct BytesM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
 
 #[cfg(not(feature = "alloc"))]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct BytesM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
+
+/// Length limited to `MAX`, as for [`VecM`].
+#[cfg(feature = "arbitrary")]
+impl<'a, const MAX: u32> Arbitrary<'a> for BytesM<MAX> {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(
+            u.arbitrary_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<arbitrary::Result<Vec<u8>>>()?,
+        ))
+    }
+
+    fn arbitrary_take_rest(u: arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(
+            u.arbitrary_take_rest_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<arbitrary::Result<Vec<u8>>>()?,
+        ))
+    }
+
+    fn size_hint(depth: usize) -> (usize, Option<usize>) {
+        Vec::<u8>::size_hint(depth)
+    }
+}
 
 impl<const MAX: u32> core::fmt::Display for BytesM<MAX> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -1928,13 +1991,36 @@ impl<const MAX: u32> WriteXdr for BytesM<MAX> {
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct StringM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
 
 #[cfg(not(feature = "alloc"))]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct StringM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
+
+/// Length limited to `MAX`, as for [`VecM`]. The type holds
+/// arbitrary bytes rather than UTF-8, so truncating cannot split a character.
+#[cfg(feature = "arbitrary")]
+impl<'a, const MAX: u32> Arbitrary<'a> for StringM<MAX> {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(
+            u.arbitrary_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<arbitrary::Result<Vec<u8>>>()?,
+        ))
+    }
+
+    fn arbitrary_take_rest(u: arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        Ok(Self(
+            u.arbitrary_take_rest_iter()?
+                .take(arbitrary_max_len(MAX))
+                .collect::<arbitrary::Result<Vec<u8>>>()?,
+        ))
+    }
+
+    fn size_hint(depth: usize) -> (usize, Option<usize>) {
+        Vec::<u8>::size_hint(depth)
+    }
+}
 
 impl<const MAX: u32> core::fmt::Display for StringM<MAX> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {

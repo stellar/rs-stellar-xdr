@@ -39,17 +39,6 @@ fuzz:
 fuzz-reduce:
 	ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz cmin spec-entry -- -rss_limit_mb=0
 
-# Writes the value each corpus entry stands for to fuzz/corpus-json/<target>/,
-# alongside the corpus itself, so the corpus can be read as values rather than
-# as the bytes that generate them. Rebuilt from scratch each run, so an entry
-# that has been removed does not linger.
-fuzz-corpus-json:
-	@rm -rf fuzz/corpus-json
-	@mkdir -p fuzz/corpus-json/spec-entry
-	for f in fuzz/corpus/spec-entry; do \
-		cargo run --quiet --features cli -- generate arbitrary --type ScSpecEntry --entropy $$f --output json-formatted > fuzz/corpus-json/$$TARGET/$$(basename $$ENTRY).json; \
-	done
-
 fuzz-coverage:
 	rustup component add --toolchain nightly llvm-tools-preview
 	@RUST_LLVM_COV=$$(find $$(rustc +nightly --print sysroot) -name llvm-cov) && \

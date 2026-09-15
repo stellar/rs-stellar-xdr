@@ -57,7 +57,6 @@ pub(crate) fn build(
         type_info,
         cfg_by_name,
         wrappers: BTreeMap::new(),
-        loop_depth: 0,
     };
 
     // One method per definition rather than per name: where the same type name
@@ -82,30 +81,18 @@ struct Collector<'a> {
     cfg_by_name: &'a HashMap<String, Option<String>>,
     /// Wrapper (`Option`/`VecM`) methods needed, keyed by method name.
     wrappers: BTreeMap<String, ConstWriterMethodOutput>,
-    /// How many loops enclose the code being emitted. Each generated method is
-    /// its own scope, so this resets per method and is only non-zero where a
-    /// fixed array nests inside another loop.
-    loop_depth: u32,
 }
 
 impl Collector<'_> {
-    /// The loop index name for the current depth. Unsuffixed at the outermost
+    /// The loop index name at `depth` loops deep. Unsuffixed at the outermost
     /// loop, which is all this spec needs; a nested loop is suffixed so its
     /// index cannot shadow the one it sits inside.
-    fn index_name(&self) -> String {
-        if self.loop_depth == 0 {
+    fn index_name(depth: u32) -> String {
+        if depth == 0 {
             "i".to_string()
         } else {
-            format!("i{}", self.loop_depth)
+            format!("i{depth}")
         }
-    }
-
-    /// Emit `f` with the loop depth increased, for code inside a loop body.
-    fn in_loop<F: FnOnce(&mut Self) -> ConstEncode>(&mut self, f: F) -> ConstEncode {
-        self.loop_depth += 1;
-        let out = f(self);
-        self.loop_depth -= 1;
-        out
     }
 
     /// The cfg gating a Rust type name, if any.
@@ -189,12 +176,17 @@ impl Collector<'_> {
     /// `s[i]`) or an identifier already bound to a reference (`is_ref == true`,
     /// e.g. the binding of a `match` arm). `parent` is the type being
     /// serialized, which decides whether a cyclic reference is wrapped.
+    ///
+    /// `depth` is how many loops enclose the code being emitted, which names
+    /// the loop indices. Each generated method is its own scope, so a method
+    /// starts at zero however deep the code that needed it sits.
     fn encode(
         &mut self,
         type_: &Type,
         acc: &str,
         is_ref: bool,
         parent: Option<&str>,
+        depth: u32,
     ) -> ConstEncode {
         let call = |method: &str, pass: ConstPass| ConstEncode {
             loops: Vec::new(),
@@ -220,7 +212,7 @@ impl Collector<'_> {
             Type::Ident(_) => {
                 if let Some(builtin) = self.type_info.resolve_typedef_to_builtin(type_) {
                     let builtin = builtin.clone();
-                    return self.encode(&builtin, acc, is_ref, parent);
+                    return self.encode(&builtin, acc, is_ref, parent, depth);
                 }
                 // Where the ident is cyclic with `parent`, its const form is
                 // already a reference to the value, so it is passed along
@@ -251,12 +243,12 @@ impl Collector<'_> {
             // forms, so it is walked inline rather than given a method: there
             // is no wrapper type to name one after.
             Type::Array { element_type, size } => {
-                let index = self.index_name();
+                let index = Self::index_name(depth);
                 let element_type = element_type.clone();
                 let elem_acc = format!("{acc}[{index}]");
                 // A container holds its elements by value, so an element is
                 // never a cyclic reference back to the enclosing type.
-                let mut elem = self.in_loop(|c| c.encode(&element_type, &elem_acc, false, None));
+                let mut elem = self.encode(&element_type, &elem_acc, false, None, depth + 1);
                 elem.loops.insert(
                     0,
                     ConstLoop {
@@ -296,9 +288,7 @@ impl Collector<'_> {
         };
 
         if !self.wrappers.contains_key(&name) {
-            // Each wrapper is its own method, so its bindings start fresh.
-            self.loop_depth = 0;
-            let inner_encode = self.encode(inner, "v", true, parent);
+            let inner_encode = self.encode(inner, "v", true, parent, 0);
             self.wrappers.insert(
                 name.clone(),
                 ConstWriterMethodOutput {
@@ -340,12 +330,10 @@ impl Collector<'_> {
         };
 
         if !self.wrappers.contains_key(&name) {
-            // Each wrapper is its own method, so its bindings start fresh.
-            self.loop_depth = 0;
             let element_type = element_type.clone();
             // `VecM` borrows its elements as one slice, so each element is
             // held by value and is never a cyclic reference.
-            let elem = self.in_loop(|c| c.encode(&element_type, "s[i]", false, None));
+            let elem = self.encode(&element_type, "s[i]", false, None, 1);
             // The max length is a const parameter rather than a fixed size, so
             // one method serves every `VecM` of this element type whatever its
             // declared maximum.
@@ -412,14 +400,12 @@ impl Collector<'_> {
     fn definition_method(&mut self, def: &Definition) -> Option<ConstWriterMethodOutput> {
         let name = type_name(def.name());
         let cfg = def.cfg().map(CfgExpr::render);
-        // Each method is its own scope, so its bindings start fresh.
-        self.loop_depth = 0;
 
         let body = match def {
             Definition::Const(_) => return None,
             Definition::Typedef(t) if is_builtin_type(&t.type_) => return None,
             Definition::Typedef(t) => {
-                ConstWriterBody::Struct(vec![self.encode(&t.type_, "v.0", false, None)])
+                ConstWriterBody::Struct(vec![self.encode(&t.type_, "v.0", false, None, 0)])
             }
             Definition::Enum(_) => ConstWriterBody::Enum,
             Definition::Struct(s) => {
@@ -429,7 +415,7 @@ impl Collector<'_> {
                         .iter()
                         .map(|m| {
                             let acc = format!("v.{}", field_name(&m.name));
-                            self.encode(&m.type_, &acc, false, Some(&parent))
+                            self.encode(&m.type_, &acc, false, Some(&parent), 0)
                         })
                         .collect(),
                 )
@@ -471,7 +457,7 @@ impl Collector<'_> {
 
         // Both the owned and const forms expose a const `discriminant`, so the
         // body mirrors the owned type's `write_xdr`.
-        let discriminant = self.encode(&u.discriminant.type_, "d", false, None);
+        let discriminant = self.encode(&u.discriminant.type_, "d", false, None, 0);
 
         // As for the parameter type, the plain name is the `const` module's
         // form of the union, which is the type the parameter holds.
@@ -522,7 +508,7 @@ impl Collector<'_> {
                     payload: arm
                         .type_
                         .as_ref()
-                        .map(|t| self.encode(t, "value", true, Some(parent))),
+                        .map(|t| self.encode(t, "value", true, Some(parent), 0)),
                 }
             })
             .collect()

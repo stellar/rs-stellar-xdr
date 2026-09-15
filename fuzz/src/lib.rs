@@ -15,7 +15,7 @@
 /// rather than `const_to_xdr` keeps the buffer sizeable at runtime.
 #[macro_export]
 macro_rules! assert_same_encoding {
-    ($type:ident, $write:ident, $data:expr) => {{
+    ($type:ident, $write:ident, $data:expr $(,)?) => {{
         use arbitrary::{Arbitrary, Unstructured};
         use stellar_xdr::{r#const, Limits, WriteXdr};
 

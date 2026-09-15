@@ -1,4 +1,4 @@
-.PHONY: all test build doc install readme fuzz fuzz-reduce watch generate generate-files clean fmt publish
+.PHONY: all test build doc install readme fuzz fuzz-reduce fuzz-corpus-json watch generate generate-files clean fmt publish
 
 export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
@@ -38,6 +38,17 @@ fuzz:
 # Shrinks each corpus to the smallest set of inputs with the same coverage.
 fuzz-reduce:
 	ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz cmin spec-entry -- -rss_limit_mb=0
+
+# Writes the value each corpus entry stands for to fuzz/corpus-json/<target>/,
+# alongside the corpus itself, so the corpus can be read as values rather than
+# as the bytes that generate them. Rebuilt from scratch each run, so an entry
+# that has been removed does not linger.
+fuzz-corpus-json:
+	@rm -rf fuzz/corpus-json
+	@mkdir -p fuzz/corpus-json/spec-entry
+	for f in fuzz/corpus/spec-entry; do \
+		cargo run --quiet --features cli -- generate arbitrary --type ScSpecEntry --entropy $$f --output json-formatted > fuzz/corpus-json/$$TARGET/$$(basename $$ENTRY).json; \
+	done; \
 
 
 fuzz-coverage:

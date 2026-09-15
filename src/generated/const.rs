@@ -718,18 +718,33 @@ mod arbitrary_impls {
 
     impl<'a, T: Arbitrary<'a> + 'static, const MAX: u32> Arbitrary<'a> for VecM<T, MAX> {
         fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
+            // The leak is required because the type holds a static lifetime
+            // reference to a slice. Even if the ref was not static but some
+            // other lifetime, the API does not provide any way to pass in an
+            // arena or similar memory management component to own the
+            // underlying memory.
             Ok(Self(Vec::leak(Vec::<T>::arbitrary(u)?)))
         }
     }
 
     impl<'a, const MAX: u32> Arbitrary<'a> for BytesM<MAX> {
         fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
+            // The leak is required because the type holds a static lifetime
+            // reference to a slice. Even if the ref was not static but some
+            // other lifetime, the API does not provide any way to pass in an
+            // arena or similar memory management component to own the
+            // underlying memory.
             Ok(Self(Vec::leak(Vec::<u8>::arbitrary(u)?)))
         }
     }
 
     impl<'a, const MAX: u32> Arbitrary<'a> for StringM<MAX> {
         fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
+            // The leak is required because the type holds a static lifetime
+            // reference to a slice. Even if the ref was not static but some
+            // other lifetime, the API does not provide any way to pass in an
+            // arena or similar memory management component to own the
+            // underlying memory.
             Ok(Self(Vec::leak(Vec::<u8>::arbitrary(u)?)))
         }
     }

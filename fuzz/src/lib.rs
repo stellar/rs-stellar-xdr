@@ -23,15 +23,6 @@ macro_rules! assert_same_encoding {
         let owned = stellar_xdr::$type::arbitrary(&mut Unstructured::new(data));
         let konst = r#const::$type::arbitrary(&mut Unstructured::new(data));
 
-        // Reading the same input in lockstep means the two forms agree on
-        // whether the input describes a value at all.
-        assert_eq!(
-            owned.is_ok(),
-            konst.is_ok(),
-            "{} built in one form but not the other",
-            stringify!($type),
-        );
-
         if let (Ok(owned), Ok(konst)) = (owned, konst) {
             // Encode the const value the way a caller in a const context does
             // at compile time: measure, then write into a buffer of that size.
@@ -50,6 +41,8 @@ macro_rules! assert_same_encoding {
                 "{} encodings differ",
                 stringify!($type),
             );
+        } else {
+            panic!("{} built in one form but not the other", stringify!($type));
         }
     }};
 }

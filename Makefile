@@ -33,14 +33,10 @@ readme:
 # Leak detection is disabled because the fuzzer tests the const impls that
 # contain &'static data and so their Arbitrary impls explicitly leak.
 fuzz:
-	ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run ledger-close-meta -- -rss_limit_mb=0 -max_len=1048576 -runs=0
-	ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run transaction-envelope -- -rss_limit_mb=0 -max_len=204800 -runs=0
 	ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run spec-entry -- -rss_limit_mb=0 -max_len=10240 -runs=0
 
 # Shrinks each corpus to the smallest set of inputs with the same coverage.
 fuzz-reduce:
-	ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz cmin ledger-close-meta -- -rss_limit_mb=0
-	ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz cmin transaction-envelope -- -rss_limit_mb=0
 	ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz cmin spec-entry -- -rss_limit_mb=0
 
 

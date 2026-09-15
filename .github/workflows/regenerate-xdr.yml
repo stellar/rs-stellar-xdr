@@ -67,10 +67,33 @@ jobs:
           if [ "$before" = "$after" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "xdr-version already pins $after; nothing to regenerate."
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "sha=$(git -C xdr rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          SHA="$(git -C xdr rev-parse --short HEAD)"
+          # Every run gets its own branch, named for the upstream commit it regenerates.
+          # `-main-` marks a run that tracked stellar-xdr@main; without it, the run was
+          # pinned to an explicit ref.
+          if [ -n "$XDR_REF" ]; then
+            BRANCH="auto/regenerate-xdr-$SHA"
+          else
+            BRANCH="auto/regenerate-xdr-main-$SHA"
+          fi
+          # A branch is only ever written once. Re-running the same upstream commit from a
+          # moved base would otherwise replace a tree something downstream may already have
+          # pinned, so stop before spending a build on it. To redo a regeneration, delete
+          # the branch first.
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "$BRANCH is already published for $SHA; leaving it untouched."
+            {
+              echo "- branch: \`$BRANCH\` (already published, not rewritten)"
+              echo "- head: \`$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
 
       # Generate the Rust source and the JSON definitions IR (no crate compile yet) and
       # record the new xdr-version. xdr-definitions-json must be regenerated here too:
@@ -105,32 +128,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           XDR_REF: ${{ inputs.xdr_ref }}
           SHA: ${{ steps.xdr.outputs.sha }}
+          BRANCH: ${{ steps.xdr.outputs.branch }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          # Every run gets its own branch, named for the upstream commit it regenerates.
-          # Nothing is ever rewritten with different content, so a downstream consumer can
-          # pin a branch and have it keep meaning what it meant. `-main-` marks a run that
-          # tracked stellar-xdr@main; without it, the run was pinned to an explicit ref.
-          if [ -n "$XDR_REF" ]; then
-            BRANCH="auto/regenerate-xdr-$SHA"
-          else
-            BRANCH="auto/regenerate-xdr-main-$SHA"
-          fi
-          export BRANCH
-          # A branch is only ever written once. Re-running the same upstream commit from a
-          # moved base would otherwise force-push a different tree onto a name something
-          # downstream may already have pinned; publish-once keeps the name honest. To
-          # redo a regeneration, delete the branch first.
-          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
-            echo "$BRANCH already published for $SHA; leaving it untouched."
-            {
-              echo "- branch: \`$BRANCH\` (already published, not rewritten)"
-              echo "- head: \`$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)\`"
-              echo "- pr: $(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state all --limit 1 --json url --jq '.[0].url // empty')"
-            } >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"

@@ -39,25 +39,6 @@ fuzz:
 fuzz-reduce:
 	ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz cmin spec-entry -- -rss_limit_mb=0
 
-fuzz-coverage:
-	rustup component add --toolchain nightly llvm-tools-preview
-	@RUST_LLVM_COV=$$(find $$(rustc +nightly --print sysroot) -name llvm-cov) && \
-	RUST_TARGET_TRIPLE=$$(rustc +nightly -vV | sed -n 's|host: ||p') && \
-	for TARGET in $$(cargo +nightly fuzz list); do \
-		echo "=== Coverage for $$TARGET ===" && \
-		cargo +nightly fuzz coverage $$TARGET && \
-		$$RUST_LLVM_COV report \
-			-instr-profile=fuzz/coverage/$$TARGET/coverage.profdata \
-			-object target/$$RUST_TARGET_TRIPLE/coverage/$$RUST_TARGET_TRIPLE/release/$$TARGET \
-			--ignore-filename-regex ".cargo/registry" && \
-		$$RUST_LLVM_COV show \
-			-instr-profile=fuzz/coverage/$$TARGET/coverage.profdata \
-			-object target/$$RUST_TARGET_TRIPLE/coverage/$$RUST_TARGET_TRIPLE/release/$$TARGET \
-			--ignore-filename-regex ".cargo/registry" \
-			--format=html \
-			> coverage-$$TARGET.html; \
-	done
-
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
 

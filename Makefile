@@ -50,7 +50,6 @@ fuzz-corpus-json:
 		cargo run --quiet --features cli -- generate arbitrary --type ScSpecEntry --entropy $$f --output json-formatted > fuzz/corpus-json/$$TARGET/$$(basename $$ENTRY).json; \
 	done; \
 
-
 fuzz-coverage:
 	rustup component add --toolchain nightly llvm-tools-preview
 	@RUST_LLVM_COV=$$(find $$(rustc +nightly --print sysroot) -name llvm-cov) && \

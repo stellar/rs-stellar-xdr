@@ -23,27 +23,45 @@ macro_rules! assert_same_encoding {
         let owned = stellar_xdr::$type::arbitrary(&mut Unstructured::new(data));
         let konst = stellar_xdr::r#const::$type::arbitrary(&mut Unstructured::new(data));
 
-        if let (Ok(owned), Ok(konst)) = (owned, konst) {
-            let owned_xdr = owned.to_xdr(Limits::none()).unwrap();
+        match (owned, konst) {
+            (Ok(owned), Ok(konst)) => {
+                let owned_xdr = owned.to_xdr(Limits::none()).unwrap();
 
-            let konst_xdr_len = konst.const_xdr_len();
-            let mut konst_xdr = vec![0u8; konst.const_xdr_len()];
-            let mut w = stellar_xdr::r#const::ConstWriter::new(&mut konst_xdr);
-            w.$write(&konst);
-            assert_eq!(
-                w.len(),
-                konst_xdr_len,
-                "{} const_xdr_len disagrees with what the writer wrote",
+                let konst_xdr_len = konst.const_xdr_len();
+                let mut konst_xdr = vec![0u8; konst.const_xdr_len()];
+                let mut w = stellar_xdr::r#const::ConstWriter::new(&mut konst_xdr);
+                w.$write(&konst);
+                assert_eq!(
+                    w.len(),
+                    konst_xdr_len,
+                    "{} const_xdr_len disagrees with what the writer wrote",
+                    stringify!($type),
+                );
+                assert_eq!(
+                    konst_xdr,
+                    owned_xdr,
+                    "{} encodings differ",
+                    stringify!($type),
+                );
+            }
+            // Both forms read the same bytes, so input that runs out, or that
+            // no value can be built from, stops both. There is nothing to
+            // compare, and it is the common case for a short input rather than
+            // a failure, but the two must agree on why they stopped.
+            (Err(owned_err), Err(konst_err)) => assert_eq!(
+                owned_err,
+                konst_err,
+                "{} failed to build in both forms but for different reasons",
                 stringify!($type),
-            );
-            assert_eq!(
-                konst_xdr,
-                owned_xdr,
-                "{} encodings differ",
+            ),
+            (Ok(_), Err(e)) => panic!(
+                "{} built in the owned form but not the const form: {e}",
                 stringify!($type),
-            );
-        } else {
-            panic!("{} built in one form but not the other", stringify!($type));
+            ),
+            (Err(e), Ok(_)) => panic!(
+                "{} built in the const form but not the owned form: {e}",
+                stringify!($type),
+            ),
         }
     }};
 }

@@ -1,0 +1,28 @@
+//! Const-evaluable forms of the generated XDR types.
+//!
+//! Every type in the parent module has a name here. A type that owns heap data
+//! has a borrowing equivalent of its own, holding `&'static` data so it can be
+//! built in a const context; every other type is an alias to the owned type,
+//! which const evaluation can already hold. So a value of any type can be
+//! written as `const`, and encoded to XDR at compile time with the type's
+//! `const_xdr_len` and `const_to_xdr`.
+//!
+//! The names are those of the parent module, without a suffix: `const::Memo` is
+//! the const form of [`super::Memo`]. Types that cannot be built in a const
+//! context (`Vec`, `String`, `Box`) are replaced by [`VecM`], [`BytesM`],
+//! [`StringM`], and `&'static` references respectively.
+
+{{ header }}
+{%- for e in entries %}
+{%- if let Some(mod_name) = e.mod_name %}
+mod {{ mod_name }};
+#[allow(unused_imports)]
+pub use {{ mod_name }}::*;
+{%- endif %}
+{%- for i in e.items %}
+{%- if let Some(cfg) = i.cfg %}
+#[cfg({{ cfg }})]
+{%- endif %}
+pub use super::{{ i.name }};
+{%- endfor %}
+{%- endfor %}

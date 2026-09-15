@@ -1,7 +1,9 @@
 use arbitrary::Unstructured;
 use clap::{Args, ValueEnum};
 use std::{
-    io::{stdout, Write},
+    ffi::{OsStr, OsString},
+    fs,
+    io::{stdin, stdout, Read, Write},
     str::FromStr,
 };
 
@@ -48,6 +50,13 @@ pub struct Cmd {
     /// up.
     #[arg(long, default_value_t = 20_000)]
     pub hint_attempts: u64,
+
+    /// Drive generation with the bytes in this file, or stdin if '-', instead
+    /// of with fresh randomness. Bytes are consumed the same way the fuzz
+    /// targets consume them, so a fuzz corpus entry piped in here produces the
+    /// value that entry stands for.
+    #[arg(long, conflicts_with = "hint")]
+    pub entropy: Option<OsString>,
 }
 
 #[derive(Default, Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
@@ -120,7 +129,24 @@ impl Cmd {
         Ok(crate::Type::arbitrary(type_, &mut u)?)
     }
 
+    /// Read the bytes that drive generation, from a file or from stdin if the
+    /// path is `-`.
+    fn read_entropy(path: &OsStr) -> Result<Vec<u8>, Error> {
+        if path == "-" {
+            let mut bytes = Vec::new();
+            stdin().read_to_end(&mut bytes)?;
+            Ok(bytes)
+        } else {
+            Ok(fs::read(path)?)
+        }
+    }
+
     /// Generate an arbitrary value of the given type.
+    ///
+    /// If `entropy` is configured the value is built from those bytes rather
+    /// than from randomness, which makes the output a function of the input
+    /// alone. Hints are meaningless there — the bytes decide the value — and
+    /// the two flags conflict.
     ///
     /// If any `hint`s are configured, values are generated repeatedly (up to
     /// `hint_attempts` times) until one whose JSON representation contains all
@@ -133,6 +159,11 @@ impl Cmd {
     /// rather than fatal: it is skipped and the search continues with fresh
     /// randomness, so a single bad draw doesn't abort the whole search.
     fn generate(&self, type_: crate::TypeVariant) -> Result<(crate::Type, Option<String>), Error> {
+        if let Some(path) = &self.entropy {
+            let bytes = Self::read_entropy(path)?;
+            let mut u = Unstructured::new(&bytes);
+            return Ok((crate::Type::arbitrary(type_, &mut u)?, None));
+        }
         if self.hint.is_empty() {
             return Ok((Self::generate_one(type_)?, None));
         }
@@ -158,6 +189,30 @@ impl Cmd {
 mod tests {
     use super::*;
 
+    /// The same bytes must always produce the same value, otherwise piping a
+    /// corpus entry in wouldn't show what that entry stands for.
+    #[test]
+    fn entropy_is_deterministic() {
+        let file = std::env::temp_dir().join("stellar-xdr-arbitrary-entropy");
+        fs::write(&file, (0u8..=255).collect::<Vec<u8>>()).unwrap();
+        let cmd = Cmd {
+            r#type: "TimeBounds".to_string(),
+            output_format: OutputFormat::Json,
+            hint: vec![],
+            hint_attempts: 1,
+            entropy: Some(file.clone().into_os_string()),
+        };
+        let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
+        let (first, json) = cmd.generate(type_).unwrap();
+        assert!(json.is_none());
+        let (second, _) = cmd.generate(type_).unwrap();
+        assert_eq!(
+            serde_json::to_string(&first).unwrap(),
+            serde_json::to_string(&second).unwrap(),
+        );
+        fs::remove_file(&file).unwrap();
+    }
+
     #[test]
     fn hint_matches() {
         let cmd = Cmd {
@@ -165,6 +220,7 @@ mod tests {
             output_format: OutputFormat::Json,
             hint: vec!["min_time".into()],
             hint_attempts: 1000,
+            entropy: None,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
         let (v, json) = cmd.generate(type_).unwrap();
@@ -180,6 +236,7 @@ mod tests {
             output_format: OutputFormat::Json,
             hint: vec!["min_time".into(), "max_time".into()],
             hint_attempts: 1000,
+            entropy: None,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
         let (_v, json) = cmd.generate(type_).unwrap();
@@ -195,6 +252,7 @@ mod tests {
             output_format: OutputFormat::Json,
             hint: vec!["zzz_does_not_exist_xyzzy".into()],
             hint_attempts: 5,
+            entropy: None,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
         assert!(matches!(
@@ -210,6 +268,7 @@ mod tests {
             output_format: OutputFormat::Json,
             hint: vec!["min_time".into(), "zzz_does_not_exist_xyzzy".into()],
             hint_attempts: 5,
+            entropy: None,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
         assert!(matches!(
@@ -225,6 +284,7 @@ mod tests {
             output_format: OutputFormat::Json,
             hint: vec![],
             hint_attempts: 1,
+            entropy: None,
         };
         let type_ = crate::TypeVariant::from_str("TimeBounds").unwrap();
         let (_v, json) = cmd.generate(type_).unwrap();

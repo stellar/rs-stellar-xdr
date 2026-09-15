@@ -21,3 +21,6 @@ mod {{ m.mod_name }};
 #[allow(unused_imports)]
 pub use {{ m.mod_name }}::*;
 {%- endfor %}
+
+#[cfg(feature = "const")]
+pub mod r#const;

@@ -19,7 +19,7 @@
     },
     {
       "name": "xdr/Stellar-contract-spec.x",
-      "sha256": "f0655f82e0a28a79e067c02f427cc709db1e4323a50c9b85f730f812b9612dbd"
+      "sha256": "38910bfa0f616916659db405c37e8c63ac7e0b46ce1bf10bd53b5fafc4f599fe"
     },
     {
       "name": "xdr/Stellar-contract.x",
@@ -1894,6 +1894,13 @@
       "file_index": 4
     },
     {
+      "kind": "const",
+      "name": "SC_SPEC_TYPE_NAME_LIMIT",
+      "value": 1024,
+      "source": "const SC_SPEC_TYPE_NAME_LIMIT = 1024;",
+      "file_index": 4
+    },
+    {
       "kind": "enum",
       "name": "SCSpecType",
       "source": "enum SCSpecType\n{\n    SC_SPEC_TYPE_VAL = 0,\n\n    // Types with no parameters.\n    SC_SPEC_TYPE_BOOL = 1,\n    SC_SPEC_TYPE_VOID = 2,\n    SC_SPEC_TYPE_ERROR = 3,\n    SC_SPEC_TYPE_U32 = 4,\n    SC_SPEC_TYPE_I32 = 5,\n    SC_SPEC_TYPE_U64 = 6,\n    SC_SPEC_TYPE_I64 = 7,\n    SC_SPEC_TYPE_TIMEPOINT = 8,\n    SC_SPEC_TYPE_DURATION = 9,\n    SC_SPEC_TYPE_U128 = 10,\n    SC_SPEC_TYPE_I128 = 11,\n    SC_SPEC_TYPE_U256 = 12,\n    SC_SPEC_TYPE_I256 = 13,\n    SC_SPEC_TYPE_BYTES = 14,\n    SC_SPEC_TYPE_STRING = 16,\n    SC_SPEC_TYPE_SYMBOL = 17,\n    SC_SPEC_TYPE_ADDRESS = 19,\n    SC_SPEC_TYPE_MUXED_ADDRESS = 20,\n\n    // Types with parameters.\n    SC_SPEC_TYPE_OPTION = 1000,\n    SC_SPEC_TYPE_RESULT = 1001,\n    SC_SPEC_TYPE_VEC = 1002,\n    SC_SPEC_TYPE_MAP = 1004,\n    SC_SPEC_TYPE_TUPLE = 1005,\n    SC_SPEC_TYPE_BYTES_N = 1006,\n\n    // User defined types.\n    SC_SPEC_TYPE_UDT = 2000\n};",
@@ -2124,14 +2131,14 @@
       "kind": "struct",
       "name": "SCSpecTypeUDT",
       "fixed_size": null,
-      "source": "struct SCSpecTypeUDT\n{\n    string name<60>;\n};",
+      "source": "struct SCSpecTypeUDT\n{\n    string name<SC_SPEC_TYPE_NAME_LIMIT>;\n};",
       "file_index": 4,
       "fields": [
         {
           "name": "name",
           "type": {
             "kind": "string",
-            "max_size": 60
+            "max_size": 1024
           }
         }
       ]
@@ -2358,7 +2365,7 @@
       "kind": "struct",
       "name": "SCSpecUDTStructV0",
       "fixed_size": null,
-      "source": "struct SCSpecUDTStructV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    SCSpecUDTStructFieldV0 fields<>;\n};",
+      "source": "struct SCSpecUDTStructV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<SC_SPEC_TYPE_NAME_LIMIT>;\n    SCSpecUDTStructFieldV0 fields<>;\n};",
       "file_index": 4,
       "fields": [
         {
@@ -2379,7 +2386,7 @@
           "name": "name",
           "type": {
             "kind": "string",
-            "max_size": 60
+            "max_size": 1024
           }
         },
         {
@@ -2513,7 +2520,7 @@
       "kind": "struct",
       "name": "SCSpecUDTUnionV0",
       "fixed_size": null,
-      "source": "struct SCSpecUDTUnionV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    SCSpecUDTUnionCaseV0 cases<>;\n};",
+      "source": "struct SCSpecUDTUnionV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<SC_SPEC_TYPE_NAME_LIMIT>;\n    SCSpecUDTUnionCaseV0 cases<>;\n};",
       "file_index": 4,
       "fields": [
         {
@@ -2534,7 +2541,7 @@
           "name": "name",
           "type": {
             "kind": "string",
-            "max_size": 60
+            "max_size": 1024
           }
         },
         {
@@ -2583,7 +2590,7 @@
       "kind": "struct",
       "name": "SCSpecUDTEnumV0",
       "fixed_size": null,
-      "source": "struct SCSpecUDTEnumV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    SCSpecUDTEnumCaseV0 cases<>;\n};",
+      "source": "struct SCSpecUDTEnumV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<SC_SPEC_TYPE_NAME_LIMIT>;\n    SCSpecUDTEnumCaseV0 cases<>;\n};",
       "file_index": 4,
       "fields": [
         {
@@ -2604,7 +2611,7 @@
           "name": "name",
           "type": {
             "kind": "string",
-            "max_size": 60
+            "max_size": 1024
           }
         },
         {
@@ -2653,7 +2660,7 @@
       "kind": "struct",
       "name": "SCSpecUDTErrorEnumV0",
       "fixed_size": null,
-      "source": "struct SCSpecUDTErrorEnumV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<60>;\n    SCSpecUDTErrorEnumCaseV0 cases<>;\n};",
+      "source": "struct SCSpecUDTErrorEnumV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<SC_SPEC_TYPE_NAME_LIMIT>;\n    SCSpecUDTErrorEnumCaseV0 cases<>;\n};",
       "file_index": 4,
       "fields": [
         {
@@ -2674,7 +2681,7 @@
           "name": "name",
           "type": {
             "kind": "string",
-            "max_size": 60
+            "max_size": 1024
           }
         },
         {
@@ -2842,7 +2849,7 @@
       "kind": "struct",
       "name": "SCSpecEventV0",
       "fixed_size": null,
-      "source": "struct SCSpecEventV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    SCSymbol name;\n    SCSymbol prefixTopics<2>;\n    SCSpecEventParamV0 params<>;\n    SCSpecEventDataFormat dataFormat;\n};",
+      "source": "struct SCSpecEventV0\n{\n    string doc<SC_SPEC_DOC_LIMIT>;\n    string lib<80>;\n    string name<SC_SPEC_TYPE_NAME_LIMIT>;\n    SCSymbol prefixTopics<2>;\n    SCSpecEventParamV0 params<>;\n    SCSpecEventDataFormat dataFormat;\n};",
       "file_index": 4,
       "fields": [
         {
@@ -2862,8 +2869,8 @@
         {
           "name": "name",
           "type": {
-            "kind": "ref",
-            "name": "SCSymbol"
+            "kind": "string",
+            "max_size": 1024
           }
         },
         {
@@ -7119,7 +7126,7 @@
     {
       "kind": "enum",
       "name": "StellarValueType",
-      "source": "enum StellarValueType\n{\n    STELLAR_VALUE_BASIC = 0,\n    STELLAR_VALUE_SIGNED = 1,\n    STELLAR_VALUE_EMPTY_TX_SET = 2\n};",
+      "source": "enum StellarValueType\n{\n    STELLAR_VALUE_BASIC = 0,\n    STELLAR_VALUE_SIGNED = 1,\n    STELLAR_VALUE_EMPTY_TX_SET = 2\n#ifdef MS_CLOSE_TIME\n    ,\n    STELLAR_VALUE_SIGNED_MS = 3,\n    STELLAR_VALUE_EMPTY_TX_SET_MS = 4\n#endif // MS_CLOSE_TIME\n};",
       "file_index": 9,
       "member_prefix": "STELLAR_VALUE_",
       "members": [
@@ -7201,7 +7208,7 @@
       "kind": "union",
       "name": "StellarValueExt",
       "fixed_size": null,
-      "source": "union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n    case STELLAR_VALUE_EMPTY_TX_SET:\n        struct\n        {\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedValue;\n    }",
+      "source": "union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n    case STELLAR_VALUE_EMPTY_TX_SET:\n        struct\n        {\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedValue;\n#ifdef MS_CLOSE_TIME\n    case STELLAR_VALUE_SIGNED_MS:\n        struct\n        {\n            TimePointMilliseconds closeTimeMs; // closeTime == closeTimeMs / 1000\n            LedgerCloseValueSignature lcValueSignature;\n        } signedMsValue;\n    case STELLAR_VALUE_EMPTY_TX_SET_MS:\n        struct\n        {\n            TimePointMilliseconds closeTimeMs; // closeTime == closeTimeMs / 1000\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedMsValue;\n#endif // MS_CLOSE_TIME\n    }",
       "file_index": 9,
       "discriminant": {
         "name": "v",
@@ -7252,7 +7259,7 @@
       "kind": "struct",
       "name": "StellarValue",
       "fixed_size": null,
-      "source": "struct StellarValue\n{\n    Hash txSetHash;      // transaction set to apply to previous ledger\n    TimePoint closeTime; // network close time\n\n    // upgrades to apply to the previous ledger (usually empty)\n    // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop\n    // unknown steps during consensus if needed.\n    // see notes below on 'LedgerUpgrade' for more detail\n    // max size is dictated by number of upgrade types (+ room for future)\n    UpgradeType upgrades<6>;\n\n    // reserved for future use\n    union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n    case STELLAR_VALUE_EMPTY_TX_SET:\n        struct\n        {\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedValue;\n    }\n    ext;\n};",
+      "source": "struct StellarValue\n{\n    Hash txSetHash;      // transaction set to apply to previous ledger\n    TimePoint closeTime; // network close time\n\n    // upgrades to apply to the previous ledger (usually empty)\n    // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop\n    // unknown steps during consensus if needed.\n    // see notes below on 'LedgerUpgrade' for more detail\n    // max size is dictated by number of upgrade types (+ room for future)\n    UpgradeType upgrades<6>;\n\n    // reserved for future use\n    union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n    case STELLAR_VALUE_EMPTY_TX_SET:\n        struct\n        {\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedValue;\n#ifdef MS_CLOSE_TIME\n    case STELLAR_VALUE_SIGNED_MS:\n        struct\n        {\n            TimePointMilliseconds closeTimeMs; // closeTime == closeTimeMs / 1000\n            LedgerCloseValueSignature lcValueSignature;\n        } signedMsValue;\n    case STELLAR_VALUE_EMPTY_TX_SET_MS:\n        struct\n        {\n            TimePointMilliseconds closeTimeMs; // closeTime == closeTimeMs / 1000\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedMsValue;\n#endif // MS_CLOSE_TIME\n    }\n    ext;\n};",
       "file_index": 9,
       "fields": [
         {

@@ -8,7 +8,7 @@ use super::*;
 /// {
 ///     string doc<SC_SPEC_DOC_LIMIT>;
 ///     string lib<80>;
-///     SCSymbol name;
+///     string name<SC_SPEC_TYPE_NAME_LIMIT>;
 ///     SCSymbol prefixTopics<2>;
 ///     SCSpecEventParamV0 params<>;
 ///     SCSpecEventDataFormat dataFormat;
@@ -29,7 +29,7 @@ use super::*;
 pub struct ScSpecEventV0 {
     pub doc: StringM<SC_SPEC_DOC_LIMIT>,
     pub lib: StringM<80>,
-    pub name: ScSymbol,
+    pub name: StringM<SC_SPEC_TYPE_NAME_LIMIT>,
     pub prefix_topics: VecM<ScSymbol, 2>,
     pub params: VecM<ScSpecEventParamV0>,
     pub data_format: ScSpecEventDataFormat,
@@ -42,7 +42,7 @@ impl ReadXdr for ScSpecEventV0 {
             Ok(Self {
                 doc: StringM::<SC_SPEC_DOC_LIMIT>::read_xdr(r)?,
                 lib: StringM::<80>::read_xdr(r)?,
-                name: ScSymbol::read_xdr(r)?,
+                name: StringM::<SC_SPEC_TYPE_NAME_LIMIT>::read_xdr(r)?,
                 prefix_topics: VecM::<ScSymbol, 2>::read_xdr(r)?,
                 params: VecM::<ScSpecEventParamV0>::read_xdr(r)?,
                 data_format: ScSpecEventDataFormat::read_xdr(r)?,

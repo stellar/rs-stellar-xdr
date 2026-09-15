@@ -211,7 +211,6 @@ impl<'a> TypeMapping<'a> {
 
     fn element_type(&self) -> String {
         match self.type_ {
-            Type::OpaqueFixed(_) | Type::OpaqueVar(_) | Type::String(_) => "u8".to_string(),
             Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
                 self.child(element_type).base_type_ref()
             }
@@ -227,6 +226,8 @@ impl<'a> TypeMapping<'a> {
                     unreachable!()
                 }
             }
+            // Opaque and string elements are bytes, as is anything else
+            // without an element type of its own.
             _ => "u8".to_string(),
         }
     }
@@ -234,7 +235,7 @@ impl<'a> TypeMapping<'a> {
     fn serde_as_type(&self) -> Option<String> {
         let base = self.base_numeric_type();
         match base.as_deref() {
-            Some("i64") | Some("u64") => Some(self.serde_type_ref("NumberOrString")),
+            Some("i64" | "u64") => Some(self.serde_type_ref("NumberOrString")),
             _ => None,
         }
     }
@@ -254,8 +255,9 @@ impl<'a> TypeMapping<'a> {
                 None
             }
             Type::Optional(inner) => self.child(inner).base_numeric_type(),
-            Type::Array { element_type, .. } => self.child(element_type).base_numeric_type(),
-            Type::VarArray { element_type, .. } => self.child(element_type).base_numeric_type(),
+            Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
+                self.child(element_type).base_numeric_type()
+            }
             _ => None,
         }
     }
@@ -304,8 +306,9 @@ fn extract_ident_name(type_: &Type) -> Option<String> {
     match type_ {
         Type::Ident(name) => Some(type_name(name)),
         Type::Optional(inner) => extract_ident_name(inner),
-        Type::Array { element_type, .. } => extract_ident_name(element_type),
-        Type::VarArray { element_type, .. } => extract_ident_name(element_type),
+        Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
+            extract_ident_name(element_type)
+        }
         _ => None,
     }
 }

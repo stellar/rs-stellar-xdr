@@ -17,10 +17,10 @@ fn wire_sizes(input: &str) -> std::collections::HashMap<String, Option<u32>> {
 
 #[test]
 fn test_fixed_wire_size() {
-    let input = r#"
+    let input = r"
         struct Fixed { int x; unsigned hyper y; };
         struct Variable { int x; opaque data<>; };
-    "#;
+    ";
     let sizes = wire_sizes(input);
     assert_eq!(sizes["Fixed"], Some(12));
     assert_eq!(sizes["Variable"], None);
@@ -28,36 +28,36 @@ fn test_fixed_wire_size() {
 
 #[test]
 fn test_union_fixed() {
-    let input = r#"
+    let input = r"
         union U switch (int v) {
             case 0: int a;
             case 1: int b;
         };
-    "#;
+    ";
     let sizes = wire_sizes(input);
     assert_eq!(sizes["U"], Some(8));
 }
 
 #[test]
 fn test_union_variable() {
-    let input = r#"
+    let input = r"
         union U switch (int v) {
             case 0: int a;
             case 1: opaque b<>;
         };
-    "#;
+    ";
     let sizes = wire_sizes(input);
     assert_eq!(sizes["U"], None);
 }
 
 #[test]
 fn test_union_different_arm_sizes() {
-    let input = r#"
+    let input = r"
         union U switch (int v) {
             case 0: int a;
             case 1: hyper b;
         };
-    "#;
+    ";
     let sizes = wire_sizes(input);
     assert_eq!(sizes["U"], None);
 }
@@ -91,10 +91,10 @@ fn test_opaque_padding_unaligned() {
 
 #[test]
 fn test_fixed_array() {
-    let input = r#"
+    let input = r"
         struct Pair { int a; int b; };
         struct Container { Pair items[3]; };
-    "#;
+    ";
     let sizes = wire_sizes(input);
     assert_eq!(sizes["Pair"], Some(8));
     assert_eq!(sizes["Container"], Some(24));
@@ -102,11 +102,11 @@ fn test_fixed_array() {
 
 #[test]
 fn test_typedef_chain() {
-    let input = r#"
+    let input = r"
         typedef int MyInt;
         typedef MyInt AnotherInt;
         struct S { AnotherInt x; };
-    "#;
+    ";
     let sizes = wire_sizes(input);
     assert_eq!(sizes["S"], Some(4));
 }

@@ -17,27 +17,28 @@
 macro_rules! assert_same_encoding {
     ($type:ident, $write:ident, $data:expr $(,)?) => {{
         use arbitrary::{Arbitrary, Unstructured};
-        use stellar_xdr::{r#const, Limits, WriteXdr};
+        use stellar_xdr::{Limits, WriteXdr};
 
         let data: &[u8] = $data;
         let owned = stellar_xdr::$type::arbitrary(&mut Unstructured::new(data));
-        let konst = r#const::$type::arbitrary(&mut Unstructured::new(data));
+        let konst = stellar_xdr::r#const::$type::arbitrary(&mut Unstructured::new(data));
 
         if let (Ok(owned), Ok(konst)) = (owned, konst) {
-            // Encode the const value the way a caller in a const context does
-            // at compile time: measure, then write into a buffer of that size.
-            let mut buf = vec![0u8; konst.const_xdr_len()];
-            let mut w = r#const::ConstWriter::new(&mut buf);
+            let owned_xdr = owned.to_xdr(Limits::none()).unwrap();
+
+            let mut konst_xdr_len = konst.const_xdr_len();
+            let mut konst_xdr = vec![0u8; konst.const_xdr_len()];
+            let mut w = stellar_xdr::r#const::ConstWriter::new(&mut konst_xdr);
             w.$write(&konst);
             assert_eq!(
                 w.len(),
-                buf.len(),
+                konst_xdr_len,
                 "{} const_xdr_len disagrees with what the writer wrote",
                 stringify!($type),
             );
             assert_eq!(
-                buf,
-                owned.to_xdr(Limits::none()).unwrap(),
+                konst_xdr,
+                owned_xdr,
                 "{} encodings differ",
                 stringify!($type),
             );

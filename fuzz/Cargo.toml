@@ -29,3 +29,10 @@ path = "fuzz_targets/ledger-close-meta.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "spec-entry"
+path = "fuzz_targets/spec-entry.rs"
+test = false
+doc = false
+bench = false

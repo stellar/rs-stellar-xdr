@@ -60,7 +60,7 @@ jobs:
     outputs:
       feature-args: ${{ steps.gen.outputs.feature-args }}
       clippy-matrix: ${{ steps.gen.outputs.clippy-matrix }}
-      publish-partitions: ${{ steps.gen.outputs.publish-partitions }}
+      publish-feature-args: ${{ steps.gen.outputs.publish-feature-args }}
     steps:
     - uses: actions/checkout@v3
     - run: rustup update
@@ -73,10 +73,9 @@ jobs:
       # per-combination feature args reused by the test job, and emit them as a
       # JSON array. From those, derive the clippy build matrix: the wasm target
       # runs minimal clippy once, and the x86 target runs a job per feature
-      # combination (with --all-targets). The publish dry-run can't take the
-      # expanded args, because cargo-hack only positions feature flags correctly
-      # when it expands the powerset itself, so it gets one `--partition M/N`
-      # per combination instead, which has cargo-hack do the same split.
+      # combination (with --all-targets). The publish dry-run takes the same
+      # expanded args, minus the manifest path, which the reusable workflow
+      # already passes and cargo rejects when given twice.
       run: |
         feature_args="$(cargo hack test $CARGO_HACK_ARGS --print-command-list | sed 's/^cargo test //' | jq -R . | jq -sc .)"
         echo "feature-args=$feature_args" >> "$GITHUB_OUTPUT"
@@ -84,7 +83,7 @@ jobs:
           [{target:"wasm32v1-none", flags:"--target wasm32v1-none --no-default-features"}]
           + map({target:"x86_64-unknown-linux-gnu", flags:(. + " --target x86_64-unknown-linux-gnu --all-targets")})
         ')" >> "$GITHUB_OUTPUT"
-        echo "publish-partitions=$(printf '%s' "$feature_args" | jq -c 'length as $n | [range($n) | "\(.+1)/\($n)"]')" >> "$GITHUB_OUTPUT"
+        echo "publish-feature-args=$(printf '%s' "$feature_args" | jq -c 'map(sub("^--manifest-path Cargo\\.toml ";""))')" >> "$GITHUB_OUTPUT"
 
   build:
     needs: prepare
@@ -184,10 +183,12 @@ jobs:
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
     needs: prepare
     strategy:
+      fail-fast: false
       matrix:
-        partition: ${{ fromJSON(needs.prepare.outputs.publish-partitions) }}
+        feature-args: ${{ fromJSON(needs.prepare.outputs.publish-feature-args) }}
     uses: stellar/actions/.github/workflows/rust-publish-dry-run-v2.yml@main
     with:
       runs-on: ubuntu-latest
       target: x86_64-unknown-linux-gnu
-      cargo-hack-feature-options: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand,type_enum,serde_ignored,test_feature --partition ${{ matrix.partition }}
+      cargo-hack-feature-options: ''
+      cargo-hack-package-options: ${{ matrix.feature-args }}

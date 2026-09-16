@@ -74,8 +74,8 @@ jobs:
       # JSON array. From those, derive the clippy build matrix: the wasm target
       # runs minimal clippy once, and the x86 target runs a job per feature
       # combination (with --all-targets). The publish dry-run takes the same
-      # expanded args, minus the manifest path, which the reusable workflow
-      # already passes and cargo rejects when given twice.
+      # expanded args, minus the manifest path, which cargo-hack adds itself
+      # and cargo rejects when given twice.
       run: |
         feature_args="$(cargo hack test $CARGO_HACK_ARGS --print-command-list | sed 's/^cargo test //' | jq -R . | jq -sc .)"
         echo "feature-args=$feature_args" >> "$GITHUB_OUTPUT"

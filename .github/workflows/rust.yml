@@ -17,7 +17,7 @@ jobs:
 
   complete:
     if: always()
-    needs: [generate, fmt, readme, prepare, build, test, fuzz-corpus, publish-dry-run]
+    needs: [generate, fmt, readme, prepare, build, test, fuzz-corpus, publish-dry-run, publish-dry-run-x86_64]
     runs-on: ubuntu-latest
     steps:
     - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
@@ -167,11 +167,24 @@ jobs:
         - os: ubuntu-latest
           target: wasm32v1-none
           cargo-hack-feature-options: --manifest-path Cargo.toml --exclude-features default,cli,rand,schemars,serde,alloc,arbitrary,base64,hex,serde_json,std,serde_ignored --each-feature
-        - os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
-          cargo-hack-feature-options: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand,type_enum,serde_ignored,test_feature
     uses: stellar/actions/.github/workflows/rust-publish-dry-run.yml@main
     with:
       runs-on: ${{ matrix.sys.os }}
       target: ${{ matrix.sys.target }}
       cargo-hack-feature-options: ${{ matrix.sys.cargo-hack-feature-options }}
+
+  # The x86 target dry-runs the same feature powerset the build and test jobs
+  # cover, so like them it runs each combination as its own job. Packaging the
+  # whole powerset on one runner accumulated the build artifacts of every
+  # combination until the runner ran out of disk space.
+  publish-dry-run-x86_64:
+    if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
+    needs: prepare
+    strategy:
+      matrix:
+        feature-args: ${{ fromJSON(needs.prepare.outputs.feature-args) }}
+    uses: stellar/actions/.github/workflows/rust-publish-dry-run.yml@main
+    with:
+      runs-on: ubuntu-latest
+      target: x86_64-unknown-linux-gnu
+      cargo-hack-feature-options: ${{ matrix.feature-args }}

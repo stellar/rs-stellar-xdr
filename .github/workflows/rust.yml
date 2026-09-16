@@ -162,8 +162,7 @@ jobs:
       run: git add -N . && git diff HEAD --exit-code
 
   publish-dry-run-wasm32:
-    # TEMPORARY, restore before merging: runs the dry-run on this PR.
-    # if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
+    if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
     uses: stellar/actions/.github/workflows/rust-publish-dry-run.yml@main
     with:
       runs-on: ubuntu-latest
@@ -171,8 +170,7 @@ jobs:
       cargo-hack-feature-options: --manifest-path Cargo.toml --each-feature --exclude-features cli,rand
 
   publish-dry-run-wasm32v1:
-    # TEMPORARY, restore before merging: runs the dry-run on this PR.
-    # if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
+    if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
     uses: stellar/actions/.github/workflows/rust-publish-dry-run.yml@main
     with:
       runs-on: ubuntu-latest
@@ -183,8 +181,7 @@ jobs:
   # build and test jobs cover, so like them it must run each combination in its
   # own job so that each run doesn't exhaust disk space.
   publish-dry-run-x86_64:
-    # TEMPORARY, restore before merging: runs the dry-run on this PR.
-    # if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
+    if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
     needs: prepare
     strategy:
       matrix:

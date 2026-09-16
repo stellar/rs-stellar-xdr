@@ -163,7 +163,7 @@ jobs:
 
   publish-dry-run-wasm32:
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
-    uses: stellar/actions/.github/workflows/rust-publish-dry-run.yml@main
+    uses: stellar/actions/.github/workflows/rust-publish-dry-run-v2.yml@main
     with:
       runs-on: ubuntu-latest
       target: wasm32-unknown-unknown
@@ -171,7 +171,7 @@ jobs:
 
   publish-dry-run-wasm32v1:
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
-    uses: stellar/actions/.github/workflows/rust-publish-dry-run.yml@main
+    uses: stellar/actions/.github/workflows/rust-publish-dry-run-v2.yml@main
     with:
       runs-on: ubuntu-latest
       target: wasm32v1-none
@@ -186,7 +186,7 @@ jobs:
     strategy:
       matrix:
         partition: ${{ fromJSON(needs.prepare.outputs.publish-partitions) }}
-    uses: stellar/actions/.github/workflows/rust-publish-dry-run.yml@main
+    uses: stellar/actions/.github/workflows/rust-publish-dry-run-v2.yml@main
     with:
       runs-on: ubuntu-latest
       target: x86_64-unknown-linux-gnu

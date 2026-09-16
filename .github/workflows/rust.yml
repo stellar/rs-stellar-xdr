@@ -170,7 +170,7 @@ jobs:
     with:
       runs-on: ubuntu-latest
       target: wasm32v1-none
-      cargo-hack-feature-options: --manifest-path Cargo.toml --exclude-features default,cli,rand,schemars,serde,alloc,arbitrary,base64,hex,serde_json,std,serde_ignored --each-feature
+      cargo-hack-feature-options: --manifest-path Cargo.toml --each-feature --exclude-features default,cli,rand,schemars,serde,alloc,arbitrary,base64,hex,serde_json,std,serde_ignored
 
   # The x86 target dry-runs the same feature powerset the build and test jobs
   # cover, so like them it runs each combination as its own job. Packaging the

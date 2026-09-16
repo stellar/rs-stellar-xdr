@@ -40,6 +40,26 @@ pub(crate) fn base_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> Strin
     TypeMapping::new(type_, type_info, None).base_type_ref()
 }
 
+/// The Rust type that holds this XDR type in a const context, named as the
+/// `const` module names it: every type has a name there, either a borrowing
+/// form of its own or an alias to the owned type.
+///
+/// Mirrors [`type_ref`], including the reference wrapping applied where
+/// `parent_type` makes the type cyclic.
+pub(crate) fn const_type(type_: &Type, parent_type: Option<&str>, type_info: &TypeInfo) -> String {
+    TypeMapping::new(type_, Some(type_info), parent_type).const_type()
+}
+
+/// As [`const_type`], but without the reference wrapping for cyclic
+/// types.
+///
+/// This is the form an element takes inside a container such as the `const`
+/// module's `VecM`, which borrows its elements as a slice rather than
+/// individually.
+pub(crate) fn const_base_type(type_: &Type, type_info: &TypeInfo) -> String {
+    TypeMapping::new(type_, Some(type_info), None).const_base_type()
+}
+
 /// Convert a Size to a Rust `u32` const generic argument, as used by
 /// `BytesM`, `StringM`, and `VecM`. Named sizes refer to the generated const,
 /// which is emitted as a `u32`.
@@ -169,6 +189,87 @@ impl<'a> TypeMapping<'a> {
             }
             Type::Array { .. } | Type::VarArray { .. } => base,
             _ => format!("Box<{base}>"),
+        }
+    }
+
+    /// The Rust type used for this XDR type inside the `const` module, without
+    /// the reference wrapping applied for cyclic types.
+    ///
+    /// Mirrors `base_type_ref`. Every name it produces is resolved in the
+    /// `const` module, where a type that owns heap data is the borrowing form
+    /// and every other name is an alias to the owned type, so the names are the
+    /// same as the owned ones.
+    fn const_base_type(&self) -> String {
+        match self.type_ {
+            Type::Int
+            | Type::UnsignedInt
+            | Type::Hyper
+            | Type::UnsignedHyper
+            | Type::Float
+            | Type::Double
+            | Type::Bool
+            | Type::OpaqueFixed(_) => self.base_type_ref(),
+            Type::OpaqueVar(max) => match max {
+                Some(size) => format!("BytesM<{}>", size_to_u32_string(size)),
+                None => "BytesM".to_string(),
+            },
+            Type::String(max) => match max {
+                Some(size) => format!("StringM<{}>", size_to_u32_string(size)),
+                None => "StringM".to_string(),
+            },
+            Type::Ident(_) => {
+                if let Some(ti) = self.type_info {
+                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
+                        return self.child(builtin).const_base_type();
+                    }
+                }
+                if let Type::Ident(name) = self.type_ {
+                    type_name(name)
+                } else {
+                    unreachable!()
+                }
+            }
+            Type::Optional(inner) => {
+                format!("Option<{}>", self.child(inner).const_base_type())
+            }
+            Type::Array { element_type, size } => {
+                format!(
+                    "[{}; {}]",
+                    self.child(element_type).const_base_type(),
+                    size_to_usize_string(size)
+                )
+            }
+            Type::VarArray {
+                element_type,
+                max_size,
+            } => {
+                let elem = self.child(element_type).const_base_type();
+                match max_size {
+                    Some(size) => format!("VecM<{elem}, {}>", size_to_u32_string(size)),
+                    None => format!("VecM<{elem}>"),
+                }
+            }
+        }
+    }
+
+    /// The Rust type used for this XDR type inside the `const` module.
+    ///
+    /// Mirrors `type_ref`: where the owned type wraps cyclic references in
+    /// `Box`, the const form uses a plain reference instead.
+    fn const_type(&self) -> String {
+        let base = self.const_base_type();
+
+        if !self.is_cyclic() {
+            return base;
+        }
+
+        match self.type_ {
+            Type::Optional(inner) => {
+                let inner = self.child(inner).const_base_type();
+                format!("Option<&'static {inner}>")
+            }
+            Type::Array { .. } | Type::VarArray { .. } => base,
+            _ => format!("&'static {base}"),
         }
     }
 

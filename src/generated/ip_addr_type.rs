@@ -51,6 +51,7 @@ impl IpAddrType {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::IPv4 => "IPv4",
@@ -88,6 +89,7 @@ impl fmt::Display for IpAddrType {
 impl TryFrom<i32> for IpAddrType {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => IpAddrType::IPv4,

@@ -54,6 +54,7 @@ impl ContractIdPreimageType {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Address => "Address",
@@ -91,6 +92,7 @@ impl fmt::Display for ContractIdPreimageType {
 impl TryFrom<i32> for ContractIdPreimageType {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ContractIdPreimageType::Address,

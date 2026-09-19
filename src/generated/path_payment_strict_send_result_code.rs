@@ -112,6 +112,7 @@ impl PathPaymentStrictSendResultCode {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
@@ -160,6 +161,7 @@ impl fmt::Display for PathPaymentStrictSendResultCode {
 impl TryFrom<i32> for PathPaymentStrictSendResultCode {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => PathPaymentStrictSendResultCode::Success,

@@ -62,6 +62,7 @@ impl BucketEntryType {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Metaentry => "Metaentry",
@@ -101,6 +102,7 @@ impl fmt::Display for BucketEntryType {
 impl TryFrom<i32> for BucketEntryType {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             -1 => BucketEntryType::Metaentry,

@@ -89,6 +89,7 @@ impl LedgerEntryType {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Account => "Account",
@@ -134,6 +135,7 @@ impl fmt::Display for LedgerEntryType {
 impl TryFrom<i32> for LedgerEntryType {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => LedgerEntryType::Account,

@@ -60,6 +60,7 @@ impl ThresholdIndexes {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::MasterWeight => "MasterWeight",
@@ -99,6 +100,7 @@ impl fmt::Display for ThresholdIndexes {
 impl TryFrom<i32> for ThresholdIndexes {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ThresholdIndexes::MasterWeight,

@@ -49,6 +49,7 @@ impl ClaimantType {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::ClaimantTypeV0 => "ClaimantTypeV0",
@@ -85,6 +86,7 @@ impl fmt::Display for ClaimantType {
 impl TryFrom<i32> for ClaimantType {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ClaimantType::ClaimantTypeV0,

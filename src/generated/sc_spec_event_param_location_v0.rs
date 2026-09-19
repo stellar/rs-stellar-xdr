@@ -54,6 +54,7 @@ impl ScSpecEventParamLocationV0 {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Data => "Data",
@@ -91,6 +92,7 @@ impl fmt::Display for ScSpecEventParamLocationV0 {
 impl TryFrom<i32> for ScSpecEventParamLocationV0 {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScSpecEventParamLocationV0::Data,

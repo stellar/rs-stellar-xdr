@@ -59,6 +59,7 @@ impl HotArchiveBucketEntryType {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Metaentry => "Metaentry",
@@ -97,6 +98,7 @@ impl fmt::Display for HotArchiveBucketEntryType {
 impl TryFrom<i32> for HotArchiveBucketEntryType {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             -1 => HotArchiveBucketEntryType::Metaentry,

@@ -51,6 +51,7 @@ impl OfferEntryFlags {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::PassiveFlag => "PassiveFlag",
@@ -87,6 +88,7 @@ impl fmt::Display for OfferEntryFlags {
 impl TryFrom<i32> for OfferEntryFlags {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             1 => OfferEntryFlags::PassiveFlag,

@@ -147,6 +147,7 @@ impl MessageType {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::ErrorMsg => "ErrorMsg",
@@ -203,6 +204,7 @@ impl fmt::Display for MessageType {
 impl TryFrom<i32> for MessageType {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => MessageType::ErrorMsg,

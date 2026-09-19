@@ -57,6 +57,7 @@ impl ContractEventType {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::System => "System",
@@ -95,6 +96,7 @@ impl fmt::Display for ContractEventType {
 impl TryFrom<i32> for ContractEventType {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ContractEventType::System,

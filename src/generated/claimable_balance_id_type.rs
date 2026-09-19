@@ -50,6 +50,7 @@ impl ClaimableBalanceIdType {
     };
 
     #[must_use]
+    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::ClaimableBalanceIdTypeV0 => "ClaimableBalanceIdTypeV0",
@@ -86,6 +87,7 @@ impl fmt::Display for ClaimableBalanceIdType {
 impl TryFrom<i32> for ClaimableBalanceIdType {
     type Error = Error;
 
+    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ClaimableBalanceIdType::ClaimableBalanceIdTypeV0,

@@ -51,7 +51,6 @@ impl BucketListType {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Live => "Live",
@@ -89,7 +88,6 @@ impl fmt::Display for BucketListType {
 impl TryFrom<i32> for BucketListType {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => BucketListType::Live,

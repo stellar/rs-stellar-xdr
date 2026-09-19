@@ -63,7 +63,6 @@ impl ErrorCode {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Misc => "Misc",
@@ -104,7 +103,6 @@ impl fmt::Display for ErrorCode {
 impl TryFrom<i32> for ErrorCode {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ErrorCode::Misc,

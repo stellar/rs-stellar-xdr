@@ -73,7 +73,6 @@ impl CreateAccountResultCode {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Success => "Success",
@@ -114,7 +113,6 @@ impl fmt::Display for CreateAccountResultCode {
 impl TryFrom<i32> for CreateAccountResultCode {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => CreateAccountResultCode::Success,

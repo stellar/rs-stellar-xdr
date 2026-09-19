@@ -50,7 +50,6 @@ impl SurveyMessageCommandType {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::TimeSlicedSurveyTopology => "TimeSlicedSurveyTopology",
@@ -87,7 +86,6 @@ impl fmt::Display for SurveyMessageCommandType {
 impl TryFrom<i32> for SurveyMessageCommandType {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             1 => SurveyMessageCommandType::TimeSlicedSurveyTopology,

@@ -51,7 +51,6 @@ impl TxSetComponentType {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::TxsetCompTxsMaybeDiscountedFee => "TxsetCompTxsMaybeDiscountedFee",
@@ -88,7 +87,6 @@ impl fmt::Display for TxSetComponentType {
 impl TryFrom<i32> for TxSetComponentType {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => TxSetComponentType::TxsetCompTxsMaybeDiscountedFee,

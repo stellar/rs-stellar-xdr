@@ -57,7 +57,6 @@ impl ContractExecutableType {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Wasm => "Wasm",
@@ -96,7 +95,6 @@ impl fmt::Display for ContractExecutableType {
 impl TryFrom<i32> for ContractExecutableType {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ContractExecutableType::Wasm,

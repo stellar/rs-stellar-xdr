@@ -78,7 +78,6 @@ impl StellarValueType {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Basic => "Basic",
@@ -121,7 +120,6 @@ impl fmt::Display for StellarValueType {
 impl TryFrom<i32> for StellarValueType {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => StellarValueType::Basic,

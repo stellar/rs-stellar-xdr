@@ -133,7 +133,6 @@ impl TransactionResultCode {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::TxFeeBumpInnerSuccess => "TxFeeBumpInnerSuccess",
@@ -189,7 +188,6 @@ impl fmt::Display for TransactionResultCode {
 impl TryFrom<i32> for TransactionResultCode {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             1 => TransactionResultCode::TxFeeBumpInnerSuccess,

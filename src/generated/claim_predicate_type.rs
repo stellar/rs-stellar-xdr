@@ -73,7 +73,6 @@ impl ClaimPredicateType {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Unconditional => "Unconditional",
@@ -115,7 +114,6 @@ impl fmt::Display for ClaimPredicateType {
 impl TryFrom<i32> for ClaimPredicateType {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ClaimPredicateType::Unconditional,

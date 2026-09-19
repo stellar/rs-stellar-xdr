@@ -65,7 +65,6 @@ impl HostFunctionType {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::InvokeContract => "InvokeContract",
@@ -105,7 +104,6 @@ impl fmt::Display for HostFunctionType {
 impl TryFrom<i32> for HostFunctionType {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => HostFunctionType::InvokeContract,

@@ -15,6 +15,7 @@
 
 #![allow(
     clippy::missing_errors_doc,
+    clippy::too_many_lines,
     clippy::unreadable_literal,
     clippy::wildcard_imports
 )]

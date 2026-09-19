@@ -159,7 +159,6 @@ impl ScSpecType {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Val => "Val",
@@ -221,7 +220,6 @@ impl fmt::Display for ScSpecType {
 impl TryFrom<i32> for ScSpecType {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScSpecType::Val,

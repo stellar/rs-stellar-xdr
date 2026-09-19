@@ -74,7 +74,6 @@ impl {{ e.name }} {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
 {%- for m in e.members %}
@@ -131,7 +130,6 @@ impl fmt::Display for {{ e.name }} {
 impl TryFrom<i32> for {{ e.name }} {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
 {%- for m in e.members %}

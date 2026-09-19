@@ -54,7 +54,6 @@ impl ScSpecUdtUnionCaseV0Kind {
     };
 
     #[must_use]
-    #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::VoidV0 => "VoidV0",
@@ -92,7 +91,6 @@ impl fmt::Display for ScSpecUdtUnionCaseV0Kind {
 impl TryFrom<i32> for ScSpecUdtUnionCaseV0Kind {
     type Error = Error;
 
-    #[allow(clippy::too_many_lines)]
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
             0 => ScSpecUdtUnionCaseV0Kind::VoidV0,

@@ -1,8 +1,11 @@
-.PHONY: all test build doc install readme fuzz fuzz-reduce watch generate generate-files clean fmt publish
+.PHONY: all test build doc install readme fuzz fuzz-reduce watch generate generate-files clean fmt publish print-cargo-hack-args
 
 export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
-CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex,rand
+# The feature combinations that get built and tested. This is the single
+# definition of them: the CI workflow reads it back with
+# `make print-cargo-hack-args` so that the two cannot drift apart.
+CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand,type_enum,serde_ignored,test_feature
 
 CARGO_DOC_ARGS?=--open
 
@@ -10,6 +13,9 @@ all: build test
 
 test:
 	cargo hack test $(CARGO_HACK_ARGS)
+
+print-cargo-hack-args:
+	@echo '$(CARGO_HACK_ARGS)'
 
 build: generate
 	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets

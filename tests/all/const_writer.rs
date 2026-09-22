@@ -4,8 +4,7 @@
 
 use stellar_xdr::{r#const, Limits, ScSpecEntry, TransactionEnvelope, WriteXdr};
 
-mod common;
-use common::{spec_entry_const, spec_entry_owned, tx_env_const, tx_env_owned};
+use crate::common::{spec_entry_const, spec_entry_owned, tx_env_const, tx_env_owned};
 
 #[test]
 fn const_and_owned_encode_same() {

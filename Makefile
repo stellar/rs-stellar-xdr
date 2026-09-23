@@ -1,4 +1,4 @@
-.PHONY: all test build doc install readme fuzz fuzz-reduce watch generate generate-files clean fmt publish print-cargo-hack-args
+.PHONY: all test build doc install readme fuzz fuzz-reduce watch generate generate-files clean fmt publish print-cargo-hack-args test-powerset
 
 export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
@@ -12,6 +12,9 @@ CARGO_DOC_ARGS?=--open
 all: build test
 
 test:
+	cargo test --all-features
+
+test-powerset:
 	cargo hack test $(CARGO_HACK_ARGS)
 
 print-cargo-hack-args:

@@ -1,6 +1,6 @@
 #![cfg(feature = "std")]
 
-use stellar_xdr::{
+use crate::{
     AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, ContractId, Error, Hash,
     Int128Parts, Int256Parts, MuxedAccount, MuxedAccountMed25519, MuxedEd25519Account, NodeId,
     PoolId, PublicKey, ScAddress, SignerKey, SignerKeyEd25519SignedPayload, UInt128Parts,

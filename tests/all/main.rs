@@ -1,13 +1,5 @@
-//! The crate's integration tests, as one test binary.
-//!
-//! Each module below was its own file in `tests/`, and so its own binary that
-//! linked the whole crate. Building them as modules of a single binary links
-//! the crate once instead of once per file.
-
-// Only `const_writer` uses these values, so the module is gated the same way it
-// is, to keep it out of builds that do not compile it.
-#[cfg(all(feature = "const", feature = "std"))]
-mod common;
+//! The crate's integration tests, in a single test binary so the crate is
+//! linked once rather than once per test module.
 
 mod account_conversions;
 mod arbitrary;

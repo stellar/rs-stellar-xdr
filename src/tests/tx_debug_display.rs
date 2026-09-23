@@ -1,7 +1,4 @@
-extern crate std;
-
 use crate::{BytesM, Error, Hash, StringM, VecM};
-use std::format;
 
 #[test]
 fn test_debug() {

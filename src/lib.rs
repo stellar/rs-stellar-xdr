@@ -1,5 +1,5 @@
 #![forbid(unsafe_code)]
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(any(feature = "std", test)), no_std)]
 #![cfg_attr(docs, feature(doc_cfg))]
 // TODO: Remove these clippy doc comment allows after improving the
 // auto-generated docs.
@@ -172,3 +172,6 @@ pub(crate) mod num256;
 
 #[cfg(feature = "alloc")]
 pub(crate) mod num128;
+
+#[cfg(test)]
+mod tests;

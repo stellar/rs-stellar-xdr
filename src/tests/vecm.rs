@@ -1,6 +1,6 @@
 #![cfg(feature = "std")]
 
-use stellar_xdr::{BytesM, Limits, ReadXdr, ScVal, VecM};
+use crate::{BytesM, Limits, ReadXdr, ScVal, VecM};
 
 #[test]
 fn valid_len() {

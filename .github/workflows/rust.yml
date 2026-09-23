@@ -10,9 +10,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref_protected == 'true' && github.sha || github.ref }}-{{ github.event_name }}
   cancel-in-progress: true
 
-env:
-  CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand,type_enum,serde_ignored,test_feature
-
 jobs:
 
   complete:
@@ -77,6 +74,7 @@ jobs:
       # expanded args, minus the manifest path, which cargo-hack adds itself
       # and cargo rejects when given twice.
       run: |
+        CARGO_HACK_ARGS="$(make print-cargo-hack-args)"
         feature_args="$(cargo hack test $CARGO_HACK_ARGS --print-command-list | sed 's/^cargo test //' | jq -R . | jq -sc .)"
         echo "feature-args=$feature_args" >> "$GITHUB_OUTPUT"
         echo "clippy-matrix=$(printf '%s' "$feature_args" | jq -c '

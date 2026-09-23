@@ -1,4 +1,4 @@
-use crate::types::{base_type_ref, size_to_string};
+use crate::types::{base_type_ref, size_to_u32_string, size_to_usize_string};
 use xdr_parser::ast::{Size, Type};
 
 #[test]
@@ -51,7 +51,7 @@ fn test_base_type_ref_opaque_fixed_named_size() {
             &Type::OpaqueFixed(Size::Named("KEY_SIZE".to_string())),
             None
         ),
-        "[u8; KeySize]"
+        "[u8; { KEY_SIZE as usize }]"
     );
 }
 
@@ -154,14 +154,27 @@ fn test_base_type_ref_nested_optional_array() {
 }
 
 #[test]
-fn test_size_to_string_literal() {
-    assert_eq!(size_to_string(&Size::Literal(32)), "32");
+fn test_size_to_u32_string_literal() {
+    assert_eq!(size_to_u32_string(&Size::Literal(32)), "32");
 }
 
 #[test]
-fn test_size_to_string_named() {
+fn test_size_to_u32_string_named() {
     assert_eq!(
-        size_to_string(&Size::Named("MAX_SIZE".to_string())),
-        "MaxSize"
+        size_to_u32_string(&Size::Named("MAX_SIZE".to_string())),
+        "MAX_SIZE"
+    );
+}
+
+#[test]
+fn test_size_to_usize_string_literal() {
+    assert_eq!(size_to_usize_string(&Size::Literal(32)), "32");
+}
+
+#[test]
+fn test_size_to_usize_string_named() {
+    assert_eq!(
+        size_to_usize_string(&Size::Named("MAX_SIZE".to_string())),
+        "{ MAX_SIZE as usize }"
     );
 }

@@ -76,6 +76,9 @@ pub enum TypeVariant {
     ScSpecEventV0,
     ScSpecEntryKind,
     ScSpecEntry,
+    ScBytes,
+    ScString,
+    ScSymbol,
     ScValType,
     ScErrorType,
     ScErrorCode,
@@ -85,15 +88,15 @@ pub enum TypeVariant {
     UInt256Parts,
     Int256Parts,
     ContractExecutableType,
-    ContractExecutable,
     ScAddressType,
     MuxedEd25519Account,
+    #[cfg(feature = "cap_0084_muxed_contract")]
+    MuxedContract,
     ScAddress,
+    ContractExecutableExternalRef,
+    ContractExecutable,
     ScVec,
     ScMap,
-    ScBytes,
-    ScString,
-    ScSymbol,
     ScNonceKey,
     ScContractInstance,
     ScVal,
@@ -194,8 +197,11 @@ pub enum TypeVariant {
     LedgerCloseValueSignature,
     StellarValue,
     StellarValueExt,
-    #[cfg(feature = "cap_0083")]
     StellarValueProposedValue,
+    #[cfg(feature = "ms_close_time")]
+    StellarValueSignedMsValue,
+    #[cfg(feature = "ms_close_time")]
+    StellarValueProposedMsValue,
     LedgerHeaderFlags,
     LedgerHeaderExtensionV1,
     LedgerHeaderExtensionV1Ext,
@@ -461,6 +467,8 @@ pub enum TypeVariant {
     Int64,
     TimePoint,
     Duration,
+    #[cfg(feature = "ms_close_time")]
+    TimePointMilliseconds,
     ExtensionPoint,
     CryptoKeyType,
     PublicKeyType,
@@ -556,6 +564,9 @@ impl TypeVariant {
         TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
+        TypeVariant::ScBytes,
+        TypeVariant::ScString,
+        TypeVariant::ScSymbol,
         TypeVariant::ScValType,
         TypeVariant::ScErrorType,
         TypeVariant::ScErrorCode,
@@ -565,15 +576,15 @@ impl TypeVariant {
         TypeVariant::UInt256Parts,
         TypeVariant::Int256Parts,
         TypeVariant::ContractExecutableType,
-        TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::MuxedEd25519Account,
+        #[cfg(feature = "cap_0084_muxed_contract")]
+        TypeVariant::MuxedContract,
         TypeVariant::ScAddress,
+        TypeVariant::ContractExecutableExternalRef,
+        TypeVariant::ContractExecutable,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
-        TypeVariant::ScBytes,
-        TypeVariant::ScString,
-        TypeVariant::ScSymbol,
         TypeVariant::ScNonceKey,
         TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
@@ -674,8 +685,11 @@ impl TypeVariant {
         TypeVariant::LedgerCloseValueSignature,
         TypeVariant::StellarValue,
         TypeVariant::StellarValueExt,
-        #[cfg(feature = "cap_0083")]
         TypeVariant::StellarValueProposedValue,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::StellarValueSignedMsValue,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::StellarValueProposedMsValue,
         TypeVariant::LedgerHeaderFlags,
         TypeVariant::LedgerHeaderExtensionV1,
         TypeVariant::LedgerHeaderExtensionV1Ext,
@@ -941,6 +955,8 @@ impl TypeVariant {
         TypeVariant::Int64,
         TypeVariant::TimePoint,
         TypeVariant::Duration,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::TimePointMilliseconds,
         TypeVariant::ExtensionPoint,
         TypeVariant::CryptoKeyType,
         TypeVariant::PublicKeyType,
@@ -1042,6 +1058,9 @@ impl TypeVariant {
         "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
+        "ScBytes",
+        "ScString",
+        "ScSymbol",
         "ScValType",
         "ScErrorType",
         "ScErrorCode",
@@ -1051,15 +1070,15 @@ impl TypeVariant {
         "UInt256Parts",
         "Int256Parts",
         "ContractExecutableType",
-        "ContractExecutable",
         "ScAddressType",
         "MuxedEd25519Account",
+        #[cfg(feature = "cap_0084_muxed_contract")]
+        "MuxedContract",
         "ScAddress",
+        "ContractExecutableExternalRef",
+        "ContractExecutable",
         "ScVec",
         "ScMap",
-        "ScBytes",
-        "ScString",
-        "ScSymbol",
         "ScNonceKey",
         "ScContractInstance",
         "ScVal",
@@ -1160,8 +1179,11 @@ impl TypeVariant {
         "LedgerCloseValueSignature",
         "StellarValue",
         "StellarValueExt",
-        #[cfg(feature = "cap_0083")]
         "StellarValueProposedValue",
+        #[cfg(feature = "ms_close_time")]
+        "StellarValueSignedMsValue",
+        #[cfg(feature = "ms_close_time")]
+        "StellarValueProposedMsValue",
         "LedgerHeaderFlags",
         "LedgerHeaderExtensionV1",
         "LedgerHeaderExtensionV1Ext",
@@ -1427,6 +1449,8 @@ impl TypeVariant {
         "Int64",
         "TimePoint",
         "Duration",
+        #[cfg(feature = "ms_close_time")]
+        "TimePointMilliseconds",
         "ExtensionPoint",
         "CryptoKeyType",
         "PublicKeyType",
@@ -1534,6 +1558,9 @@ impl TypeVariant {
             Self::ScSpecEventV0 => "ScSpecEventV0",
             Self::ScSpecEntryKind => "ScSpecEntryKind",
             Self::ScSpecEntry => "ScSpecEntry",
+            Self::ScBytes => "ScBytes",
+            Self::ScString => "ScString",
+            Self::ScSymbol => "ScSymbol",
             Self::ScValType => "ScValType",
             Self::ScErrorType => "ScErrorType",
             Self::ScErrorCode => "ScErrorCode",
@@ -1543,15 +1570,15 @@ impl TypeVariant {
             Self::UInt256Parts => "UInt256Parts",
             Self::Int256Parts => "Int256Parts",
             Self::ContractExecutableType => "ContractExecutableType",
-            Self::ContractExecutable => "ContractExecutable",
             Self::ScAddressType => "ScAddressType",
             Self::MuxedEd25519Account => "MuxedEd25519Account",
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract => "MuxedContract",
             Self::ScAddress => "ScAddress",
+            Self::ContractExecutableExternalRef => "ContractExecutableExternalRef",
+            Self::ContractExecutable => "ContractExecutable",
             Self::ScVec => "ScVec",
             Self::ScMap => "ScMap",
-            Self::ScBytes => "ScBytes",
-            Self::ScString => "ScString",
-            Self::ScSymbol => "ScSymbol",
             Self::ScNonceKey => "ScNonceKey",
             Self::ScContractInstance => "ScContractInstance",
             Self::ScVal => "ScVal",
@@ -1654,8 +1681,11 @@ impl TypeVariant {
             Self::LedgerCloseValueSignature => "LedgerCloseValueSignature",
             Self::StellarValue => "StellarValue",
             Self::StellarValueExt => "StellarValueExt",
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue => "StellarValueProposedValue",
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue => "StellarValueSignedMsValue",
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue => "StellarValueProposedMsValue",
             Self::LedgerHeaderFlags => "LedgerHeaderFlags",
             Self::LedgerHeaderExtensionV1 => "LedgerHeaderExtensionV1",
             Self::LedgerHeaderExtensionV1Ext => "LedgerHeaderExtensionV1Ext",
@@ -1935,6 +1965,8 @@ impl TypeVariant {
             Self::Int64 => "Int64",
             Self::TimePoint => "TimePoint",
             Self::Duration => "Duration",
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds => "TimePointMilliseconds",
             Self::ExtensionPoint => "ExtensionPoint",
             Self::CryptoKeyType => "CryptoKeyType",
             Self::PublicKeyType => "PublicKeyType",
@@ -2067,6 +2099,9 @@ impl TypeVariant {
             Self::ScSpecEventV0 => gen.into_root_schema_for::<ScSpecEventV0>(),
             Self::ScSpecEntryKind => gen.into_root_schema_for::<ScSpecEntryKind>(),
             Self::ScSpecEntry => gen.into_root_schema_for::<ScSpecEntry>(),
+            Self::ScBytes => gen.into_root_schema_for::<ScBytes>(),
+            Self::ScString => gen.into_root_schema_for::<ScString>(),
+            Self::ScSymbol => gen.into_root_schema_for::<ScSymbol>(),
             Self::ScValType => gen.into_root_schema_for::<ScValType>(),
             Self::ScErrorType => gen.into_root_schema_for::<ScErrorType>(),
             Self::ScErrorCode => gen.into_root_schema_for::<ScErrorCode>(),
@@ -2076,15 +2111,17 @@ impl TypeVariant {
             Self::UInt256Parts => gen.into_root_schema_for::<UInt256Parts>(),
             Self::Int256Parts => gen.into_root_schema_for::<Int256Parts>(),
             Self::ContractExecutableType => gen.into_root_schema_for::<ContractExecutableType>(),
-            Self::ContractExecutable => gen.into_root_schema_for::<ContractExecutable>(),
             Self::ScAddressType => gen.into_root_schema_for::<ScAddressType>(),
             Self::MuxedEd25519Account => gen.into_root_schema_for::<MuxedEd25519Account>(),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract => gen.into_root_schema_for::<MuxedContract>(),
             Self::ScAddress => gen.into_root_schema_for::<ScAddress>(),
+            Self::ContractExecutableExternalRef => {
+                gen.into_root_schema_for::<ContractExecutableExternalRef>()
+            }
+            Self::ContractExecutable => gen.into_root_schema_for::<ContractExecutable>(),
             Self::ScVec => gen.into_root_schema_for::<ScVec>(),
             Self::ScMap => gen.into_root_schema_for::<ScMap>(),
-            Self::ScBytes => gen.into_root_schema_for::<ScBytes>(),
-            Self::ScString => gen.into_root_schema_for::<ScString>(),
-            Self::ScSymbol => gen.into_root_schema_for::<ScSymbol>(),
             Self::ScNonceKey => gen.into_root_schema_for::<ScNonceKey>(),
             Self::ScContractInstance => gen.into_root_schema_for::<ScContractInstance>(),
             Self::ScVal => gen.into_root_schema_for::<ScVal>(),
@@ -2213,9 +2250,16 @@ impl TypeVariant {
             }
             Self::StellarValue => gen.into_root_schema_for::<StellarValue>(),
             Self::StellarValueExt => gen.into_root_schema_for::<StellarValueExt>(),
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue => {
                 gen.into_root_schema_for::<StellarValueProposedValue>()
+            }
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue => {
+                gen.into_root_schema_for::<StellarValueSignedMsValue>()
+            }
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue => {
+                gen.into_root_schema_for::<StellarValueProposedMsValue>()
             }
             Self::LedgerHeaderFlags => gen.into_root_schema_for::<LedgerHeaderFlags>(),
             Self::LedgerHeaderExtensionV1 => gen.into_root_schema_for::<LedgerHeaderExtensionV1>(),
@@ -2644,6 +2688,8 @@ impl TypeVariant {
             Self::Int64 => gen.into_root_schema_for::<Int64>(),
             Self::TimePoint => gen.into_root_schema_for::<TimePoint>(),
             Self::Duration => gen.into_root_schema_for::<Duration>(),
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds => gen.into_root_schema_for::<TimePointMilliseconds>(),
             Self::ExtensionPoint => gen.into_root_schema_for::<ExtensionPoint>(),
             Self::CryptoKeyType => gen.into_root_schema_for::<CryptoKeyType>(),
             Self::PublicKeyType => gen.into_root_schema_for::<PublicKeyType>(),
@@ -2771,6 +2817,9 @@ impl core::str::FromStr for TypeVariant {
             "ScSpecEventV0" => Ok(Self::ScSpecEventV0),
             "ScSpecEntryKind" => Ok(Self::ScSpecEntryKind),
             "ScSpecEntry" => Ok(Self::ScSpecEntry),
+            "ScBytes" => Ok(Self::ScBytes),
+            "ScString" => Ok(Self::ScString),
+            "ScSymbol" => Ok(Self::ScSymbol),
             "ScValType" => Ok(Self::ScValType),
             "ScErrorType" => Ok(Self::ScErrorType),
             "ScErrorCode" => Ok(Self::ScErrorCode),
@@ -2780,15 +2829,15 @@ impl core::str::FromStr for TypeVariant {
             "UInt256Parts" => Ok(Self::UInt256Parts),
             "Int256Parts" => Ok(Self::Int256Parts),
             "ContractExecutableType" => Ok(Self::ContractExecutableType),
-            "ContractExecutable" => Ok(Self::ContractExecutable),
             "ScAddressType" => Ok(Self::ScAddressType),
             "MuxedEd25519Account" => Ok(Self::MuxedEd25519Account),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            "MuxedContract" => Ok(Self::MuxedContract),
             "ScAddress" => Ok(Self::ScAddress),
+            "ContractExecutableExternalRef" => Ok(Self::ContractExecutableExternalRef),
+            "ContractExecutable" => Ok(Self::ContractExecutable),
             "ScVec" => Ok(Self::ScVec),
             "ScMap" => Ok(Self::ScMap),
-            "ScBytes" => Ok(Self::ScBytes),
-            "ScString" => Ok(Self::ScString),
-            "ScSymbol" => Ok(Self::ScSymbol),
             "ScNonceKey" => Ok(Self::ScNonceKey),
             "ScContractInstance" => Ok(Self::ScContractInstance),
             "ScVal" => Ok(Self::ScVal),
@@ -2891,8 +2940,11 @@ impl core::str::FromStr for TypeVariant {
             "LedgerCloseValueSignature" => Ok(Self::LedgerCloseValueSignature),
             "StellarValue" => Ok(Self::StellarValue),
             "StellarValueExt" => Ok(Self::StellarValueExt),
-            #[cfg(feature = "cap_0083")]
             "StellarValueProposedValue" => Ok(Self::StellarValueProposedValue),
+            #[cfg(feature = "ms_close_time")]
+            "StellarValueSignedMsValue" => Ok(Self::StellarValueSignedMsValue),
+            #[cfg(feature = "ms_close_time")]
+            "StellarValueProposedMsValue" => Ok(Self::StellarValueProposedMsValue),
             "LedgerHeaderFlags" => Ok(Self::LedgerHeaderFlags),
             "LedgerHeaderExtensionV1" => Ok(Self::LedgerHeaderExtensionV1),
             "LedgerHeaderExtensionV1Ext" => Ok(Self::LedgerHeaderExtensionV1Ext),
@@ -3182,6 +3234,8 @@ impl core::str::FromStr for TypeVariant {
             "Int64" => Ok(Self::Int64),
             "TimePoint" => Ok(Self::TimePoint),
             "Duration" => Ok(Self::Duration),
+            #[cfg(feature = "ms_close_time")]
+            "TimePointMilliseconds" => Ok(Self::TimePointMilliseconds),
             "ExtensionPoint" => Ok(Self::ExtensionPoint),
             "CryptoKeyType" => Ok(Self::CryptoKeyType),
             "PublicKeyType" => Ok(Self::PublicKeyType),
@@ -3287,6 +3341,9 @@ pub enum Type {
     ScSpecEventV0(Box<ScSpecEventV0>),
     ScSpecEntryKind(Box<ScSpecEntryKind>),
     ScSpecEntry(Box<ScSpecEntry>),
+    ScBytes(Box<ScBytes>),
+    ScString(Box<ScString>),
+    ScSymbol(Box<ScSymbol>),
     ScValType(Box<ScValType>),
     ScErrorType(Box<ScErrorType>),
     ScErrorCode(Box<ScErrorCode>),
@@ -3296,15 +3353,15 @@ pub enum Type {
     UInt256Parts(Box<UInt256Parts>),
     Int256Parts(Box<Int256Parts>),
     ContractExecutableType(Box<ContractExecutableType>),
-    ContractExecutable(Box<ContractExecutable>),
     ScAddressType(Box<ScAddressType>),
     MuxedEd25519Account(Box<MuxedEd25519Account>),
+    #[cfg(feature = "cap_0084_muxed_contract")]
+    MuxedContract(Box<MuxedContract>),
     ScAddress(Box<ScAddress>),
+    ContractExecutableExternalRef(Box<ContractExecutableExternalRef>),
+    ContractExecutable(Box<ContractExecutable>),
     ScVec(Box<ScVec>),
     ScMap(Box<ScMap>),
-    ScBytes(Box<ScBytes>),
-    ScString(Box<ScString>),
-    ScSymbol(Box<ScSymbol>),
     ScNonceKey(Box<ScNonceKey>),
     ScContractInstance(Box<ScContractInstance>),
     ScVal(Box<ScVal>),
@@ -3405,8 +3462,11 @@ pub enum Type {
     LedgerCloseValueSignature(Box<LedgerCloseValueSignature>),
     StellarValue(Box<StellarValue>),
     StellarValueExt(Box<StellarValueExt>),
-    #[cfg(feature = "cap_0083")]
     StellarValueProposedValue(Box<StellarValueProposedValue>),
+    #[cfg(feature = "ms_close_time")]
+    StellarValueSignedMsValue(Box<StellarValueSignedMsValue>),
+    #[cfg(feature = "ms_close_time")]
+    StellarValueProposedMsValue(Box<StellarValueProposedMsValue>),
     LedgerHeaderFlags(Box<LedgerHeaderFlags>),
     LedgerHeaderExtensionV1(Box<LedgerHeaderExtensionV1>),
     LedgerHeaderExtensionV1Ext(Box<LedgerHeaderExtensionV1Ext>),
@@ -3674,6 +3734,8 @@ pub enum Type {
     Int64(Box<Int64>),
     TimePoint(Box<TimePoint>),
     Duration(Box<Duration>),
+    #[cfg(feature = "ms_close_time")]
+    TimePointMilliseconds(Box<TimePointMilliseconds>),
     ExtensionPoint(Box<ExtensionPoint>),
     CryptoKeyType(Box<CryptoKeyType>),
     PublicKeyType(Box<PublicKeyType>),
@@ -3769,6 +3831,9 @@ impl Type {
         TypeVariant::ScSpecEventV0,
         TypeVariant::ScSpecEntryKind,
         TypeVariant::ScSpecEntry,
+        TypeVariant::ScBytes,
+        TypeVariant::ScString,
+        TypeVariant::ScSymbol,
         TypeVariant::ScValType,
         TypeVariant::ScErrorType,
         TypeVariant::ScErrorCode,
@@ -3778,15 +3843,15 @@ impl Type {
         TypeVariant::UInt256Parts,
         TypeVariant::Int256Parts,
         TypeVariant::ContractExecutableType,
-        TypeVariant::ContractExecutable,
         TypeVariant::ScAddressType,
         TypeVariant::MuxedEd25519Account,
+        #[cfg(feature = "cap_0084_muxed_contract")]
+        TypeVariant::MuxedContract,
         TypeVariant::ScAddress,
+        TypeVariant::ContractExecutableExternalRef,
+        TypeVariant::ContractExecutable,
         TypeVariant::ScVec,
         TypeVariant::ScMap,
-        TypeVariant::ScBytes,
-        TypeVariant::ScString,
-        TypeVariant::ScSymbol,
         TypeVariant::ScNonceKey,
         TypeVariant::ScContractInstance,
         TypeVariant::ScVal,
@@ -3887,8 +3952,11 @@ impl Type {
         TypeVariant::LedgerCloseValueSignature,
         TypeVariant::StellarValue,
         TypeVariant::StellarValueExt,
-        #[cfg(feature = "cap_0083")]
         TypeVariant::StellarValueProposedValue,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::StellarValueSignedMsValue,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::StellarValueProposedMsValue,
         TypeVariant::LedgerHeaderFlags,
         TypeVariant::LedgerHeaderExtensionV1,
         TypeVariant::LedgerHeaderExtensionV1Ext,
@@ -4154,6 +4222,8 @@ impl Type {
         TypeVariant::Int64,
         TypeVariant::TimePoint,
         TypeVariant::Duration,
+        #[cfg(feature = "ms_close_time")]
+        TypeVariant::TimePointMilliseconds,
         TypeVariant::ExtensionPoint,
         TypeVariant::CryptoKeyType,
         TypeVariant::PublicKeyType,
@@ -4255,6 +4325,9 @@ impl Type {
         "ScSpecEventV0",
         "ScSpecEntryKind",
         "ScSpecEntry",
+        "ScBytes",
+        "ScString",
+        "ScSymbol",
         "ScValType",
         "ScErrorType",
         "ScErrorCode",
@@ -4264,15 +4337,15 @@ impl Type {
         "UInt256Parts",
         "Int256Parts",
         "ContractExecutableType",
-        "ContractExecutable",
         "ScAddressType",
         "MuxedEd25519Account",
+        #[cfg(feature = "cap_0084_muxed_contract")]
+        "MuxedContract",
         "ScAddress",
+        "ContractExecutableExternalRef",
+        "ContractExecutable",
         "ScVec",
         "ScMap",
-        "ScBytes",
-        "ScString",
-        "ScSymbol",
         "ScNonceKey",
         "ScContractInstance",
         "ScVal",
@@ -4373,8 +4446,11 @@ impl Type {
         "LedgerCloseValueSignature",
         "StellarValue",
         "StellarValueExt",
-        #[cfg(feature = "cap_0083")]
         "StellarValueProposedValue",
+        #[cfg(feature = "ms_close_time")]
+        "StellarValueSignedMsValue",
+        #[cfg(feature = "ms_close_time")]
+        "StellarValueProposedMsValue",
         "LedgerHeaderFlags",
         "LedgerHeaderExtensionV1",
         "LedgerHeaderExtensionV1Ext",
@@ -4640,6 +4716,8 @@ impl Type {
         "Int64",
         "TimePoint",
         "Duration",
+        #[cfg(feature = "ms_close_time")]
+        "TimePointMilliseconds",
         "ExtensionPoint",
         "CryptoKeyType",
         "PublicKeyType",
@@ -4973,6 +5051,15 @@ impl Type {
             TypeVariant::ScSpecEntry => {
                 r.with_limited_depth(|r| Ok(Self::ScSpecEntry(Box::new(ScSpecEntry::read_xdr(r)?))))
             }
+            TypeVariant::ScBytes => {
+                r.with_limited_depth(|r| Ok(Self::ScBytes(Box::new(ScBytes::read_xdr(r)?))))
+            }
+            TypeVariant::ScString => {
+                r.with_limited_depth(|r| Ok(Self::ScString(Box::new(ScString::read_xdr(r)?))))
+            }
+            TypeVariant::ScSymbol => {
+                r.with_limited_depth(|r| Ok(Self::ScSymbol(Box::new(ScSymbol::read_xdr(r)?))))
+            }
             TypeVariant::ScValType => {
                 r.with_limited_depth(|r| Ok(Self::ScValType(Box::new(ScValType::read_xdr(r)?))))
             }
@@ -5002,11 +5089,6 @@ impl Type {
                     ContractExecutableType::read_xdr(r)?,
                 )))
             }),
-            TypeVariant::ContractExecutable => r.with_limited_depth(|r| {
-                Ok(Self::ContractExecutable(Box::new(
-                    ContractExecutable::read_xdr(r)?,
-                )))
-            }),
             TypeVariant::ScAddressType => r.with_limited_depth(|r| {
                 Ok(Self::ScAddressType(Box::new(ScAddressType::read_xdr(r)?)))
             }),
@@ -5015,23 +5097,28 @@ impl Type {
                     MuxedEd25519Account::read_xdr(r)?,
                 )))
             }),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => r.with_limited_depth(|r| {
+                Ok(Self::MuxedContract(Box::new(MuxedContract::read_xdr(r)?)))
+            }),
             TypeVariant::ScAddress => {
                 r.with_limited_depth(|r| Ok(Self::ScAddress(Box::new(ScAddress::read_xdr(r)?))))
             }
+            TypeVariant::ContractExecutableExternalRef => r.with_limited_depth(|r| {
+                Ok(Self::ContractExecutableExternalRef(Box::new(
+                    ContractExecutableExternalRef::read_xdr(r)?,
+                )))
+            }),
+            TypeVariant::ContractExecutable => r.with_limited_depth(|r| {
+                Ok(Self::ContractExecutable(Box::new(
+                    ContractExecutable::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::ScVec => {
                 r.with_limited_depth(|r| Ok(Self::ScVec(Box::new(ScVec::read_xdr(r)?))))
             }
             TypeVariant::ScMap => {
                 r.with_limited_depth(|r| Ok(Self::ScMap(Box::new(ScMap::read_xdr(r)?))))
-            }
-            TypeVariant::ScBytes => {
-                r.with_limited_depth(|r| Ok(Self::ScBytes(Box::new(ScBytes::read_xdr(r)?))))
-            }
-            TypeVariant::ScString => {
-                r.with_limited_depth(|r| Ok(Self::ScString(Box::new(ScString::read_xdr(r)?))))
-            }
-            TypeVariant::ScSymbol => {
-                r.with_limited_depth(|r| Ok(Self::ScSymbol(Box::new(ScSymbol::read_xdr(r)?))))
             }
             TypeVariant::ScNonceKey => {
                 r.with_limited_depth(|r| Ok(Self::ScNonceKey(Box::new(ScNonceKey::read_xdr(r)?))))
@@ -5445,10 +5532,21 @@ impl Type {
                     r,
                 )?)))
             }),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => r.with_limited_depth(|r| {
                 Ok(Self::StellarValueProposedValue(Box::new(
                     StellarValueProposedValue::read_xdr(r)?,
+                )))
+            }),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => r.with_limited_depth(|r| {
+                Ok(Self::StellarValueSignedMsValue(Box::new(
+                    StellarValueSignedMsValue::read_xdr(r)?,
+                )))
+            }),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => r.with_limited_depth(|r| {
+                Ok(Self::StellarValueProposedMsValue(Box::new(
+                    StellarValueProposedMsValue::read_xdr(r)?,
                 )))
             }),
             TypeVariant::LedgerHeaderFlags => r.with_limited_depth(|r| {
@@ -6666,6 +6764,12 @@ impl Type {
             TypeVariant::Duration => {
                 r.with_limited_depth(|r| Ok(Self::Duration(Box::new(Duration::read_xdr(r)?))))
             }
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => r.with_limited_depth(|r| {
+                Ok(Self::TimePointMilliseconds(Box::new(
+                    TimePointMilliseconds::read_xdr(r)?,
+                )))
+            }),
             TypeVariant::ExtensionPoint => r.with_limited_depth(|r| {
                 Ok(Self::ExtensionPoint(Box::new(ExtensionPoint::read_xdr(r)?)))
             }),
@@ -7092,6 +7196,18 @@ impl Type {
                 ReadXdrIter::<_, ScSpecEntry>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
             ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, ScBytes>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, ScString>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, ScSymbol>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
+            ),
             TypeVariant::ScValType => Box::new(
                 ReadXdrIter::<_, ScValType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
@@ -7128,10 +7244,6 @@ impl Type {
                 ReadXdrIter::<_, ContractExecutableType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
             ),
-            TypeVariant::ContractExecutable => Box::new(
-                ReadXdrIter::<_, ContractExecutable>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
-            ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, ScAddressType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
@@ -7140,9 +7252,25 @@ impl Type {
                 ReadXdrIter::<_, MuxedEd25519Account>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => Box::new(
+                ReadXdrIter::<_, MuxedContract>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedContract(Box::new(t)))),
+            ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, ScAddress>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
+            ),
+            TypeVariant::ContractExecutableExternalRef => Box::new(
+                ReadXdrIter::<_, ContractExecutableExternalRef>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ContractExecutableExternalRef(Box::new(t)))),
+            ),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, ContractExecutable>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
             ),
             TypeVariant::ScVec => Box::new(
                 ReadXdrIter::<_, ScVec>::new(&mut r.inner, r.limits.clone())
@@ -7151,18 +7279,6 @@ impl Type {
             TypeVariant::ScMap => Box::new(
                 ReadXdrIter::<_, ScMap>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
-            ),
-            TypeVariant::ScBytes => Box::new(
-                ReadXdrIter::<_, ScBytes>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
-            ),
-            TypeVariant::ScString => Box::new(
-                ReadXdrIter::<_, ScString>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
-            ),
-            TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, ScSymbol>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
             ),
             TypeVariant::ScNonceKey => Box::new(
                 ReadXdrIter::<_, ScNonceKey>::new(&mut r.inner, r.limits.clone())
@@ -7576,10 +7692,19 @@ impl Type {
                 ReadXdrIter::<_, StellarValueExt>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
             ),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Box::new(
                 ReadXdrIter::<_, StellarValueProposedValue>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueProposedValue(Box::new(t)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Box::new(
+                ReadXdrIter::<_, StellarValueSignedMsValue>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::StellarValueSignedMsValue(Box::new(t)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Box::new(
+                ReadXdrIter::<_, StellarValueProposedMsValue>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::StellarValueProposedMsValue(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
                 ReadXdrIter::<_, LedgerHeaderFlags>::new(&mut r.inner, r.limits.clone())
@@ -8752,6 +8877,11 @@ impl Type {
                 ReadXdrIter::<_, Duration>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Box::new(
+                ReadXdrIter::<_, TimePointMilliseconds>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimePointMilliseconds(Box::new(t)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, ExtensionPoint>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
@@ -9176,6 +9306,18 @@ impl Type {
                 ReadXdrIter::<_, Frame<ScSpecEntry>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t.0)))),
             ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, Frame<ScBytes>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t.0)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, Frame<ScString>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScString(Box::new(t.0)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, Frame<ScSymbol>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t.0)))),
+            ),
             TypeVariant::ScValType => Box::new(
                 ReadXdrIter::<_, Frame<ScValType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t.0)))),
@@ -9215,10 +9357,6 @@ impl Type {
                 )
                 .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t.0)))),
             ),
-            TypeVariant::ContractExecutable => Box::new(
-                ReadXdrIter::<_, Frame<ContractExecutable>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t.0)))),
-            ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, Frame<ScAddressType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t.0)))),
@@ -9227,9 +9365,25 @@ impl Type {
                 ReadXdrIter::<_, Frame<MuxedEd25519Account>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t.0)))),
             ),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => Box::new(
+                ReadXdrIter::<_, Frame<MuxedContract>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedContract(Box::new(t.0)))),
+            ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, Frame<ScAddress>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractExecutableExternalRef => Box::new(
+                ReadXdrIter::<_, Frame<ContractExecutableExternalRef>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::ContractExecutableExternalRef(Box::new(t.0)))),
+            ),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, Frame<ContractExecutable>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t.0)))),
             ),
             TypeVariant::ScVec => Box::new(
                 ReadXdrIter::<_, Frame<ScVec>>::new(&mut r.inner, r.limits.clone())
@@ -9238,18 +9392,6 @@ impl Type {
             TypeVariant::ScMap => Box::new(
                 ReadXdrIter::<_, Frame<ScMap>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMap(Box::new(t.0)))),
-            ),
-            TypeVariant::ScBytes => Box::new(
-                ReadXdrIter::<_, Frame<ScBytes>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t.0)))),
-            ),
-            TypeVariant::ScString => Box::new(
-                ReadXdrIter::<_, Frame<ScString>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScString(Box::new(t.0)))),
-            ),
-            TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, Frame<ScSymbol>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t.0)))),
             ),
             TypeVariant::ScNonceKey => Box::new(
                 ReadXdrIter::<_, Frame<ScNonceKey>>::new(&mut r.inner, r.limits.clone())
@@ -9720,13 +9862,28 @@ impl Type {
                 ReadXdrIter::<_, Frame<StellarValueExt>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t.0)))),
             ),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Box::new(
                 ReadXdrIter::<_, Frame<StellarValueProposedValue>>::new(
                     &mut r.inner,
                     r.limits.clone(),
                 )
                 .map(|r| r.map(|t| Self::StellarValueProposedValue(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Box::new(
+                ReadXdrIter::<_, Frame<StellarValueSignedMsValue>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::StellarValueSignedMsValue(Box::new(t.0)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Box::new(
+                ReadXdrIter::<_, Frame<StellarValueProposedMsValue>>::new(
+                    &mut r.inner,
+                    r.limits.clone(),
+                )
+                .map(|r| r.map(|t| Self::StellarValueProposedMsValue(Box::new(t.0)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
                 ReadXdrIter::<_, Frame<LedgerHeaderFlags>>::new(&mut r.inner, r.limits.clone())
@@ -11111,6 +11268,11 @@ impl Type {
                 ReadXdrIter::<_, Frame<Duration>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Duration(Box::new(t.0)))),
             ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Box::new(
+                ReadXdrIter::<_, Frame<TimePointMilliseconds>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimePointMilliseconds(Box::new(t.0)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, Frame<ExtensionPoint>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t.0)))),
@@ -11494,6 +11656,18 @@ impl Type {
                 ReadXdrIter::<_, ScSpecEntry>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScSpecEntry(Box::new(t)))),
             ),
+            TypeVariant::ScBytes => Box::new(
+                ReadXdrIter::<_, ScBytes>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
+            ),
+            TypeVariant::ScString => Box::new(
+                ReadXdrIter::<_, ScString>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
+            ),
+            TypeVariant::ScSymbol => Box::new(
+                ReadXdrIter::<_, ScSymbol>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
+            ),
             TypeVariant::ScValType => Box::new(
                 ReadXdrIter::<_, ScValType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScValType(Box::new(t)))),
@@ -11530,10 +11704,6 @@ impl Type {
                 ReadXdrIter::<_, ContractExecutableType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ContractExecutableType(Box::new(t)))),
             ),
-            TypeVariant::ContractExecutable => Box::new(
-                ReadXdrIter::<_, ContractExecutable>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
-            ),
             TypeVariant::ScAddressType => Box::new(
                 ReadXdrIter::<_, ScAddressType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddressType(Box::new(t)))),
@@ -11542,9 +11712,22 @@ impl Type {
                 ReadXdrIter::<_, MuxedEd25519Account>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::MuxedEd25519Account(Box::new(t)))),
             ),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => Box::new(
+                ReadXdrIter::<_, MuxedContract>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::MuxedContract(Box::new(t)))),
+            ),
             TypeVariant::ScAddress => Box::new(
                 ReadXdrIter::<_, ScAddress>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScAddress(Box::new(t)))),
+            ),
+            TypeVariant::ContractExecutableExternalRef => Box::new(
+                ReadXdrIter::<_, ContractExecutableExternalRef>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractExecutableExternalRef(Box::new(t)))),
+            ),
+            TypeVariant::ContractExecutable => Box::new(
+                ReadXdrIter::<_, ContractExecutable>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::ContractExecutable(Box::new(t)))),
             ),
             TypeVariant::ScVec => Box::new(
                 ReadXdrIter::<_, ScVec>::new(dec, r.limits.clone())
@@ -11553,18 +11736,6 @@ impl Type {
             TypeVariant::ScMap => Box::new(
                 ReadXdrIter::<_, ScMap>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ScMap(Box::new(t)))),
-            ),
-            TypeVariant::ScBytes => Box::new(
-                ReadXdrIter::<_, ScBytes>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScBytes(Box::new(t)))),
-            ),
-            TypeVariant::ScString => Box::new(
-                ReadXdrIter::<_, ScString>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScString(Box::new(t)))),
-            ),
-            TypeVariant::ScSymbol => Box::new(
-                ReadXdrIter::<_, ScSymbol>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::ScSymbol(Box::new(t)))),
             ),
             TypeVariant::ScNonceKey => Box::new(
                 ReadXdrIter::<_, ScNonceKey>::new(dec, r.limits.clone())
@@ -11969,10 +12140,19 @@ impl Type {
                 ReadXdrIter::<_, StellarValueExt>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueExt(Box::new(t)))),
             ),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Box::new(
                 ReadXdrIter::<_, StellarValueProposedValue>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::StellarValueProposedValue(Box::new(t)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Box::new(
+                ReadXdrIter::<_, StellarValueSignedMsValue>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::StellarValueSignedMsValue(Box::new(t)))),
+            ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Box::new(
+                ReadXdrIter::<_, StellarValueProposedMsValue>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::StellarValueProposedMsValue(Box::new(t)))),
             ),
             TypeVariant::LedgerHeaderFlags => Box::new(
                 ReadXdrIter::<_, LedgerHeaderFlags>::new(dec, r.limits.clone())
@@ -13061,6 +13241,11 @@ impl Type {
                 ReadXdrIter::<_, Duration>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Box::new(
+                ReadXdrIter::<_, TimePointMilliseconds>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimePointMilliseconds(Box::new(t)))),
+            ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, ExtensionPoint>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::ExtensionPoint(Box::new(t)))),
@@ -13383,6 +13568,9 @@ impl Type {
             TypeVariant::ScSpecEntry => {
                 Ok(Self::ScSpecEntry(Box::new(serde_json::from_reader(r)?)))
             }
+            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScString => Ok(Self::ScString(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScValType => Ok(Self::ScValType(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScErrorType => {
                 Ok(Self::ScErrorType(Box::new(serde_json::from_reader(r)?)))
@@ -13406,21 +13594,25 @@ impl Type {
             TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
                 serde_json::from_reader(r)?,
             ))),
-            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
             TypeVariant::ScAddressType => {
                 Ok(Self::ScAddressType(Box::new(serde_json::from_reader(r)?)))
             }
             TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
                 serde_json::from_reader(r)?,
             ))),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => {
+                Ok(Self::MuxedContract(Box::new(serde_json::from_reader(r)?)))
+            }
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(serde_json::from_reader(r)?))),
+            TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::ScString => Ok(Self::ScString(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScNonceKey => Ok(Self::ScNonceKey(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::ScContractInstance => Ok(Self::ScContractInstance(Box::new(
                 serde_json::from_reader(r)?,
@@ -13679,8 +13871,15 @@ impl Type {
             TypeVariant::StellarValueExt => {
                 Ok(Self::StellarValueExt(Box::new(serde_json::from_reader(r)?)))
             }
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Ok(Self::StellarValueSignedMsValue(
+                Box::new(serde_json::from_reader(r)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Ok(Self::StellarValueProposedMsValue(
                 Box::new(serde_json::from_reader(r)?),
             )),
             TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
@@ -14440,6 +14639,10 @@ impl Type {
             TypeVariant::Int64 => Ok(Self::Int64(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::Duration => Ok(Self::Duration(Box::new(serde_json::from_reader(r)?))),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Ok(Self::TimePointMilliseconds(Box::new(
+                serde_json::from_reader(r)?,
+            ))),
             TypeVariant::ExtensionPoint => {
                 Ok(Self::ExtensionPoint(Box::new(serde_json::from_reader(r)?)))
             }
@@ -14720,6 +14923,15 @@ impl Type {
             TypeVariant::ScSpecEntry => Ok(Self::ScSpecEntry(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScString => Ok(Self::ScString(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::ScValType => Ok(Self::ScValType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -14747,16 +14959,23 @@ impl Type {
             TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
             TypeVariant::ScAddressType => Ok(Self::ScAddressType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => Ok(Self::MuxedContract(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(serde::de::Deserialize::deserialize(
@@ -14765,15 +14984,6 @@ impl Type {
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(serde::de::Deserialize::deserialize(
                 r,
             )?))),
-            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ScString => Ok(Self::ScString(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
-            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(
-                serde::de::Deserialize::deserialize(r)?,
-            ))),
             TypeVariant::ScNonceKey => Ok(Self::ScNonceKey(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -15082,8 +15292,15 @@ impl Type {
             TypeVariant::StellarValueExt => Ok(Self::StellarValueExt(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Ok(Self::StellarValueSignedMsValue(
+                Box::new(serde::de::Deserialize::deserialize(r)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Ok(Self::StellarValueProposedMsValue(
                 Box::new(serde::de::Deserialize::deserialize(r)?),
             )),
             TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
@@ -15943,6 +16160,10 @@ impl Type {
             TypeVariant::Duration => Ok(Self::Duration(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Ok(Self::TimePointMilliseconds(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
             TypeVariant::ExtensionPoint => Ok(Self::ExtensionPoint(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -16014,6 +16235,2488 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
         }
+    }
+
+    #[cfg(feature = "serde_ignored")]
+    pub fn from_json_collecting_ignored_fields(
+        v: TypeVariant,
+        r: impl Read,
+    ) -> Result<(Self, Vec<String>), Error> {
+        let mut de = serde_json::Deserializer::from_reader(r);
+        let result = Self::deserialize_json_collecting_ignored_fields(v, &mut de)?;
+        de.end().map_err(Error::Json)?;
+        Ok(result)
+    }
+
+    #[cfg(feature = "serde_ignored")]
+    #[allow(clippy::too_many_lines)]
+    pub fn deserialize_json_collecting_ignored_fields<'r, R: serde_json::de::Read<'r>>(
+        v: TypeVariant,
+        r: &mut serde_json::de::Deserializer<R>,
+    ) -> Result<(Self, Vec<String>), Error> {
+        let ignored = std::cell::RefCell::new(Vec::new());
+        let t = match v {
+            TypeVariant::Value => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Value(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpBallot => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpBallot(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpStatementType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpStatementType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpNomination => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpNomination(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpStatement => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpStatement(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpStatementPledges => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpStatementPledges(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpStatementPrepare => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpStatementPrepare(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpStatementConfirm => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpStatementConfirm(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpStatementExternalize => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpStatementExternalize(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpEnvelope => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpEnvelope(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpQuorumSet => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpQuorumSet(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::EncodedLedgerKey => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::EncodedLedgerKey(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractExecutionLanesV0 => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractExecutionLanesV0(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ConfigSettingContractComputeV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ConfigSettingContractComputeV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractParallelComputeV0 => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractParallelComputeV0(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ConfigSettingContractLedgerCostV0 => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractLedgerCostV0(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ConfigSettingContractLedgerCostExtV0 => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractLedgerCostExtV0(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ConfigSettingContractHistoricalDataV0 => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractHistoricalDataV0(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ConfigSettingContractEventsV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ConfigSettingContractEventsV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ConfigSettingContractBandwidthV0 => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ConfigSettingContractBandwidthV0(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ContractCostType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractCostType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractCostParamEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractCostParamEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::StateArchivalSettings => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StateArchivalSettings(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::EvictionIterator => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::EvictionIterator(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ConfigSettingScpTiming => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ConfigSettingScpTiming(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::FrozenLedgerKeys => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::FrozenLedgerKeys(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::FrozenLedgerKeysDelta => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::FrozenLedgerKeysDelta(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::FreezeBypassTxs => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::FreezeBypassTxs(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::FreezeBypassTxsDelta => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::FreezeBypassTxsDelta(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractCostParams => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractCostParams(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ConfigSettingId => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ConfigSettingId(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ConfigSettingEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ConfigSettingEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScEnvMetaKind => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScEnvMetaKind(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScEnvMetaEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScEnvMetaEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScEnvMetaEntryInterfaceVersion => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScEnvMetaEntryInterfaceVersion(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScMetaV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScMetaV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScMetaKind => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScMetaKind(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScMetaEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScMetaEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecTypeOption => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecTypeOption(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecTypeResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecTypeResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecTypeVec => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecTypeVec(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecTypeMap => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecTypeMap(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecTypeTuple => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecTypeTuple(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecTypeBytesN => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecTypeBytesN(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecTypeUdt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecTypeUdt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecTypeDef => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecTypeDef(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecUdtStructFieldV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecUdtStructFieldV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecUdtStructV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecUdtStructV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecUdtUnionCaseVoidV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecUdtUnionCaseVoidV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecUdtUnionCaseTupleV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecUdtUnionCaseTupleV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecUdtUnionCaseV0Kind => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecUdtUnionCaseV0Kind(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecUdtUnionCaseV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecUdtUnionCaseV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecUdtUnionV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecUdtUnionV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecUdtEnumCaseV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecUdtEnumCaseV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecUdtEnumV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecUdtEnumV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecUdtErrorEnumCaseV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecUdtErrorEnumCaseV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecUdtErrorEnumV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecUdtErrorEnumV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecFunctionInputV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecFunctionInputV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecFunctionV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecFunctionV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecEventParamLocationV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecEventParamLocationV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecEventParamV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecEventParamV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecEventDataFormat => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecEventDataFormat(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecEventV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecEventV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecEntryKind => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecEntryKind(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSpecEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSpecEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScBytes => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScBytes(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScString => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScString(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScSymbol => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScSymbol(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScValType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScValType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScErrorType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScErrorType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScErrorCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScErrorCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScError => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScError(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::UInt128Parts => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::UInt128Parts(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Int128Parts => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Int128Parts(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::UInt256Parts => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::UInt256Parts(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Int256Parts => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Int256Parts(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractExecutableType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractExecutableType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScAddressType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScAddressType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::MuxedEd25519Account => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::MuxedEd25519Account(Box::new(t)))
+            .map_err(Error::Json),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::MuxedContract(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScAddress => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScAddress(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractExecutableExternalRef => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractExecutableExternalRef(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractExecutable => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractExecutable(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScVec => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScVec(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScMap => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScMap(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScNonceKey => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScNonceKey(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScContractInstance => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScContractInstance(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScVal => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScVal(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScMapEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScMapEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaBatch => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerCloseMetaBatch(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::StoredTransactionSet => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StoredTransactionSet(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::StoredDebugTransactionSet => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StoredDebugTransactionSet(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PersistedScpStateV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PersistedScpStateV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PersistedScpStateV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PersistedScpStateV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PersistedScpState => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PersistedScpState(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Thresholds => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Thresholds(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::String32 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::String32(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::String64 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::String64(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SequenceNumber => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SequenceNumber(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::DataValue => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::DataValue(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AssetCode4 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AssetCode4(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AssetCode12 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AssetCode12(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AssetType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AssetType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AssetCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AssetCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AlphaNum4 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AlphaNum4(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AlphaNum12 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AlphaNum12(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Asset => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Asset(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Price => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Price(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Liabilities => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Liabilities(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ThresholdIndexes => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ThresholdIndexes(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerEntryType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerEntryType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Signer => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Signer(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AccountFlags => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AccountFlags(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SponsorshipDescriptor => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SponsorshipDescriptor(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AccountEntryExtensionV3 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AccountEntryExtensionV3(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AccountEntryExtensionV2 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AccountEntryExtensionV2(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AccountEntryExtensionV2Ext => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AccountEntryExtensionV2Ext(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AccountEntryExtensionV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AccountEntryExtensionV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AccountEntryExtensionV1Ext => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AccountEntryExtensionV1Ext(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AccountEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AccountEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AccountEntryExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AccountEntryExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TrustLineFlags => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TrustLineFlags(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LiquidityPoolType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LiquidityPoolType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TrustLineAsset => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TrustLineAsset(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TrustLineEntryExtensionV2 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TrustLineEntryExtensionV2(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TrustLineEntryExtensionV2Ext => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TrustLineEntryExtensionV2Ext(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TrustLineEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TrustLineEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TrustLineEntryExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TrustLineEntryExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TrustLineEntryV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TrustLineEntryV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TrustLineEntryV1Ext => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TrustLineEntryV1Ext(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::OfferEntryFlags => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::OfferEntryFlags(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::OfferEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::OfferEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::OfferEntryExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::OfferEntryExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::DataEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::DataEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::DataEntryExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::DataEntryExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimPredicateType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimPredicateType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimPredicate => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimPredicate(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimantType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimantType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Claimant => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Claimant(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimantV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimantV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceFlags => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimableBalanceFlags(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceEntryExtensionV1 => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimableBalanceEntryExtensionV1(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ClaimableBalanceEntryExtensionV1Ext => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClaimableBalanceEntryExtensionV1Ext(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ClaimableBalanceEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimableBalanceEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceEntryExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimableBalanceEntryExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LiquidityPoolConstantProductParameters => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolConstantProductParameters(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::LiquidityPoolEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LiquidityPoolEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LiquidityPoolEntryBody => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LiquidityPoolEntryBody(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LiquidityPoolEntryConstantProduct => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::LiquidityPoolEntryConstantProduct(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ContractDataDurability => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractDataDurability(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractDataEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractDataEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractCodeCostInputs => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractCodeCostInputs(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractCodeEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractCodeEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractCodeEntryExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractCodeEntryExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractCodeEntryV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractCodeEntryV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TtlEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TtlEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerEntryExtensionV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerEntryExtensionV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerEntryExtensionV1Ext => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerEntryExtensionV1Ext(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerEntryData => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerEntryData(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerEntryExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerEntryExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerKey => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerKey(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerKeyAccount => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerKeyAccount(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerKeyTrustLine => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerKeyTrustLine(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerKeyOffer => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerKeyOffer(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerKeyData => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerKeyData(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerKeyClaimableBalance => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerKeyClaimableBalance(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerKeyLiquidityPool => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerKeyLiquidityPool(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerKeyContractData => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerKeyContractData(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerKeyContractCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerKeyContractCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerKeyConfigSetting => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerKeyConfigSetting(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerKeyTtl => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerKeyTtl(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::EnvelopeType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::EnvelopeType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::BucketListType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::BucketListType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::BucketEntryType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::BucketEntryType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::HotArchiveBucketEntryType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::HotArchiveBucketEntryType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::BucketMetadata => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::BucketMetadata(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::BucketMetadataExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::BucketMetadataExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::BucketEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::BucketEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::HotArchiveBucketEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::HotArchiveBucketEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::UpgradeType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::UpgradeType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::StellarValueType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StellarValueType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerCloseValueSignature => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerCloseValueSignature(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::StellarValue => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StellarValue(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::StellarValueExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StellarValueExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::StellarValueProposedValue => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StellarValueProposedValue(Box::new(t)))
+            .map_err(Error::Json),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StellarValueSignedMsValue(Box::new(t)))
+            .map_err(Error::Json),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StellarValueProposedMsValue(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerHeaderFlags => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerHeaderFlags(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerHeaderExtensionV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerHeaderExtensionV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerHeaderExtensionV1Ext => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerHeaderExtensionV1Ext(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerHeader => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerHeader(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerHeaderExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerHeaderExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerUpgradeType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerUpgradeType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ConfigUpgradeSetKey => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ConfigUpgradeSetKey(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerUpgrade => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerUpgrade(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ConfigUpgradeSet => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ConfigUpgradeSet(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TxSetComponentType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TxSetComponentType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::DependentTxCluster => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::DependentTxCluster(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ParallelTxExecutionStage => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ParallelTxExecutionStage(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ParallelTxsComponent => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ParallelTxsComponent(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TxSetComponent => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TxSetComponent(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TxSetComponentTxsMaybeDiscountedFee => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TxSetComponentTxsMaybeDiscountedFee(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::TransactionPhase => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionPhase(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionSet => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionSet(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionSetV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionSetV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::GeneralizedTransactionSet => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::GeneralizedTransactionSet(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionResultPair => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionResultPair(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionResultSet => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionResultSet(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionHistoryEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionHistoryEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionHistoryEntryExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionHistoryEntryExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionHistoryResultEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionHistoryResultEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionHistoryResultEntryExt => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionHistoryResultEntryExt(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::LedgerHeaderHistoryEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerHeaderHistoryEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerHeaderHistoryEntryExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerHeaderHistoryEntryExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerScpMessages => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerScpMessages(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpHistoryEntryV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpHistoryEntryV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ScpHistoryEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ScpHistoryEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerEntryChangeType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerEntryChangeType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerEntryChange => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerEntryChange(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerEntryChanges => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerEntryChanges(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::OperationMeta => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::OperationMeta(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionMetaV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionMetaV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionMetaV2 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionMetaV2(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractEventType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractEventType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractEvent => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractEvent(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractEventBody => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractEventBody(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractEventV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractEventV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::DiagnosticEvent => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::DiagnosticEvent(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanTransactionMetaExtV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanTransactionMetaExtV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanTransactionMetaExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanTransactionMetaExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanTransactionMeta => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanTransactionMeta(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionMetaV3 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionMetaV3(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::OperationMetaV2 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::OperationMetaV2(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanTransactionMetaV2 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanTransactionMetaV2(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionEventStage => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionEventStage(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionEvent => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionEvent(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionMetaV4 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionMetaV4(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InvokeHostFunctionSuccessPreImage => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::InvokeHostFunctionSuccessPreImage(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::TransactionMeta => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionMeta(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionResultMeta => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionResultMeta(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionResultMetaV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionResultMetaV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::UpgradeEntryMeta => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::UpgradeEntryMeta(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerCloseMetaV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaExtV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerCloseMetaExtV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerCloseMetaExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaV1 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerCloseMetaV1(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerCloseMetaV2 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerCloseMetaV2(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerCloseMeta => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerCloseMeta(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ErrorCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ErrorCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SError => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SError(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SendMore => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SendMore(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SendMoreExtended => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SendMoreExtended(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AuthCert => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AuthCert(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Hello => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Hello(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Auth => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Auth(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::IpAddrType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::IpAddrType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PeerAddress => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PeerAddress(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PeerAddressIp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PeerAddressIp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::MessageType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::MessageType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::DontHave => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::DontHave(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SurveyMessageCommandType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SurveyMessageCommandType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SurveyMessageResponseType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SurveyMessageResponseType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TimeSlicedSurveyStartCollectingMessage => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TimeSlicedSurveyStartCollectingMessage(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::SignedTimeSlicedSurveyStartCollectingMessage => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignedTimeSlicedSurveyStartCollectingMessage(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::TimeSlicedSurveyStopCollectingMessage => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TimeSlicedSurveyStopCollectingMessage(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::SignedTimeSlicedSurveyStopCollectingMessage => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignedTimeSlicedSurveyStopCollectingMessage(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::SurveyRequestMessage => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SurveyRequestMessage(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TimeSlicedSurveyRequestMessage => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TimeSlicedSurveyRequestMessage(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SignedTimeSlicedSurveyRequestMessage => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignedTimeSlicedSurveyRequestMessage(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::EncryptedBody => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::EncryptedBody(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SurveyResponseMessage => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SurveyResponseMessage(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TimeSlicedSurveyResponseMessage => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TimeSlicedSurveyResponseMessage(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SignedTimeSlicedSurveyResponseMessage => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SignedTimeSlicedSurveyResponseMessage(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::PeerStats => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PeerStats(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TimeSlicedNodeData => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TimeSlicedNodeData(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TimeSlicedPeerData => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TimeSlicedPeerData(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TimeSlicedPeerDataList => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TimeSlicedPeerDataList(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TopologyResponseBodyV2 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TopologyResponseBodyV2(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SurveyResponseBody => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SurveyResponseBody(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TxAdvertVector => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TxAdvertVector(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::FloodAdvert => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::FloodAdvert(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TxDemandVector => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TxDemandVector(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::FloodDemand => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::FloodDemand(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::StellarMessage => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::StellarMessage(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AuthenticatedMessage => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AuthenticatedMessage(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AuthenticatedMessageV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AuthenticatedMessageV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LiquidityPoolParameters => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LiquidityPoolParameters(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::MuxedAccount => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::MuxedAccount(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::MuxedAccountMed25519 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::MuxedAccountMed25519(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::DecoratedSignature => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::DecoratedSignature(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::OperationType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::OperationType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::CreateAccountOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::CreateAccountOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PaymentOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PaymentOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictReceiveOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PathPaymentStrictReceiveOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictSendOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PathPaymentStrictSendOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ManageSellOfferOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageSellOfferOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ManageBuyOfferOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageBuyOfferOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::CreatePassiveSellOfferOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::CreatePassiveSellOfferOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SetOptionsOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SetOptionsOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ChangeTrustAsset => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ChangeTrustAsset(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ChangeTrustOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ChangeTrustOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AllowTrustOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AllowTrustOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ManageDataOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageDataOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::BumpSequenceOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::BumpSequenceOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::CreateClaimableBalanceOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::CreateClaimableBalanceOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimClaimableBalanceOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimClaimableBalanceOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::BeginSponsoringFutureReservesOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::BeginSponsoringFutureReservesOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::RevokeSponsorshipType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::RevokeSponsorshipType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::RevokeSponsorshipOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::RevokeSponsorshipOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::RevokeSponsorshipOpSigner => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::RevokeSponsorshipOpSigner(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClawbackOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClawbackOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClawbackClaimableBalanceOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClawbackClaimableBalanceOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SetTrustLineFlagsOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SetTrustLineFlagsOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LiquidityPoolDepositOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LiquidityPoolDepositOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LiquidityPoolWithdrawOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LiquidityPoolWithdrawOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::HostFunctionType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::HostFunctionType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractIdPreimageType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractIdPreimageType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractIdPreimage => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractIdPreimage(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractIdPreimageFromAddress => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractIdPreimageFromAddress(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::CreateContractArgs => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::CreateContractArgs(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::CreateContractArgsV2 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::CreateContractArgsV2(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InvokeContractArgs => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::InvokeContractArgs(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::HostFunction => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::HostFunction(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanAuthorizedFunctionType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanAuthorizedFunctionType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanAuthorizedFunction => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanAuthorizedFunction(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanAuthorizedInvocation => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanAuthorizedInvocation(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanAddressCredentials => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanAddressCredentials(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanDelegateSignature => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanDelegateSignature(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanAddressCredentialsWithDelegates => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::SorobanAddressCredentialsWithDelegates(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::SorobanCredentialsType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanCredentialsType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanCredentials => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanCredentials(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanAuthorizationEntry => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanAuthorizationEntry(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanAuthorizationEntries => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanAuthorizationEntries(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InvokeHostFunctionOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::InvokeHostFunctionOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ExtendFootprintTtlOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ExtendFootprintTtlOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::RestoreFootprintOp => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::RestoreFootprintOp(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Operation => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Operation(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::OperationBody => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::OperationBody(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::HashIdPreimage => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::HashIdPreimage(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::HashIdPreimageOperationId => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::HashIdPreimageOperationId(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::HashIdPreimageRevokeId => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::HashIdPreimageRevokeId(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::HashIdPreimageContractId => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::HashIdPreimageContractId(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::HashIdPreimageSorobanAuthorization => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HashIdPreimageSorobanAuthorization(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::HashIdPreimageSorobanAuthorizationWithAddress => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::HashIdPreimageSorobanAuthorizationWithAddress(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::MemoType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::MemoType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Memo => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Memo(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TimeBounds => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TimeBounds(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerBounds => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerBounds(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PreconditionsV2 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PreconditionsV2(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PreconditionType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PreconditionType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Preconditions => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Preconditions(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LedgerFootprint => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LedgerFootprint(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanResources => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanResources(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanResourcesExtV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanResourcesExtV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanTransactionData => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanTransactionData(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SorobanTransactionDataExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SorobanTransactionDataExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionV0Ext => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionV0Ext(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionV0Envelope => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionV0Envelope(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Transaction => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Transaction(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionV1Envelope => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionV1Envelope(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::FeeBumpTransaction => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::FeeBumpTransaction(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::FeeBumpTransactionInnerTx => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::FeeBumpTransactionInnerTx(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::FeeBumpTransactionExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::FeeBumpTransactionExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::FeeBumpTransactionEnvelope => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::FeeBumpTransactionEnvelope(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionEnvelope => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionEnvelope(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionSignaturePayload => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionSignaturePayload(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionSignaturePayloadTaggedTransaction => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::TransactionSignaturePayloadTaggedTransaction(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ClaimAtomType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimAtomType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimOfferAtomV0 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimOfferAtomV0(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimOfferAtom => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimOfferAtom(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimLiquidityAtom => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimLiquidityAtom(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimAtom => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimAtom(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::CreateAccountResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::CreateAccountResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::CreateAccountResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::CreateAccountResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PaymentResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PaymentResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PaymentResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PaymentResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictReceiveResultCode => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PathPaymentStrictReceiveResultCode(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::SimplePaymentResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SimplePaymentResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictReceiveResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PathPaymentStrictReceiveResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictReceiveResultSuccess => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PathPaymentStrictReceiveResultSuccess(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::PathPaymentStrictSendResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PathPaymentStrictSendResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictSendResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PathPaymentStrictSendResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PathPaymentStrictSendResultSuccess => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::PathPaymentStrictSendResultSuccess(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ManageSellOfferResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageSellOfferResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ManageOfferEffect => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageOfferEffect(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ManageOfferSuccessResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageOfferSuccessResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ManageOfferSuccessResultOffer => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageOfferSuccessResultOffer(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ManageSellOfferResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageSellOfferResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ManageBuyOfferResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageBuyOfferResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ManageBuyOfferResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageBuyOfferResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SetOptionsResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SetOptionsResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SetOptionsResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SetOptionsResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ChangeTrustResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ChangeTrustResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ChangeTrustResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ChangeTrustResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AllowTrustResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AllowTrustResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AllowTrustResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AllowTrustResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AccountMergeResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AccountMergeResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AccountMergeResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AccountMergeResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InflationResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::InflationResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InflationPayout => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::InflationPayout(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InflationResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::InflationResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ManageDataResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageDataResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ManageDataResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ManageDataResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::BumpSequenceResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::BumpSequenceResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::BumpSequenceResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::BumpSequenceResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::CreateClaimableBalanceResultCode => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::CreateClaimableBalanceResultCode(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::CreateClaimableBalanceResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::CreateClaimableBalanceResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimClaimableBalanceResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimClaimableBalanceResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimClaimableBalanceResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimClaimableBalanceResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::BeginSponsoringFutureReservesResultCode => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BeginSponsoringFutureReservesResultCode(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::BeginSponsoringFutureReservesResult => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::BeginSponsoringFutureReservesResult(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::EndSponsoringFutureReservesResultCode => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::EndSponsoringFutureReservesResultCode(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::EndSponsoringFutureReservesResult => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::EndSponsoringFutureReservesResult(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::RevokeSponsorshipResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::RevokeSponsorshipResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::RevokeSponsorshipResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::RevokeSponsorshipResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClawbackResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClawbackResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClawbackResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClawbackResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClawbackClaimableBalanceResultCode => {
+                serde_ignored::deserialize(r, |path| {
+                    ignored.borrow_mut().push(path.to_string());
+                })
+                .map(|t| Self::ClawbackClaimableBalanceResultCode(Box::new(t)))
+                .map_err(Error::Json)
+            }
+            TypeVariant::ClawbackClaimableBalanceResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClawbackClaimableBalanceResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SetTrustLineFlagsResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SetTrustLineFlagsResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SetTrustLineFlagsResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SetTrustLineFlagsResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LiquidityPoolDepositResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LiquidityPoolDepositResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LiquidityPoolDepositResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LiquidityPoolDepositResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LiquidityPoolWithdrawResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LiquidityPoolWithdrawResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::LiquidityPoolWithdrawResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::LiquidityPoolWithdrawResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InvokeHostFunctionResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::InvokeHostFunctionResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InvokeHostFunctionResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::InvokeHostFunctionResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ExtendFootprintTtlResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ExtendFootprintTtlResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ExtendFootprintTtlResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ExtendFootprintTtlResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::RestoreFootprintResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::RestoreFootprintResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::RestoreFootprintResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::RestoreFootprintResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::OperationResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::OperationResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::OperationResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::OperationResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::OperationResultTr => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::OperationResultTr(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionResultCode => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionResultCode(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InnerTransactionResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::InnerTransactionResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InnerTransactionResultResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::InnerTransactionResultResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InnerTransactionResultExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::InnerTransactionResultExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::InnerTransactionResultPair => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::InnerTransactionResultPair(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionResultResult => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionResultResult(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TransactionResultExt => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TransactionResultExt(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Hash => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Hash(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Uint256 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Uint256(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Uint32 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Uint32(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Int32 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Int32(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Uint64 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Uint64(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Int64 => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Int64(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::TimePoint => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TimePoint(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Duration => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Duration(Box::new(t)))
+            .map_err(Error::Json),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TimePointMilliseconds(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ExtensionPoint => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ExtensionPoint(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::CryptoKeyType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::CryptoKeyType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PublicKeyType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PublicKeyType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SignerKeyType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SignerKeyType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PublicKey => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PublicKey(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SignerKey => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SignerKey(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SignerKeyEd25519SignedPayload => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SignerKeyEd25519SignedPayload(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Signature => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Signature(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SignatureHint => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SignatureHint(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::NodeId => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::NodeId(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::AccountId => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::AccountId(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ContractId => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ContractId(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Curve25519Secret => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Curve25519Secret(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::Curve25519Public => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::Curve25519Public(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::HmacSha256Key => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::HmacSha256Key(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::HmacSha256Mac => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::HmacSha256Mac(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ShortHashSeed => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ShortHashSeed(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::BinaryFuseFilterType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::BinaryFuseFilterType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::SerializedBinaryFuseFilter => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::SerializedBinaryFuseFilter(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::PoolId => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::PoolId(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceIdType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimableBalanceIdType(Box::new(t)))
+            .map_err(Error::Json),
+            TypeVariant::ClaimableBalanceId => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::ClaimableBalanceId(Box::new(t)))
+            .map_err(Error::Json),
+            #[cfg(feature = "test_feature")]
+            TypeVariant::TestNextType => serde_ignored::deserialize(r, |path| {
+                ignored.borrow_mut().push(path.to_string());
+            })
+            .map(|t| Self::TestNextType(Box::new(t)))
+            .map_err(Error::Json),
+        }?;
+        Ok((t, ignored.into_inner()))
     }
 
     #[cfg(feature = "arbitrary")]
@@ -16218,6 +18921,9 @@ impl Type {
                 ScSpecEntryKind::arbitrary(u)?,
             ))),
             TypeVariant::ScSpecEntry => Ok(Self::ScSpecEntry(Box::new(ScSpecEntry::arbitrary(u)?))),
+            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(ScBytes::arbitrary(u)?))),
+            TypeVariant::ScString => Ok(Self::ScString(Box::new(ScString::arbitrary(u)?))),
+            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(ScSymbol::arbitrary(u)?))),
             TypeVariant::ScValType => Ok(Self::ScValType(Box::new(ScValType::arbitrary(u)?))),
             TypeVariant::ScErrorType => Ok(Self::ScErrorType(Box::new(ScErrorType::arbitrary(u)?))),
             TypeVariant::ScErrorCode => Ok(Self::ScErrorCode(Box::new(ScErrorCode::arbitrary(u)?))),
@@ -16233,21 +18939,25 @@ impl Type {
             TypeVariant::ContractExecutableType => Ok(Self::ContractExecutableType(Box::new(
                 ContractExecutableType::arbitrary(u)?,
             ))),
-            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
-                ContractExecutable::arbitrary(u)?,
-            ))),
             TypeVariant::ScAddressType => {
                 Ok(Self::ScAddressType(Box::new(ScAddressType::arbitrary(u)?)))
             }
             TypeVariant::MuxedEd25519Account => Ok(Self::MuxedEd25519Account(Box::new(
                 MuxedEd25519Account::arbitrary(u)?,
             ))),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => {
+                Ok(Self::MuxedContract(Box::new(MuxedContract::arbitrary(u)?)))
+            }
             TypeVariant::ScAddress => Ok(Self::ScAddress(Box::new(ScAddress::arbitrary(u)?))),
+            TypeVariant::ContractExecutableExternalRef => Ok(Self::ContractExecutableExternalRef(
+                Box::new(ContractExecutableExternalRef::arbitrary(u)?),
+            )),
+            TypeVariant::ContractExecutable => Ok(Self::ContractExecutable(Box::new(
+                ContractExecutable::arbitrary(u)?,
+            ))),
             TypeVariant::ScVec => Ok(Self::ScVec(Box::new(ScVec::arbitrary(u)?))),
             TypeVariant::ScMap => Ok(Self::ScMap(Box::new(ScMap::arbitrary(u)?))),
-            TypeVariant::ScBytes => Ok(Self::ScBytes(Box::new(ScBytes::arbitrary(u)?))),
-            TypeVariant::ScString => Ok(Self::ScString(Box::new(ScString::arbitrary(u)?))),
-            TypeVariant::ScSymbol => Ok(Self::ScSymbol(Box::new(ScSymbol::arbitrary(u)?))),
             TypeVariant::ScNonceKey => Ok(Self::ScNonceKey(Box::new(ScNonceKey::arbitrary(u)?))),
             TypeVariant::ScContractInstance => Ok(Self::ScContractInstance(Box::new(
                 ScContractInstance::arbitrary(u)?,
@@ -16504,9 +19214,16 @@ impl Type {
             TypeVariant::StellarValueExt => Ok(Self::StellarValueExt(Box::new(
                 StellarValueExt::arbitrary(u)?,
             ))),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => Ok(Self::StellarValueProposedValue(
                 Box::new(StellarValueProposedValue::arbitrary(u)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => Ok(Self::StellarValueSignedMsValue(
+                Box::new(StellarValueSignedMsValue::arbitrary(u)?),
+            )),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => Ok(Self::StellarValueProposedMsValue(
+                Box::new(StellarValueProposedMsValue::arbitrary(u)?),
             )),
             TypeVariant::LedgerHeaderFlags => Ok(Self::LedgerHeaderFlags(Box::new(
                 LedgerHeaderFlags::arbitrary(u)?,
@@ -17307,6 +20024,10 @@ impl Type {
             TypeVariant::Int64 => Ok(Self::Int64(Box::new(Int64::arbitrary(u)?))),
             TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(TimePoint::arbitrary(u)?))),
             TypeVariant::Duration => Ok(Self::Duration(Box::new(Duration::arbitrary(u)?))),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Ok(Self::TimePointMilliseconds(Box::new(
+                TimePointMilliseconds::arbitrary(u)?,
+            ))),
             TypeVariant::ExtensionPoint => Ok(Self::ExtensionPoint(Box::new(
                 ExtensionPoint::arbitrary(u)?,
             ))),
@@ -17459,6 +20180,9 @@ impl Type {
             TypeVariant::ScSpecEventV0 => Self::ScSpecEventV0(Box::default()),
             TypeVariant::ScSpecEntryKind => Self::ScSpecEntryKind(Box::default()),
             TypeVariant::ScSpecEntry => Self::ScSpecEntry(Box::default()),
+            TypeVariant::ScBytes => Self::ScBytes(Box::default()),
+            TypeVariant::ScString => Self::ScString(Box::default()),
+            TypeVariant::ScSymbol => Self::ScSymbol(Box::default()),
             TypeVariant::ScValType => Self::ScValType(Box::default()),
             TypeVariant::ScErrorType => Self::ScErrorType(Box::default()),
             TypeVariant::ScErrorCode => Self::ScErrorCode(Box::default()),
@@ -17468,15 +20192,17 @@ impl Type {
             TypeVariant::UInt256Parts => Self::UInt256Parts(Box::default()),
             TypeVariant::Int256Parts => Self::Int256Parts(Box::default()),
             TypeVariant::ContractExecutableType => Self::ContractExecutableType(Box::default()),
-            TypeVariant::ContractExecutable => Self::ContractExecutable(Box::default()),
             TypeVariant::ScAddressType => Self::ScAddressType(Box::default()),
             TypeVariant::MuxedEd25519Account => Self::MuxedEd25519Account(Box::default()),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            TypeVariant::MuxedContract => Self::MuxedContract(Box::default()),
             TypeVariant::ScAddress => Self::ScAddress(Box::default()),
+            TypeVariant::ContractExecutableExternalRef => {
+                Self::ContractExecutableExternalRef(Box::default())
+            }
+            TypeVariant::ContractExecutable => Self::ContractExecutable(Box::default()),
             TypeVariant::ScVec => Self::ScVec(Box::default()),
             TypeVariant::ScMap => Self::ScMap(Box::default()),
-            TypeVariant::ScBytes => Self::ScBytes(Box::default()),
-            TypeVariant::ScString => Self::ScString(Box::default()),
-            TypeVariant::ScSymbol => Self::ScSymbol(Box::default()),
             TypeVariant::ScNonceKey => Self::ScNonceKey(Box::default()),
             TypeVariant::ScContractInstance => Self::ScContractInstance(Box::default()),
             TypeVariant::ScVal => Self::ScVal(Box::default()),
@@ -17603,9 +20329,16 @@ impl Type {
             }
             TypeVariant::StellarValue => Self::StellarValue(Box::default()),
             TypeVariant::StellarValueExt => Self::StellarValueExt(Box::default()),
-            #[cfg(feature = "cap_0083")]
             TypeVariant::StellarValueProposedValue => {
                 Self::StellarValueProposedValue(Box::default())
+            }
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueSignedMsValue => {
+                Self::StellarValueSignedMsValue(Box::default())
+            }
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::StellarValueProposedMsValue => {
+                Self::StellarValueProposedMsValue(Box::default())
             }
             TypeVariant::LedgerHeaderFlags => Self::LedgerHeaderFlags(Box::default()),
             TypeVariant::LedgerHeaderExtensionV1 => Self::LedgerHeaderExtensionV1(Box::default()),
@@ -18010,6 +20743,8 @@ impl Type {
             TypeVariant::Int64 => Self::Int64(Box::default()),
             TypeVariant::TimePoint => Self::TimePoint(Box::default()),
             TypeVariant::Duration => Self::Duration(Box::default()),
+            #[cfg(feature = "ms_close_time")]
+            TypeVariant::TimePointMilliseconds => Self::TimePointMilliseconds(Box::default()),
             TypeVariant::ExtensionPoint => Self::ExtensionPoint(Box::default()),
             TypeVariant::CryptoKeyType => Self::CryptoKeyType(Box::default()),
             TypeVariant::PublicKeyType => Self::PublicKeyType(Box::default()),
@@ -18113,6 +20848,9 @@ impl Type {
             Self::ScSpecEventV0(ref v) => v.as_ref(),
             Self::ScSpecEntryKind(ref v) => v.as_ref(),
             Self::ScSpecEntry(ref v) => v.as_ref(),
+            Self::ScBytes(ref v) => v.as_ref(),
+            Self::ScString(ref v) => v.as_ref(),
+            Self::ScSymbol(ref v) => v.as_ref(),
             Self::ScValType(ref v) => v.as_ref(),
             Self::ScErrorType(ref v) => v.as_ref(),
             Self::ScErrorCode(ref v) => v.as_ref(),
@@ -18122,15 +20860,15 @@ impl Type {
             Self::UInt256Parts(ref v) => v.as_ref(),
             Self::Int256Parts(ref v) => v.as_ref(),
             Self::ContractExecutableType(ref v) => v.as_ref(),
-            Self::ContractExecutable(ref v) => v.as_ref(),
             Self::ScAddressType(ref v) => v.as_ref(),
             Self::MuxedEd25519Account(ref v) => v.as_ref(),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract(ref v) => v.as_ref(),
             Self::ScAddress(ref v) => v.as_ref(),
+            Self::ContractExecutableExternalRef(ref v) => v.as_ref(),
+            Self::ContractExecutable(ref v) => v.as_ref(),
             Self::ScVec(ref v) => v.as_ref(),
             Self::ScMap(ref v) => v.as_ref(),
-            Self::ScBytes(ref v) => v.as_ref(),
-            Self::ScString(ref v) => v.as_ref(),
-            Self::ScSymbol(ref v) => v.as_ref(),
             Self::ScNonceKey(ref v) => v.as_ref(),
             Self::ScContractInstance(ref v) => v.as_ref(),
             Self::ScVal(ref v) => v.as_ref(),
@@ -18231,8 +20969,11 @@ impl Type {
             Self::LedgerCloseValueSignature(ref v) => v.as_ref(),
             Self::StellarValue(ref v) => v.as_ref(),
             Self::StellarValueExt(ref v) => v.as_ref(),
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue(ref v) => v.as_ref(),
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue(ref v) => v.as_ref(),
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue(ref v) => v.as_ref(),
             Self::LedgerHeaderFlags(ref v) => v.as_ref(),
             Self::LedgerHeaderExtensionV1(ref v) => v.as_ref(),
             Self::LedgerHeaderExtensionV1Ext(ref v) => v.as_ref(),
@@ -18498,6 +21239,8 @@ impl Type {
             Self::Int64(ref v) => v.as_ref(),
             Self::TimePoint(ref v) => v.as_ref(),
             Self::Duration(ref v) => v.as_ref(),
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds(ref v) => v.as_ref(),
             Self::ExtensionPoint(ref v) => v.as_ref(),
             Self::CryptoKeyType(ref v) => v.as_ref(),
             Self::PublicKeyType(ref v) => v.as_ref(),
@@ -18601,6 +21344,9 @@ impl Type {
             Self::ScSpecEventV0(_) => "ScSpecEventV0",
             Self::ScSpecEntryKind(_) => "ScSpecEntryKind",
             Self::ScSpecEntry(_) => "ScSpecEntry",
+            Self::ScBytes(_) => "ScBytes",
+            Self::ScString(_) => "ScString",
+            Self::ScSymbol(_) => "ScSymbol",
             Self::ScValType(_) => "ScValType",
             Self::ScErrorType(_) => "ScErrorType",
             Self::ScErrorCode(_) => "ScErrorCode",
@@ -18610,15 +21356,15 @@ impl Type {
             Self::UInt256Parts(_) => "UInt256Parts",
             Self::Int256Parts(_) => "Int256Parts",
             Self::ContractExecutableType(_) => "ContractExecutableType",
-            Self::ContractExecutable(_) => "ContractExecutable",
             Self::ScAddressType(_) => "ScAddressType",
             Self::MuxedEd25519Account(_) => "MuxedEd25519Account",
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract(_) => "MuxedContract",
             Self::ScAddress(_) => "ScAddress",
+            Self::ContractExecutableExternalRef(_) => "ContractExecutableExternalRef",
+            Self::ContractExecutable(_) => "ContractExecutable",
             Self::ScVec(_) => "ScVec",
             Self::ScMap(_) => "ScMap",
-            Self::ScBytes(_) => "ScBytes",
-            Self::ScString(_) => "ScString",
-            Self::ScSymbol(_) => "ScSymbol",
             Self::ScNonceKey(_) => "ScNonceKey",
             Self::ScContractInstance(_) => "ScContractInstance",
             Self::ScVal(_) => "ScVal",
@@ -18721,8 +21467,11 @@ impl Type {
             Self::LedgerCloseValueSignature(_) => "LedgerCloseValueSignature",
             Self::StellarValue(_) => "StellarValue",
             Self::StellarValueExt(_) => "StellarValueExt",
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue(_) => "StellarValueProposedValue",
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue(_) => "StellarValueSignedMsValue",
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue(_) => "StellarValueProposedMsValue",
             Self::LedgerHeaderFlags(_) => "LedgerHeaderFlags",
             Self::LedgerHeaderExtensionV1(_) => "LedgerHeaderExtensionV1",
             Self::LedgerHeaderExtensionV1Ext(_) => "LedgerHeaderExtensionV1Ext",
@@ -19010,6 +21759,8 @@ impl Type {
             Self::Int64(_) => "Int64",
             Self::TimePoint(_) => "TimePoint",
             Self::Duration(_) => "Duration",
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds(_) => "TimePointMilliseconds",
             Self::ExtensionPoint(_) => "ExtensionPoint",
             Self::CryptoKeyType(_) => "CryptoKeyType",
             Self::PublicKeyType(_) => "PublicKeyType",
@@ -19125,6 +21876,9 @@ impl Type {
             Self::ScSpecEventV0(_) => TypeVariant::ScSpecEventV0,
             Self::ScSpecEntryKind(_) => TypeVariant::ScSpecEntryKind,
             Self::ScSpecEntry(_) => TypeVariant::ScSpecEntry,
+            Self::ScBytes(_) => TypeVariant::ScBytes,
+            Self::ScString(_) => TypeVariant::ScString,
+            Self::ScSymbol(_) => TypeVariant::ScSymbol,
             Self::ScValType(_) => TypeVariant::ScValType,
             Self::ScErrorType(_) => TypeVariant::ScErrorType,
             Self::ScErrorCode(_) => TypeVariant::ScErrorCode,
@@ -19134,15 +21888,15 @@ impl Type {
             Self::UInt256Parts(_) => TypeVariant::UInt256Parts,
             Self::Int256Parts(_) => TypeVariant::Int256Parts,
             Self::ContractExecutableType(_) => TypeVariant::ContractExecutableType,
-            Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
             Self::ScAddressType(_) => TypeVariant::ScAddressType,
             Self::MuxedEd25519Account(_) => TypeVariant::MuxedEd25519Account,
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract(_) => TypeVariant::MuxedContract,
             Self::ScAddress(_) => TypeVariant::ScAddress,
+            Self::ContractExecutableExternalRef(_) => TypeVariant::ContractExecutableExternalRef,
+            Self::ContractExecutable(_) => TypeVariant::ContractExecutable,
             Self::ScVec(_) => TypeVariant::ScVec,
             Self::ScMap(_) => TypeVariant::ScMap,
-            Self::ScBytes(_) => TypeVariant::ScBytes,
-            Self::ScString(_) => TypeVariant::ScString,
-            Self::ScSymbol(_) => TypeVariant::ScSymbol,
             Self::ScNonceKey(_) => TypeVariant::ScNonceKey,
             Self::ScContractInstance(_) => TypeVariant::ScContractInstance,
             Self::ScVal(_) => TypeVariant::ScVal,
@@ -19251,8 +22005,11 @@ impl Type {
             Self::LedgerCloseValueSignature(_) => TypeVariant::LedgerCloseValueSignature,
             Self::StellarValue(_) => TypeVariant::StellarValue,
             Self::StellarValueExt(_) => TypeVariant::StellarValueExt,
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue(_) => TypeVariant::StellarValueProposedValue,
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue(_) => TypeVariant::StellarValueSignedMsValue,
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue(_) => TypeVariant::StellarValueProposedMsValue,
             Self::LedgerHeaderFlags(_) => TypeVariant::LedgerHeaderFlags,
             Self::LedgerHeaderExtensionV1(_) => TypeVariant::LedgerHeaderExtensionV1,
             Self::LedgerHeaderExtensionV1Ext(_) => TypeVariant::LedgerHeaderExtensionV1Ext,
@@ -19572,6 +22329,8 @@ impl Type {
             Self::Int64(_) => TypeVariant::Int64,
             Self::TimePoint(_) => TypeVariant::TimePoint,
             Self::Duration(_) => TypeVariant::Duration,
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds(_) => TypeVariant::TimePointMilliseconds,
             Self::ExtensionPoint(_) => TypeVariant::ExtensionPoint,
             Self::CryptoKeyType(_) => TypeVariant::CryptoKeyType,
             Self::PublicKeyType(_) => TypeVariant::PublicKeyType,
@@ -19687,6 +22446,9 @@ impl WriteXdr for Type {
             Self::ScSpecEventV0(v) => v.write_xdr(w),
             Self::ScSpecEntryKind(v) => v.write_xdr(w),
             Self::ScSpecEntry(v) => v.write_xdr(w),
+            Self::ScBytes(v) => v.write_xdr(w),
+            Self::ScString(v) => v.write_xdr(w),
+            Self::ScSymbol(v) => v.write_xdr(w),
             Self::ScValType(v) => v.write_xdr(w),
             Self::ScErrorType(v) => v.write_xdr(w),
             Self::ScErrorCode(v) => v.write_xdr(w),
@@ -19696,15 +22458,15 @@ impl WriteXdr for Type {
             Self::UInt256Parts(v) => v.write_xdr(w),
             Self::Int256Parts(v) => v.write_xdr(w),
             Self::ContractExecutableType(v) => v.write_xdr(w),
-            Self::ContractExecutable(v) => v.write_xdr(w),
             Self::ScAddressType(v) => v.write_xdr(w),
             Self::MuxedEd25519Account(v) => v.write_xdr(w),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            Self::MuxedContract(v) => v.write_xdr(w),
             Self::ScAddress(v) => v.write_xdr(w),
+            Self::ContractExecutableExternalRef(v) => v.write_xdr(w),
+            Self::ContractExecutable(v) => v.write_xdr(w),
             Self::ScVec(v) => v.write_xdr(w),
             Self::ScMap(v) => v.write_xdr(w),
-            Self::ScBytes(v) => v.write_xdr(w),
-            Self::ScString(v) => v.write_xdr(w),
-            Self::ScSymbol(v) => v.write_xdr(w),
             Self::ScNonceKey(v) => v.write_xdr(w),
             Self::ScContractInstance(v) => v.write_xdr(w),
             Self::ScVal(v) => v.write_xdr(w),
@@ -19805,8 +22567,11 @@ impl WriteXdr for Type {
             Self::LedgerCloseValueSignature(v) => v.write_xdr(w),
             Self::StellarValue(v) => v.write_xdr(w),
             Self::StellarValueExt(v) => v.write_xdr(w),
-            #[cfg(feature = "cap_0083")]
             Self::StellarValueProposedValue(v) => v.write_xdr(w),
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueSignedMsValue(v) => v.write_xdr(w),
+            #[cfg(feature = "ms_close_time")]
+            Self::StellarValueProposedMsValue(v) => v.write_xdr(w),
             Self::LedgerHeaderFlags(v) => v.write_xdr(w),
             Self::LedgerHeaderExtensionV1(v) => v.write_xdr(w),
             Self::LedgerHeaderExtensionV1Ext(v) => v.write_xdr(w),
@@ -20072,6 +22837,8 @@ impl WriteXdr for Type {
             Self::Int64(v) => v.write_xdr(w),
             Self::TimePoint(v) => v.write_xdr(w),
             Self::Duration(v) => v.write_xdr(w),
+            #[cfg(feature = "ms_close_time")]
+            Self::TimePointMilliseconds(v) => v.write_xdr(w),
             Self::ExtensionPoint(v) => v.write_xdr(w),
             Self::CryptoKeyType(v) => v.write_xdr(w),
             Self::PublicKeyType(v) => v.write_xdr(w),

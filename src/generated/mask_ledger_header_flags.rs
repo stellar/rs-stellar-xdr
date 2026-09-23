@@ -7,4 +7,4 @@ use super::*;
 /// const MASK_LEDGER_HEADER_FLAGS = 0x7;
 /// ```
 ///
-pub const MASK_LEDGER_HEADER_FLAGS: u64 = 0x7;
+pub const MASK_LEDGER_HEADER_FLAGS: u32 = 0x7;

@@ -7,7 +7,8 @@ use super::*;
 /// enum ContractExecutableType
 /// {
 ///     CONTRACT_EXECUTABLE_WASM = 0,
-///     CONTRACT_EXECUTABLE_STELLAR_ASSET = 1
+///     CONTRACT_EXECUTABLE_STELLAR_ASSET = 1,
+///     CONTRACT_EXECUTABLE_EXTERNAL_REF = 2
 /// };
 /// ```
 ///
@@ -26,12 +27,14 @@ pub enum ContractExecutableType {
     #[cfg_attr(feature = "alloc", default)]
     Wasm = 0,
     StellarAsset = 1,
+    ExternalRef = 2,
 }
 
 impl ContractExecutableType {
     const _VARIANTS: &[ContractExecutableType] = &[
         ContractExecutableType::Wasm,
         ContractExecutableType::StellarAsset,
+        ContractExecutableType::ExternalRef,
     ];
     pub const VARIANTS: [ContractExecutableType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -42,7 +45,7 @@ impl ContractExecutableType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Wasm", "StellarAsset"];
+    const _VARIANTS_STR: &[&str] = &["Wasm", "StellarAsset", "ExternalRef"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -58,6 +61,7 @@ impl ContractExecutableType {
         match self {
             Self::Wasm => "Wasm",
             Self::StellarAsset => "StellarAsset",
+            Self::ExternalRef => "ExternalRef",
         }
     }
 
@@ -95,6 +99,7 @@ impl TryFrom<i32> for ContractExecutableType {
         let e = match i {
             0 => ContractExecutableType::Wasm,
             1 => ContractExecutableType::StellarAsset,
+            2 => ContractExecutableType::ExternalRef,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

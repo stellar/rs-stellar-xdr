@@ -63,6 +63,9 @@ use super::*;
 ///     void;
 /// case SCV_LEDGER_KEY_NONCE:
 ///     SCNonceKey nonce_key;
+///
+/// case SCV_EXECUTABLE_TAG:
+///     SCString executable_tag;
 /// };
 /// ```
 ///
@@ -113,6 +116,7 @@ pub enum ScVal {
     ContractInstance(ScContractInstance),
     LedgerKeyContractInstance,
     LedgerKeyNonce(ScNonceKey),
+    ExecutableTag(ScString),
 }
 
 #[cfg(feature = "alloc")]
@@ -146,6 +150,7 @@ impl ScVal {
         ScValType::ContractInstance,
         ScValType::LedgerKeyContractInstance,
         ScValType::LedgerKeyNonce,
+        ScValType::ExecutableTag,
     ];
     pub const VARIANTS: [ScValType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -179,6 +184,7 @@ impl ScVal {
         "ContractInstance",
         "LedgerKeyContractInstance",
         "LedgerKeyNonce",
+        "ExecutableTag",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
@@ -215,6 +221,7 @@ impl ScVal {
             Self::ContractInstance(_) => "ContractInstance",
             Self::LedgerKeyContractInstance => "LedgerKeyContractInstance",
             Self::LedgerKeyNonce(_) => "LedgerKeyNonce",
+            Self::ExecutableTag(_) => "ExecutableTag",
         }
     }
 
@@ -244,6 +251,7 @@ impl ScVal {
             Self::ContractInstance(_) => ScValType::ContractInstance,
             Self::LedgerKeyContractInstance => ScValType::LedgerKeyContractInstance,
             Self::LedgerKeyNonce(_) => ScValType::LedgerKeyNonce,
+            Self::ExecutableTag(_) => ScValType::ExecutableTag,
         }
     }
 
@@ -306,6 +314,7 @@ impl ReadXdr for ScVal {
                 }
                 ScValType::LedgerKeyContractInstance => Self::LedgerKeyContractInstance,
                 ScValType::LedgerKeyNonce => Self::LedgerKeyNonce(ScNonceKey::read_xdr(r)?),
+                ScValType::ExecutableTag => Self::ExecutableTag(ScString::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -343,6 +352,7 @@ impl WriteXdr for ScVal {
                 Self::ContractInstance(v) => v.write_xdr(w)?,
                 Self::LedgerKeyContractInstance => ().write_xdr(w)?,
                 Self::LedgerKeyNonce(v) => v.write_xdr(w)?,
+                Self::ExecutableTag(v) => v.write_xdr(w)?,
             };
             Ok(())
         })

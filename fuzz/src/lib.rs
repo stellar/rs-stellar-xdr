@@ -1,0 +1,67 @@
+//! Shared harness for the differential fuzz targets.
+
+/// Builds a value in both the owned and the const form from the same input
+/// bytes, and asserts the two encoders agree.
+///
+/// The const form of a type mirrors the owned form field for field, and the
+/// `Arbitrary` impls of the types the const form substitutes — `VecM` for
+/// `Vec`, `BytesM` and `StringM` for `Vec<u8>`, a `&'static` reference for a
+/// `Box` — consume input bytes exactly as the owned ones do. Driving both
+/// derives from the same input therefore yields the same value in both forms,
+/// with no conversion between them, and the two encoders must agree.
+///
+/// `$write` is the [`ConstWriter`](stellar_xdr::r#const::ConstWriter) method
+/// for `$type`, which is what a const context reaches for; going through it
+/// rather than `const_to_xdr` keeps the buffer sizeable at runtime.
+#[macro_export]
+macro_rules! assert_same_encoding {
+    ($type:ident, $write:ident, $data:expr $(,)?) => {{
+        use arbitrary::{Arbitrary, Unstructured};
+        use stellar_xdr::{Limits, WriteXdr};
+
+        let data: &[u8] = $data;
+        let owned = stellar_xdr::$type::arbitrary(&mut Unstructured::new(data));
+        let konst = stellar_xdr::r#const::$type::arbitrary(&mut Unstructured::new(data));
+
+        match (owned, konst) {
+            (Ok(owned), Ok(konst)) => {
+                let owned_xdr = owned.to_xdr(Limits::none()).unwrap();
+
+                let konst_xdr_len = konst.const_xdr_len();
+                let mut konst_xdr = vec![0u8; konst.const_xdr_len()];
+                let mut w = stellar_xdr::r#const::ConstWriter::new(&mut konst_xdr);
+                w.$write(&konst);
+                assert_eq!(
+                    w.len(),
+                    konst_xdr_len,
+                    "{} const_xdr_len disagrees with what the writer wrote",
+                    stringify!($type),
+                );
+                assert_eq!(
+                    konst_xdr,
+                    owned_xdr,
+                    "{} encodings differ",
+                    stringify!($type),
+                );
+            }
+            // Both forms read the same bytes, so input that runs out, or that
+            // no value can be built from, stops both. There is nothing to
+            // compare, and it is the common case for a short input rather than
+            // a failure, but the two must agree on why they stopped.
+            (Err(owned_err), Err(konst_err)) => assert_eq!(
+                owned_err,
+                konst_err,
+                "{} failed to build in both forms but for different reasons",
+                stringify!($type),
+            ),
+            (Ok(_), Err(e)) => panic!(
+                "{} built in the owned form but not the const form: {e}",
+                stringify!($type),
+            ),
+            (Err(e), Ok(_)) => panic!(
+                "{} built in the const form but not the owned form: {e}",
+                stringify!($type),
+            ),
+        }
+    }};
+}

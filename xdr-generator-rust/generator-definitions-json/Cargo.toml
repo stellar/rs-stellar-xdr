@@ -3,7 +3,7 @@ name = "generator-definitions-json"
 description = "Emit parsed XDR definitions as a JSON AST for downstream code generators"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.84.0"
+rust-version = "1.85.0"
 
 [[bin]]
 name = "generator-definitions-json"

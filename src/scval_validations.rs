@@ -30,7 +30,8 @@ impl Validate for ScVal {
             | ScVal::Address(_)
             | ScVal::LedgerKeyContractInstance
             | ScVal::LedgerKeyNonce(_)
-            | ScVal::ContractInstance(_) => Ok(()),
+            | ScVal::ContractInstance(_)
+            | ScVal::ExecutableTag(_) => Ok(()),
 
             ScVal::Vec(Some(v)) => {
                 for e in v.iter() {

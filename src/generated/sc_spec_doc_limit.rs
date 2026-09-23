@@ -7,4 +7,4 @@ use super::*;
 /// const SC_SPEC_DOC_LIMIT = 1024;
 /// ```
 ///
-pub const SC_SPEC_DOC_LIMIT: u64 = 1024;
+pub const SC_SPEC_DOC_LIMIT: u32 = 1024;

@@ -1,3 +1,5 @@
+.PHONY: all test build doc install readme fuzz fuzz-reduce watch generate generate-files clean fmt publish
+
 export RUSTFLAGS=-Dwarnings -Dclippy::all -Dclippy::pedantic
 
 CARGO_HACK_ARGS=--feature-powerset --exclude-features default --group-features base64,serde,arbitrary,hex,rand
@@ -26,6 +28,16 @@ readme:
 		| cat target/doc/stellar_xdr.json \
 		| jq -r '"# stellar-xdr\n\n" + .index[.root|tostring].docs' \
 		> README.md
+
+# Run the fuzz corpus.
+# Leak detection is disabled because the fuzzer tests the const impls that
+# contain &'static data and so their Arbitrary impls explicitly leak.
+fuzz:
+	ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz run spec-entry -- -rss_limit_mb=0 -max_len=10240 -runs=0
+
+# Shrinks each corpus to the smallest set of inputs with the same coverage.
+fuzz-reduce:
+	ASAN_OPTIONS=detect_leaks=0 cargo +nightly fuzz cmin spec-entry -- -rss_limit_mb=0
 
 watch:
 	cargo watch --clear --watch-when-idle --shell '$(MAKE)'

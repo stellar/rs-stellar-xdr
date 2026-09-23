@@ -1,8 +1,9 @@
-{# XDR consts are always emitted as u64 to match the Ruby xdrgen generator, #}
-{# which uses u64 unconditionally regardless of the const's declared type. #}
+{# XDR consts are untyped (RFC 4506 §6.2) and exist to be used wherever a #}
+{# constant can appear in a .x file, which is only as an array or string #}
+{# length. Lengths are bounded by u32, so consts are emitted as u32 and can #}
+{# be used directly as the length parameter of BytesM, StringM, and VecM. #}
 /// {{ c.doc_name }}{{ c.source_comment }}
 {%- if let Some(cfg) = c.cfg %}
 #[cfg({{ cfg }})]
 {%- endif %}
-pub const {{ c.name }}: u64 = {{ c.value_str }};
-
+pub const {{ c.name }}: u32 = {{ c.value_str }};

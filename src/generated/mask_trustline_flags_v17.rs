@@ -7,4 +7,4 @@ use super::*;
 /// const MASK_TRUSTLINE_FLAGS_V17 = 7;
 /// ```
 ///
-pub const MASK_TRUSTLINE_FLAGS_V17: u64 = 7;
+pub const MASK_TRUSTLINE_FLAGS_V17: u32 = 7;

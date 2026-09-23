@@ -7,11 +7,13 @@ use super::*;
 /// enum StellarValueType
 /// {
 ///     STELLAR_VALUE_BASIC = 0,
-///     STELLAR_VALUE_SIGNED = 1
-/// #ifdef CAP_0083
-///     ,
+///     STELLAR_VALUE_SIGNED = 1,
 ///     STELLAR_VALUE_EMPTY_TX_SET = 2
-/// #endif
+/// #ifdef MS_CLOSE_TIME
+///     ,
+///     STELLAR_VALUE_SIGNED_MS = 3,
+///     STELLAR_VALUE_EMPTY_TX_SET_MS = 4
+/// #endif // MS_CLOSE_TIME
 /// };
 /// ```
 ///
@@ -30,16 +32,22 @@ pub enum StellarValueType {
     #[cfg_attr(feature = "alloc", default)]
     Basic = 0,
     Signed = 1,
-    #[cfg(feature = "cap_0083")]
     EmptyTxSet = 2,
+    #[cfg(feature = "ms_close_time")]
+    SignedMs = 3,
+    #[cfg(feature = "ms_close_time")]
+    EmptyTxSetMs = 4,
 }
 
 impl StellarValueType {
     const _VARIANTS: &[StellarValueType] = &[
         StellarValueType::Basic,
         StellarValueType::Signed,
-        #[cfg(feature = "cap_0083")]
         StellarValueType::EmptyTxSet,
+        #[cfg(feature = "ms_close_time")]
+        StellarValueType::SignedMs,
+        #[cfg(feature = "ms_close_time")]
+        StellarValueType::EmptyTxSetMs,
     ];
     pub const VARIANTS: [StellarValueType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -53,8 +61,11 @@ impl StellarValueType {
     const _VARIANTS_STR: &[&str] = &[
         "Basic",
         "Signed",
-        #[cfg(feature = "cap_0083")]
         "EmptyTxSet",
+        #[cfg(feature = "ms_close_time")]
+        "SignedMs",
+        #[cfg(feature = "ms_close_time")]
+        "EmptyTxSetMs",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
@@ -71,8 +82,11 @@ impl StellarValueType {
         match self {
             Self::Basic => "Basic",
             Self::Signed => "Signed",
-            #[cfg(feature = "cap_0083")]
             Self::EmptyTxSet => "EmptyTxSet",
+            #[cfg(feature = "ms_close_time")]
+            Self::SignedMs => "SignedMs",
+            #[cfg(feature = "ms_close_time")]
+            Self::EmptyTxSetMs => "EmptyTxSetMs",
         }
     }
 
@@ -110,8 +124,11 @@ impl TryFrom<i32> for StellarValueType {
         let e = match i {
             0 => StellarValueType::Basic,
             1 => StellarValueType::Signed,
-            #[cfg(feature = "cap_0083")]
             2 => StellarValueType::EmptyTxSet,
+            #[cfg(feature = "ms_close_time")]
+            3 => StellarValueType::SignedMs,
+            #[cfg(feature = "ms_close_time")]
+            4 => StellarValueType::EmptyTxSetMs,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

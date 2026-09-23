@@ -20,6 +20,8 @@ pub enum Error {
     WriteOutput(std::io::Error),
     #[error("error generating XDR: {0}")]
     WriteXdr(crate::Error),
+    #[error("unknown fields in JSON input: {}", .0.join(", "))]
+    UnknownFields(Vec<String>),
 }
 
 impl From<crate::Error> for Error {
@@ -61,30 +63,20 @@ pub struct Cmd {
     pub output_format: OutputFormat,
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
+#[derive(Default, Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
 pub enum InputFormat {
+    #[default]
     Json,
 }
 
-impl Default for InputFormat {
-    fn default() -> Self {
-        Self::Json
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
+#[derive(Default, Clone, Copy, Debug, Eq, Hash, PartialEq, ValueEnum)]
 pub enum OutputFormat {
     Single,
+    #[default]
     SingleBase64,
     Stream,
     // TODO: StreamBase64,
     // TODO: StreamFramed,
-}
-
-impl Default for OutputFormat {
-    fn default() -> Self {
-        Self::SingleBase64
-    }
 }
 
 // TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next
@@ -101,14 +93,18 @@ macro_rules! run_x {
                 match self.input_format {
                     InputFormat::Json => match self.output_format {
                         OutputFormat::Single => {
-                            let t = crate::Type::from_json(r#type, f)?;
+                            let (t, ignored) =
+                                crate::Type::from_json_collecting_ignored_fields(r#type, f)?;
+                            check_ignored_fields(&ignored)?;
                             let l = crate::Limits::none();
                             stdout()
                                 .write_all(&t.to_xdr(l)?)
                                 .map_err(Error::WriteOutput)?;
                         }
                         OutputFormat::SingleBase64 => {
-                            let t = crate::Type::from_json(r#type, f)?;
+                            let (t, ignored) =
+                                crate::Type::from_json_collecting_ignored_fields(r#type, f)?;
+                            check_ignored_fields(&ignored)?;
                             let l = crate::Limits::none();
                             writeln!(stdout(), "{}", t.to_xdr_base64(l)?)
                                 .map_err(Error::WriteOutput)?
@@ -117,13 +113,14 @@ macro_rules! run_x {
                             let mut de =
                                 serde_json::Deserializer::new(serde_json::de::IoRead::new(f));
                             loop {
-                                let t = match crate::Type::deserialize_json(r#type, &mut de) {
-                                    Ok(t) => t,
+                                let (t, ignored) = match crate::Type::deserialize_json_collecting_ignored_fields(r#type, &mut de) {
+                                    Ok(r) => r,
                                     Err(crate::Error::Json(ref inner)) if inner.is_eof() => {
                                         break;
                                     }
                                     Err(e) => Err(e)?,
                                 };
+                                check_ignored_fields(&ignored)?;
                                 let l = crate::Limits::none();
                                 stdout()
                                     .write_all(&t.to_xdr(l)?)
@@ -154,4 +151,11 @@ impl Cmd {
     }
 
     run_x!(run_inner);
+}
+
+fn check_ignored_fields(ignored: &[String]) -> Result<(), Error> {
+    if ignored.is_empty() {
+        return Ok(());
+    }
+    Err(Error::UnknownFields(ignored.to_vec()))
 }

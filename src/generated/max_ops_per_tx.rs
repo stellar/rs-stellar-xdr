@@ -7,4 +7,4 @@ use super::*;
 /// const MAX_OPS_PER_TX = 100;
 /// ```
 ///
-pub const MAX_OPS_PER_TX: u64 = 100;
+pub const MAX_OPS_PER_TX: u32 = 100;

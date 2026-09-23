@@ -23,7 +23,6 @@ use super::*;
 ///         void;
 ///     case STELLAR_VALUE_SIGNED:
 ///         LedgerCloseValueSignature lcValueSignature;
-/// #ifdef CAP_0083
 ///     case STELLAR_VALUE_EMPTY_TX_SET:
 ///         struct
 ///         {
@@ -32,7 +31,23 @@ use super::*;
 ///             uint32 previousLedgerVersion;
 ///             LedgerCloseValueSignature lcValueSignature;
 ///         } proposedValue;
-/// #endif
+/// #ifdef MS_CLOSE_TIME
+///     case STELLAR_VALUE_SIGNED_MS:
+///         struct
+///         {
+///             TimePointMilliseconds closeTimeMs; // closeTime == closeTimeMs / 1000
+///             LedgerCloseValueSignature lcValueSignature;
+///         } signedMsValue;
+///     case STELLAR_VALUE_EMPTY_TX_SET_MS:
+///         struct
+///         {
+///             TimePointMilliseconds closeTimeMs; // closeTime == closeTimeMs / 1000
+///             Hash txSetHash;
+///             Hash previousLedgerHash;
+///             uint32 previousLedgerVersion;
+///             LedgerCloseValueSignature lcValueSignature;
+///         } proposedMsValue;
+/// #endif // MS_CLOSE_TIME
 ///     }
 ///     ext;
 /// };

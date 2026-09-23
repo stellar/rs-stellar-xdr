@@ -30,26 +30,9 @@ impl XdrSpec {
     /// The parser emits nested types before their parents (so the compiler sees
     /// them before they're referenced). This method provides the opposite order:
     /// parents first, then children — useful for type variant enums.
+    #[must_use]
     pub fn type_names_parent_first(&self) -> Vec<&str> {
         use std::collections::{HashMap, HashSet};
-
-        let mut children_of: HashMap<&str, Vec<&str>> = HashMap::new();
-        let mut all: Vec<(&str, Option<&str>)> = Vec::new();
-
-        for def in self.all_definitions() {
-            if matches!(def, Definition::Const(_)) {
-                continue;
-            }
-            let name = def.name();
-            let parent = def.parent();
-            if let Some(p) = parent {
-                children_of.entry(p).or_default().push(name);
-            }
-            all.push((name, parent));
-        }
-
-        let mut result: Vec<&str> = Vec::new();
-        let mut added: HashSet<&str> = HashSet::new();
 
         fn add_with_children<'a>(
             name: &'a str,
@@ -68,6 +51,24 @@ impl XdrSpec {
                 }
             }
         }
+
+        let mut children_of: HashMap<&str, Vec<&str>> = HashMap::new();
+        let mut all: Vec<(&str, Option<&str>)> = Vec::new();
+
+        for def in self.all_definitions() {
+            if matches!(def, Definition::Const(_)) {
+                continue;
+            }
+            let name = def.name();
+            let parent = def.parent();
+            if let Some(p) = parent {
+                children_of.entry(p).or_default().push(name);
+            }
+            all.push((name, parent));
+        }
+
+        let mut result: Vec<&str> = Vec::new();
+        let mut added: HashSet<&str> = HashSet::new();
 
         for (name, parent) in &all {
             if parent.is_none() {
@@ -109,6 +110,7 @@ pub enum CfgExpr {
 impl CfgExpr {
     /// Negate this expression, simplifying double negation.
     /// `Not(x)` becomes `x`, anything else becomes `Not(self)`.
+    #[must_use]
     pub fn negate(self) -> CfgExpr {
         match self {
             CfgExpr::Not(inner) => *inner,
@@ -119,6 +121,7 @@ impl CfgExpr {
     /// Combine two cfg expressions with `all(...)`, flattening nested `All`.
     ///
     /// Useful for combining an `#ifdef`-derived cfg with a file-based cfg.
+    #[must_use]
     pub fn and(self, other: CfgExpr) -> CfgExpr {
         let mut parts = Vec::new();
         match self {
@@ -130,7 +133,7 @@ impl CfgExpr {
             other_expr => parts.push(other_expr),
         }
         if parts.len() == 1 {
-            parts.into_iter().next().unwrap()
+            parts.remove(0)
         } else {
             CfgExpr::All(parts)
         }
@@ -138,6 +141,7 @@ impl CfgExpr {
 
     /// Evaluate this expression against a set of enabled features.
     /// Feature names are compared case-insensitively.
+    #[must_use]
     pub fn evaluate(&self, features: &std::collections::HashSet<String>) -> bool {
         match self {
             CfgExpr::Feature(name) => features.contains(&name.to_lowercase()),
@@ -150,6 +154,7 @@ impl CfgExpr {
     ///
     /// Feature names are lowercased to follow the Cargo convention that feature
     /// names are lowercase (e.g. XDR `FEATURE_X` becomes `feature = "feature_x"`).
+    #[must_use]
     pub fn render(&self) -> String {
         match self {
             CfgExpr::Feature(name) => {
@@ -158,7 +163,7 @@ impl CfgExpr {
             }
             CfgExpr::Not(inner) => format!("not({})", inner.render()),
             CfgExpr::All(exprs) => {
-                let parts: Vec<String> = exprs.iter().map(|e| e.render()).collect();
+                let parts: Vec<String> = exprs.iter().map(CfgExpr::render).collect();
                 format!("all({})", parts.join(", "))
             }
         }
@@ -177,6 +182,7 @@ pub enum Definition {
 
 impl Definition {
     /// Get the name of this definition.
+    #[must_use]
     pub fn name(&self) -> &str {
         match self {
             Definition::Struct(s) => &s.name,
@@ -188,6 +194,7 @@ impl Definition {
     }
 
     /// Check if this definition is nested (inline struct/union extracted from parent).
+    #[must_use]
     pub fn is_nested(&self) -> bool {
         match self {
             Definition::Struct(s) => s.is_nested,
@@ -198,6 +205,7 @@ impl Definition {
     }
 
     /// Get the parent type name if this is a nested definition.
+    #[must_use]
     pub fn parent(&self) -> Option<&str> {
         match self {
             Definition::Struct(s) => s.parent.as_deref(),
@@ -208,6 +216,7 @@ impl Definition {
     }
 
     /// Get the file index this definition was parsed from.
+    #[must_use]
     pub fn file_index(&self) -> usize {
         match self {
             Definition::Struct(s) => s.file_index,
@@ -219,6 +228,7 @@ impl Definition {
     }
 
     /// Get the cfg expression for conditional compilation, if any.
+    #[must_use]
     pub fn cfg(&self) -> Option<&CfgExpr> {
         match self {
             Definition::Struct(s) => s.cfg.as_ref(),
@@ -275,6 +285,7 @@ pub struct Enum {
 
 impl Enum {
     /// Create a new Enum, computing stripped member names from the common prefix.
+    #[must_use]
     pub fn new(name: String, members: Vec<(String, i32, Option<CfgExpr>)>, source: String) -> Self {
         let names: Vec<&str> = members.iter().map(|(n, _, _)| n.as_str()).collect();
         let member_prefix = find_common_prefix(&names).to_string();
@@ -408,7 +419,7 @@ pub struct UnionDiscriminant {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnionArm {
     pub cases: Vec<UnionCase>,
-    /// The declaration name for this arm (e.g., "v0" from "LedgerCloseMetaV0 v0;").
+    /// The declaration name for this arm (e.g., `v0` from `LedgerCloseMetaV0 v0;`).
     /// `None` for void arms.
     pub name: Option<String>,
     /// The type for this arm. None means `void`.
@@ -435,6 +446,7 @@ pub enum UnionCaseValue {
 impl UnionCaseValue {
     /// Get the identifier name with the common prefix stripped.
     /// Returns `None` for literal values.
+    #[must_use]
     pub fn stripped_ident(&self, prefix: &str) -> Option<String> {
         match self {
             UnionCaseValue::Ident(name) => Some(strip_prefix(name, prefix)),

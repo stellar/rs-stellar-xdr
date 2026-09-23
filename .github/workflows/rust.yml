@@ -11,13 +11,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand
+  CARGO_HACK_ARGS: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand,type_enum,serde_ignored,test_feature
 
 jobs:
 
   complete:
     if: always()
-    needs: [generate, fmt, readme, prepare, build, test, publish-dry-run]
+    needs: [generate, fmt, readme, prepare, build, test, fuzz-corpus, publish-dry-run-wasm32, publish-dry-run-wasm32v1, publish-dry-run-x86_64]
     runs-on: ubuntu-latest
     steps:
     - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
@@ -51,15 +51,16 @@ jobs:
     - run: git add -N . && git diff HEAD --exit-code
 
   # Expand the cargo-hack feature powerset into a list of individual cargo
-  # invocations, so the build and test jobs below can run each feature
-  # combination as its own parallel job. Running them separately keeps each
-  # runner from accumulating the build artifacts of every combination, which
-  # was exhausting disk space when the whole powerset ran on one runner.
+  # invocations, so the build, test and publish dry-run jobs below can run each
+  # feature combination as its own parallel job. Running them separately keeps
+  # each runner from accumulating the build artifacts of every combination,
+  # which was exhausting disk space when the whole powerset ran on one runner.
   prepare:
     runs-on: ubuntu-latest
     outputs:
       feature-args: ${{ steps.gen.outputs.feature-args }}
       clippy-matrix: ${{ steps.gen.outputs.clippy-matrix }}
+      publish-feature-args: ${{ steps.gen.outputs.publish-feature-args }}
     steps:
     - uses: actions/checkout@v3
     - run: rustup update
@@ -72,7 +73,9 @@ jobs:
       # per-combination feature args reused by the test job, and emit them as a
       # JSON array. From those, derive the clippy build matrix: the wasm target
       # runs minimal clippy once, and the x86 target runs a job per feature
-      # combination (with --all-targets).
+      # combination (with --all-targets). The publish dry-run takes the same
+      # expanded args, minus the manifest path, which cargo-hack adds itself
+      # and cargo rejects when given twice.
       run: |
         feature_args="$(cargo hack test $CARGO_HACK_ARGS --print-command-list | sed 's/^cargo test //' | jq -R . | jq -sc .)"
         echo "feature-args=$feature_args" >> "$GITHUB_OUTPUT"
@@ -80,6 +83,7 @@ jobs:
           [{target:"wasm32v1-none", flags:"--target wasm32v1-none --no-default-features"}]
           + map({target:"x86_64-unknown-linux-gnu", flags:(. + " --target x86_64-unknown-linux-gnu --all-targets")})
         ')" >> "$GITHUB_OUTPUT"
+        echo "publish-feature-args=$(printf '%s' "$feature_args" | jq -c 'map(sub("^--manifest-path Cargo\\.toml ";""))')" >> "$GITHUB_OUTPUT"
 
   build:
     needs: prepare
@@ -129,26 +133,64 @@ jobs:
       # Rust will frequently add new warnings and checks.
       if: matrix.rust == 'msrv'
       run: echo RUSTFLAGS='-Dwarnings -Dclippy::all -Dclippy::pedantic' >> $GITHUB_ENV
+    - name: Reduce test debug info on the msrv to keep linking within memory
+      # cargo test links a separate binary per integration test, each embedding
+      # the crate's debug info. On the msrv toolchain the cli feature set links
+      # these in parallel using enough memory to exhaust the runner and have it
+      # killed. Dropping test debug info keeps linking within the memory limit.
+      if: matrix.rust == 'msrv'
+      run: echo CARGO_PROFILE_TEST_DEBUG=0 >> $GITHUB_ENV
     - run: rustup update
     - run: cargo version
     - run: cargo test ${{ matrix.feature-args }}
 
-  publish-dry-run:
+  fuzz-corpus:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: stellar/actions/rust-cache@main
+    - uses: stellar/binaries@v55
+      with:
+        name: cargo-fuzz
+        version: 0.13.1
+    - run: rustup install nightly
+    - run: rustup default nightly
+    - name: Run fuzz corpus
+      run: make fuzz
+    - name: Check no diffs exist
+      run: git add -N . && git diff HEAD --exit-code
+
+  publish-dry-run-wasm32:
     if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
-    strategy:
-      matrix:
-        sys:
-        - os: ubuntu-latest
-          target: wasm32-unknown-unknown
-          cargo-hack-feature-options: --manifest-path Cargo.toml --each-feature --exclude-features cli,rand
-        - os: ubuntu-latest
-          target: wasm32v1-none
-          cargo-hack-feature-options: --manifest-path Cargo.toml --exclude-features default,cli,rand,schemars,serde,alloc,arbitrary,base64,hex,serde_json,std --each-feature
-        - os: ubuntu-latest
-          target: x86_64-unknown-linux-gnu
-          cargo-hack-feature-options: --feature-powerset --exclude-features default --group-features base64,serde,serde_json,schemars,arbitrary,hex,rand
-    uses: stellar/actions/.github/workflows/rust-publish-dry-run.yml@main
+    uses: stellar/actions/.github/workflows/rust-publish-dry-run-v2.yml@main
     with:
-      runs-on: ${{ matrix.sys.os }}
-      target: ${{ matrix.sys.target }}
-      cargo-hack-feature-options: ${{ matrix.sys.cargo-hack-feature-options }}
+      runs-on: ubuntu-latest
+      target: wasm32-unknown-unknown
+      cargo-hack-feature-options: ''
+      cargo-hack-package-options: --each-feature --exclude-features cli,rand --manifest-path Cargo.toml
+
+  publish-dry-run-wasm32v1:
+    if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
+    uses: stellar/actions/.github/workflows/rust-publish-dry-run-v2.yml@main
+    with:
+      runs-on: ubuntu-latest
+      target: wasm32v1-none
+      cargo-hack-feature-options: ''
+      cargo-hack-package-options: --each-feature --exclude-features default,cli,rand,schemars,serde,alloc,arbitrary,base64,hex,serde_json,std,serde_ignored --manifest-path Cargo.toml
+
+  # The x86 target dry-runs a large powerset, the same large powerset that the
+  # build and test jobs cover, so like them it must run each combination in its
+  # own job so that each run doesn't exhaust disk space.
+  publish-dry-run-x86_64:
+    if: github.event_name == 'push' || startsWith(github.head_ref, 'release/')
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        feature-args: ${{ fromJSON(needs.prepare.outputs.publish-feature-args) }}
+    uses: stellar/actions/.github/workflows/rust-publish-dry-run-v2.yml@main
+    with:
+      runs-on: ubuntu-latest
+      target: x86_64-unknown-linux-gnu
+      cargo-hack-feature-options: ''
+      cargo-hack-package-options: ${{ matrix.feature-args }}

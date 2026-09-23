@@ -25,7 +25,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct ScSpecFunctionV0 {
-    pub doc: StringM<1024>,
+    pub doc: StringM<SC_SPEC_DOC_LIMIT>,
     pub name: ScSymbol,
     pub inputs: VecM<ScSpecFunctionInputV0>,
     pub outputs: VecM<ScSpecTypeDef, 1>,
@@ -36,7 +36,7 @@ impl ReadXdr for ScSpecFunctionV0 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                doc: StringM::<1024>::read_xdr(r)?,
+                doc: StringM::<SC_SPEC_DOC_LIMIT>::read_xdr(r)?,
                 name: ScSymbol::read_xdr(r)?,
                 inputs: VecM::<ScSpecFunctionInputV0>::read_xdr(r)?,
                 outputs: VecM::<ScSpecTypeDef, 1>::read_xdr(r)?,

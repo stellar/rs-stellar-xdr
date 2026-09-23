@@ -3,7 +3,7 @@ name = "xdr-generator-rust"
 description = "XDR to Rust code generator for Stellar"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.84.0"
+rust-version = "1.85.0"
 
 [[bin]]
 name = "xdr-generator-rust"

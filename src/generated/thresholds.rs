@@ -68,8 +68,8 @@ impl schemars::JsonSchema for Thresholds {
             );
             let string = *schema.string.unwrap_or_default().clone();
             schema.string = Some(Box::new(schemars::schema::StringValidation {
-                max_length: 4_u32.checked_mul(2).map(Some).unwrap_or_default(),
-                min_length: 4_u32.checked_mul(2).map(Some).unwrap_or_default(),
+                max_length: u32::checked_mul(4, 2).map(Some).unwrap_or_default(),
+                min_length: u32::checked_mul(4, 2).map(Some).unwrap_or_default(),
                 ..string
             }));
             schema.into()

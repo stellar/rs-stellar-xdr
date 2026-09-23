@@ -580,11 +580,16 @@ fn asset_code_4_to_string() {
 #[test]
 #[rustfmt::skip]
 fn asset_code_12_from_str() {
-    assert_eq!(AssetCode12::from_str(""), Ok(AssetCode12(*b"\0\0\0\0\0\0\0\0\0\0\0\0")));
-    assert_eq!(AssetCode12::from_str("a"), Ok(AssetCode12(*b"a\0\0\0\0\0\0\0\0\0\0\0")));
-    assert_eq!(AssetCode12::from_str("ab"), Ok(AssetCode12(*b"ab\0\0\0\0\0\0\0\0\0\0")));
-    assert_eq!(AssetCode12::from_str("abc"), Ok(AssetCode12(*b"abc\0\0\0\0\0\0\0\0\0")));
-    assert_eq!(AssetCode12::from_str("abcd"), Ok(AssetCode12(*b"abcd\0\0\0\0\0\0\0\0")));
+    // AssetCode12 must be at least 5 characters (shorter codes are AssetCode4),
+    // otherwise the value does not round-trip through Display. See #432.
+    assert_eq!(AssetCode12::from_str(""), Err(Error::Invalid));
+    assert_eq!(AssetCode12::from_str("a"), Err(Error::Invalid));
+    assert_eq!(AssetCode12::from_str("ab"), Err(Error::Invalid));
+    assert_eq!(AssetCode12::from_str("abc"), Err(Error::Invalid));
+    assert_eq!(AssetCode12::from_str("abcd"), Err(Error::Invalid));
+    // The canonical 5-byte escaped short form is accepted and round-trips with
+    // Display (see asset_code_12_to_string).
+    assert_eq!(AssetCode12::from_str(r"abc\0\0"), Ok(AssetCode12(*b"abc\0\0\0\0\0\0\0\0\0")));
     assert_eq!(AssetCode12::from_str("abcde"), Ok(AssetCode12(*b"abcde\0\0\0\0\0\0\0")));
     assert_eq!(AssetCode12::from_str("abcdef"), Ok(AssetCode12(*b"abcdef\0\0\0\0\0\0")));
     assert_eq!(AssetCode12::from_str("abcdefg"), Ok(AssetCode12(*b"abcdefg\0\0\0\0\0")));

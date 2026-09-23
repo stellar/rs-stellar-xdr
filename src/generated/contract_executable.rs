@@ -10,6 +10,8 @@ use super::*;
 ///     Hash wasm_hash;
 /// case CONTRACT_EXECUTABLE_STELLAR_ASSET:
 ///     void;
+/// case CONTRACT_EXECUTABLE_EXTERNAL_REF:
+///     ContractExecutableExternalRef external_ref;
 /// };
 /// ```
 ///
@@ -28,6 +30,7 @@ use super::*;
 pub enum ContractExecutable {
     Wasm(Hash),
     StellarAsset,
+    ExternalRef(ContractExecutableExternalRef),
 }
 
 #[cfg(feature = "alloc")]
@@ -41,6 +44,7 @@ impl ContractExecutable {
     const _VARIANTS: &[ContractExecutableType] = &[
         ContractExecutableType::Wasm,
         ContractExecutableType::StellarAsset,
+        ContractExecutableType::ExternalRef,
     ];
     pub const VARIANTS: [ContractExecutableType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -51,7 +55,7 @@ impl ContractExecutable {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["Wasm", "StellarAsset"];
+    const _VARIANTS_STR: &[&str] = &["Wasm", "StellarAsset", "ExternalRef"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -67,6 +71,7 @@ impl ContractExecutable {
         match self {
             Self::Wasm(_) => "Wasm",
             Self::StellarAsset => "StellarAsset",
+            Self::ExternalRef(_) => "ExternalRef",
         }
     }
 
@@ -76,6 +81,7 @@ impl ContractExecutable {
         match self {
             Self::Wasm(_) => ContractExecutableType::Wasm,
             Self::StellarAsset => ContractExecutableType::StellarAsset,
+            Self::ExternalRef(_) => ContractExecutableType::ExternalRef,
         }
     }
 
@@ -116,6 +122,9 @@ impl ReadXdr for ContractExecutable {
             let v = match dv {
                 ContractExecutableType::Wasm => Self::Wasm(Hash::read_xdr(r)?),
                 ContractExecutableType::StellarAsset => Self::StellarAsset,
+                ContractExecutableType::ExternalRef => {
+                    Self::ExternalRef(ContractExecutableExternalRef::read_xdr(r)?)
+                }
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -133,6 +142,7 @@ impl WriteXdr for ContractExecutable {
             match self {
                 Self::Wasm(v) => v.write_xdr(w)?,
                 Self::StellarAsset => ().write_xdr(w)?,
+                Self::ExternalRef(v) => v.write_xdr(w)?,
             };
             Ok(())
         })

@@ -353,6 +353,13 @@ impl core::fmt::Display for ScAddress {
             }
             ScAddress::ClaimableBalance(claimable_balance_id) => claimable_balance_id.fmt(f),
             ScAddress::LiquidityPool(pool_id) => pool_id.fmt(f),
+            // Muxed contract addresses (CAP-0084) have no strkey encoding yet
+            // (stellar-strkey has no variant for them), so there is no string
+            // representation to produce. Needs to be updated once SEP-23 is
+            // updated. This block should only be ungated after that is complete
+            // and we return the proper encoding here.
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            ScAddress::MuxedContract(_) => Err(core::fmt::Error),
         }
     }
 }
@@ -379,9 +386,22 @@ impl core::fmt::Display for AssetCode4 {
 
 impl core::str::FromStr for AssetCode12 {
     type Err = Error;
+    /// Parses an `AssetCode12`. Requires at least 5 bytes: any code shorter
+    /// than 5 is an `AssetCode4`, and accepting it here would not round-trip (the
+    /// `Display` impl always renders at least 5 characters). For length-agnostic
+    /// parsing that selects the right variant, use `AssetCode`'s `FromStr`.
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        // An AssetCode12 is always at least 5 characters, because any asset
+        // code shorter than 5 characters is an AssetCode4. This mirrors the
+        // Display impl, which always renders at least 5 characters, and keeps
+        // the XDR<>JSON conversion round-trippable.
+        const MIN_LENGTH: usize = 5;
         let mut code = AssetCode12([0u8; 12]);
-        escape_bytes::unescape_into(&mut code.0, s.as_bytes()).map_err(|_| Error::Invalid)?;
+        let n =
+            escape_bytes::unescape_into(&mut code.0, s.as_bytes()).map_err(|_| Error::Invalid)?;
+        if n < MIN_LENGTH {
+            return Err(Error::Invalid);
+        }
         Ok(code)
     }
 }

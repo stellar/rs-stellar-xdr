@@ -7,4 +7,4 @@ use super::*;
 /// const MASK_CLAIMABLE_BALANCE_FLAGS = 0x1;
 /// ```
 ///
-pub const MASK_CLAIMABLE_BALANCE_FLAGS: u64 = 0x1;
+pub const MASK_CLAIMABLE_BALANCE_FLAGS: u32 = 0x1;

@@ -7,4 +7,4 @@ use super::*;
 /// const MASK_OFFERENTRY_FLAGS = 1;
 /// ```
 ///
-pub const MASK_OFFERENTRY_FLAGS: u64 = 1;
+pub const MASK_OFFERENTRY_FLAGS: u32 = 1;

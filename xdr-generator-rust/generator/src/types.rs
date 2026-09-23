@@ -1,7 +1,7 @@
 use xdr_parser::ast::{Size, Type};
 use xdr_parser::types::TypeInfo;
 
-use crate::naming::type_name;
+use crate::naming::{const_name, type_name};
 
 /// All resolved Rust type strings for an XDR type, computed together.
 pub struct ResolvedType {
@@ -40,11 +40,42 @@ pub(crate) fn base_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> Strin
     TypeMapping::new(type_, type_info, None).base_type_ref()
 }
 
-/// Convert a Size to a Rust string representation.
-pub(crate) fn size_to_string(size: &Size) -> String {
+/// The Rust type that holds this XDR type in a const context, named as the
+/// `const` module names it: every type has a name there, either a borrowing
+/// form of its own or an alias to the owned type.
+///
+/// Mirrors [`type_ref`], including the reference wrapping applied where
+/// `parent_type` makes the type cyclic.
+pub(crate) fn const_type(type_: &Type, parent_type: Option<&str>, type_info: &TypeInfo) -> String {
+    TypeMapping::new(type_, Some(type_info), parent_type).const_type()
+}
+
+/// As [`const_type`], but without the reference wrapping for cyclic
+/// types.
+///
+/// This is the form an element takes inside a container such as the `const`
+/// module's `VecM`, which borrows its elements as a slice rather than
+/// individually.
+pub(crate) fn const_base_type(type_: &Type, type_info: &TypeInfo) -> String {
+    TypeMapping::new(type_, Some(type_info), None).const_base_type()
+}
+
+/// Convert a Size to a Rust `u32` const generic argument, as used by
+/// `BytesM`, `StringM`, and `VecM`. Named sizes refer to the generated const,
+/// which is emitted as a `u32`.
+pub(crate) fn size_to_u32_string(size: &Size) -> String {
     match size {
         Size::Literal(n) => n.to_string(),
-        Size::Named(name) => type_name(name),
+        Size::Named(name) => const_name(name),
+    }
+}
+
+/// Convert a Size to a Rust `usize` array length. Named sizes refer to the
+/// generated const, which is emitted as a `u32` and so needs casting.
+pub(crate) fn size_to_usize_string(size: &Size) -> String {
+    match size {
+        Size::Literal(n) => n.to_string(),
+        Size::Named(name) => format!("{{ {} as usize }}", const_name(name)),
     }
 }
 
@@ -79,13 +110,6 @@ impl<'a> TypeMapping<'a> {
         }
     }
 
-    fn resolve_size(&self, size: &Size) -> String {
-        match self.type_info {
-            Some(ti) => ti.size_to_literal(size),
-            None => size_to_string(size),
-        }
-    }
-
     fn is_cyclic(&self) -> bool {
         self.parent_type
             .and_then(|parent| {
@@ -107,13 +131,13 @@ impl<'a> TypeMapping<'a> {
             Type::Float => "f32".to_string(),
             Type::Double => "f64".to_string(),
             Type::Bool => "bool".to_string(),
-            Type::OpaqueFixed(size) => format!("[u8; {}]", self.resolve_size(size)),
+            Type::OpaqueFixed(size) => format!("[u8; {}]", size_to_usize_string(size)),
             Type::OpaqueVar(max) => match max {
-                Some(size) => format!("BytesM::<{}>", self.resolve_size(size)),
+                Some(size) => format!("BytesM::<{}>", size_to_u32_string(size)),
                 None => "BytesM".to_string(),
             },
             Type::String(max) => match max {
-                Some(size) => format!("StringM::<{}>", self.resolve_size(size)),
+                Some(size) => format!("StringM::<{}>", size_to_u32_string(size)),
                 None => "StringM".to_string(),
             },
             Type::Ident(_) => {
@@ -135,7 +159,7 @@ impl<'a> TypeMapping<'a> {
                 format!(
                     "[{}; {}]",
                     self.child(element_type).base_type_ref(),
-                    self.resolve_size(size)
+                    size_to_usize_string(size)
                 )
             }
             Type::VarArray {
@@ -144,7 +168,7 @@ impl<'a> TypeMapping<'a> {
             } => {
                 let elem = self.child(element_type).base_type_ref();
                 match max_size {
-                    Some(size) => format!("VecM<{elem}, {}>", self.resolve_size(size)),
+                    Some(size) => format!("VecM<{elem}, {}>", size_to_u32_string(size)),
                     None => format!("VecM<{elem}>"),
                 }
             }
@@ -168,16 +192,97 @@ impl<'a> TypeMapping<'a> {
         }
     }
 
+    /// The Rust type used for this XDR type inside the `const` module, without
+    /// the reference wrapping applied for cyclic types.
+    ///
+    /// Mirrors `base_type_ref`. Every name it produces is resolved in the
+    /// `const` module, where a type that owns heap data is the borrowing form
+    /// and every other name is an alias to the owned type, so the names are the
+    /// same as the owned ones.
+    fn const_base_type(&self) -> String {
+        match self.type_ {
+            Type::Int
+            | Type::UnsignedInt
+            | Type::Hyper
+            | Type::UnsignedHyper
+            | Type::Float
+            | Type::Double
+            | Type::Bool
+            | Type::OpaqueFixed(_) => self.base_type_ref(),
+            Type::OpaqueVar(max) => match max {
+                Some(size) => format!("BytesM<{}>", size_to_u32_string(size)),
+                None => "BytesM".to_string(),
+            },
+            Type::String(max) => match max {
+                Some(size) => format!("StringM<{}>", size_to_u32_string(size)),
+                None => "StringM".to_string(),
+            },
+            Type::Ident(_) => {
+                if let Some(ti) = self.type_info {
+                    if let Some(builtin) = ti.resolve_typedef_to_builtin(self.type_) {
+                        return self.child(builtin).const_base_type();
+                    }
+                }
+                if let Type::Ident(name) = self.type_ {
+                    type_name(name)
+                } else {
+                    unreachable!()
+                }
+            }
+            Type::Optional(inner) => {
+                format!("Option<{}>", self.child(inner).const_base_type())
+            }
+            Type::Array { element_type, size } => {
+                format!(
+                    "[{}; {}]",
+                    self.child(element_type).const_base_type(),
+                    size_to_usize_string(size)
+                )
+            }
+            Type::VarArray {
+                element_type,
+                max_size,
+            } => {
+                let elem = self.child(element_type).const_base_type();
+                match max_size {
+                    Some(size) => format!("VecM<{elem}, {}>", size_to_u32_string(size)),
+                    None => format!("VecM<{elem}>"),
+                }
+            }
+        }
+    }
+
+    /// The Rust type used for this XDR type inside the `const` module.
+    ///
+    /// Mirrors `type_ref`: where the owned type wraps cyclic references in
+    /// `Box`, the const form uses a plain reference instead.
+    fn const_type(&self) -> String {
+        let base = self.const_base_type();
+
+        if !self.is_cyclic() {
+            return base;
+        }
+
+        match self.type_ {
+            Type::Optional(inner) => {
+                let inner = self.child(inner).const_base_type();
+                format!("Option<&'static {inner}>")
+            }
+            Type::Array { .. } | Type::VarArray { .. } => base,
+            _ => format!("&'static {base}"),
+        }
+    }
+
     fn turbofish_type(&self) -> String {
         let cyclic = self.is_cyclic();
 
         match self.type_ {
             Type::OpaqueFixed(size) => {
-                format!("<[u8; {}]>", self.resolve_size(size))
+                format!("<[u8; {}]>", size_to_usize_string(size))
             }
             Type::Array { element_type, size } => {
                 let elem = self.child(element_type).base_type_ref();
-                format!("<[{elem}; {}]>", self.resolve_size(size))
+                format!("<[{elem}; {}]>", size_to_usize_string(size))
             }
             Type::Optional(inner) => {
                 let inner_ref = self.child(inner).base_type_ref();
@@ -193,7 +298,7 @@ impl<'a> TypeMapping<'a> {
             } => {
                 let elem = self.child(element_type).base_type_ref();
                 match max_size {
-                    Some(size) => format!("VecM::<{elem}, {}>", self.resolve_size(size)),
+                    Some(size) => format!("VecM::<{elem}, {}>", size_to_u32_string(size)),
                     None => format!("VecM::<{elem}>"),
                 }
             }
@@ -207,7 +312,6 @@ impl<'a> TypeMapping<'a> {
 
     fn element_type(&self) -> String {
         match self.type_ {
-            Type::OpaqueFixed(_) | Type::OpaqueVar(_) | Type::String(_) => "u8".to_string(),
             Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
                 self.child(element_type).base_type_ref()
             }
@@ -223,6 +327,8 @@ impl<'a> TypeMapping<'a> {
                     unreachable!()
                 }
             }
+            // Opaque and string elements are bytes, as is anything else
+            // without an element type of its own.
             _ => "u8".to_string(),
         }
     }
@@ -230,7 +336,7 @@ impl<'a> TypeMapping<'a> {
     fn serde_as_type(&self) -> Option<String> {
         let base = self.base_numeric_type();
         match base.as_deref() {
-            Some("i64") | Some("u64") => Some(self.serde_type_ref("NumberOrString")),
+            Some("i64" | "u64") => Some(self.serde_type_ref("NumberOrString")),
             _ => None,
         }
     }
@@ -250,8 +356,9 @@ impl<'a> TypeMapping<'a> {
                 None
             }
             Type::Optional(inner) => self.child(inner).base_numeric_type(),
-            Type::Array { element_type, .. } => self.child(element_type).base_numeric_type(),
-            Type::VarArray { element_type, .. } => self.child(element_type).base_numeric_type(),
+            Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
+                self.child(element_type).base_numeric_type()
+            }
             _ => None,
         }
     }
@@ -277,7 +384,7 @@ impl<'a> TypeMapping<'a> {
                 format!(
                     "[{}; {}]",
                     self.child(element_type).serde_type_ref(number_wrapper),
-                    size_to_string(size)
+                    size_to_usize_string(size)
                 )
             }
             Type::VarArray {
@@ -286,7 +393,7 @@ impl<'a> TypeMapping<'a> {
             } => {
                 let elem = self.child(element_type).serde_type_ref(number_wrapper);
                 match max_size {
-                    Some(size) => format!("VecM<{elem}, {}>", size_to_string(size)),
+                    Some(size) => format!("VecM<{elem}, {}>", size_to_u32_string(size)),
                     None => format!("VecM<{elem}>"),
                 }
             }
@@ -300,8 +407,9 @@ fn extract_ident_name(type_: &Type) -> Option<String> {
     match type_ {
         Type::Ident(name) => Some(type_name(name)),
         Type::Optional(inner) => extract_ident_name(inner),
-        Type::Array { element_type, .. } => extract_ident_name(element_type),
-        Type::VarArray { element_type, .. } => extract_ident_name(element_type),
+        Type::Array { element_type, .. } | Type::VarArray { element_type, .. } => {
+            extract_ident_name(element_type)
+        }
         _ => None,
     }
 }

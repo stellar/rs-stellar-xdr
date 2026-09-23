@@ -23,6 +23,11 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct DontHave {
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(rename = "type", alias = "type_")
+    )]
+    #[cfg_attr(feature = "schemars", schemars(rename = "type"))]
     pub type_: MessageType,
     pub req_hash: Uint256,
 }

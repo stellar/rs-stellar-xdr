@@ -208,6 +208,19 @@ fn signer_key_ed25519_signed_payload_to_string() {
 }
 
 #[test]
+fn signer_key_ed25519_signed_payload_to_string_invalid_empty_payload() {
+    let s = SignerKeyEd25519SignedPayload {
+        ed25519: Uint256([0; 32]),
+        payload: [].try_into().unwrap(),
+    }
+    .to_string();
+    assert_eq!(
+        s,
+        "<INVALID:SignerKeyEd25519SignedPayload { ed25519: Uint256(0000000000000000000000000000000000000000000000000000000000000000), payload: BytesM() }>"
+    );
+}
+
+#[test]
 fn signer_key_ed25519_signed_payload_from_str() {
     let v = SignerKeyEd25519SignedPayload::from_str(
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IBZGM",
@@ -332,6 +345,19 @@ fn signer_key_to_string_with_signed_payload_ed25519() {
     assert_eq!(
         s,
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IBZGM"
+    );
+}
+
+#[test]
+fn signer_key_to_string_with_signed_payload_ed25519_invalid_empty_payload() {
+    let s = SignerKey::Ed25519SignedPayload(SignerKeyEd25519SignedPayload {
+        ed25519: Uint256([0; 32]),
+        payload: [].try_into().unwrap(),
+    })
+    .to_string();
+    assert_eq!(
+        s,
+        "<INVALID:SignerKeyEd25519SignedPayload { ed25519: Uint256(0000000000000000000000000000000000000000000000000000000000000000), payload: BytesM() }>"
     );
 }
 

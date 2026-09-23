@@ -203,8 +203,12 @@ impl core::fmt::Display for SignerKeyEd25519SignedPayload {
             ed25519: Uint256(ed25519),
             payload,
         } = self;
-        let k = stellar_strkey::ed25519::SignedPayload::new(*ed25519, payload.as_ref())
-            .map_err(|_| core::fmt::Error)?;
+        // Payloads outside the length range a strkey supports cannot be
+        // rendered as a strkey, so render them as obviously invalid instead
+        // of returning an error, which would cause to_string to panic.
+        let Ok(k) = stellar_strkey::ed25519::SignedPayload::new(*ed25519, payload.as_ref()) else {
+            return write!(f, "<INVALID:{self:?}>");
+        };
         let s = k.to_string();
         f.write_str(&s)?;
         Ok(())

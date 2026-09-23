@@ -17,6 +17,7 @@ mod tx_debug_display;
 mod tx_hash;
 mod tx_prot18;
 mod tx_read_edge_cases;
+mod tx_signed_payload_signer;
 mod tx_small;
 mod vecm;
 mod version;

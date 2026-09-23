@@ -15,7 +15,7 @@ test:
 	cargo hack test $(CARGO_HACK_ARGS)
 
 print-cargo-hack-args:
-	@echo '$(CARGO_HACK_ARGS)'
+	@printf '%s\n' "$(CARGO_HACK_ARGS)"
 
 build: generate
 	cargo hack clippy $(CARGO_HACK_ARGS) --all-targets

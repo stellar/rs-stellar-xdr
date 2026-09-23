@@ -2,8 +2,8 @@
 
 #![cfg(feature = "const")]
 
-use stellar_xdr::r#const::{BytesM, StringM, VecM};
-use stellar_xdr::ErrorLengthExceedsMax;
+use crate::r#const::{BytesM, StringM, VecM};
+use crate::ErrorLengthExceedsMax;
 
 #[test]
 fn consts_try_from_enforce_max_len() {

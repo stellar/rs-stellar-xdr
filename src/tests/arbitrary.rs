@@ -1,8 +1,8 @@
 #![cfg(feature = "arbitrary")]
 
+use crate::{BytesM, ScMap, ScSpecEntry, StringM, VecM, SCSYMBOL_LIMIT};
 use arbitrary::{Arbitrary, Unstructured};
 use rand::{rngs::StdRng, RngCore, SeedableRng};
-use stellar_xdr::{BytesM, ScMap, ScSpecEntry, StringM, VecM, SCSYMBOL_LIMIT};
 
 #[test]
 fn arb() {

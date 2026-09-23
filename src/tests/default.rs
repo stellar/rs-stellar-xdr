@@ -1,6 +1,6 @@
 #![cfg(feature = "alloc")]
 
-use stellar_xdr::{Hash, TransactionEnvelope, Uint32};
+use crate::{Hash, TransactionEnvelope, Uint32};
 
 #[test]
 fn default() {

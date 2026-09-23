@@ -1,10 +1,10 @@
 #![cfg(all(feature = "std", feature = "base64"))]
 
+use crate::Error;
+use crate::{Limited, Limits, ReadXdr, WriteXdr};
 use base64::Engine;
 use std::assert_eq;
 use std::io::Cursor;
-use stellar_xdr::Error;
-use stellar_xdr::{Limited, Limits, ReadXdr, WriteXdr};
 
 #[test]
 fn test_skip_whitespace() -> Result<(), Error> {

@@ -30,6 +30,7 @@ impl From<crate::Error> for Error {
             crate::Error::Invalid
             | crate::Error::Unsupported
             | crate::Error::LengthExceedsMax
+            | crate::Error::LengthBelowMin
             | crate::Error::LengthMismatch
             | crate::Error::NonZeroPadding
             | crate::Error::Utf8Error(_)

@@ -13,7 +13,7 @@ mod tests;
 use clap::Parser;
 use generator::RustGenerator;
 use options::RustOptions;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::PathBuf;
 
@@ -44,6 +44,21 @@ struct Args {
     /// Types that should NOT have Display/FromStr/schemars generated
     #[arg(long, value_delimiter = ',')]
     no_display_fromstr: Vec<String>,
+
+    /// Minimum lengths for variable-length opaque struct members, which the
+    /// XDR definitions do not express, as Type.member=N
+    #[arg(long, value_delimiter = ',', value_parser = parse_min_len)]
+    min_len: Vec<(String, u32)>,
+}
+
+fn parse_min_len(s: &str) -> Result<(String, u32), String> {
+    let (key, min) = s
+        .split_once('=')
+        .ok_or_else(|| format!("expected Type.member=N, got {s}"))?;
+    let min = min
+        .parse()
+        .map_err(|e| format!("invalid min length in {s}: {e}"))?;
+    Ok((key.to_string(), min))
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -70,6 +85,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         custom_default_impl: args.custom_default.into_iter().collect::<HashSet<_>>(),
         custom_str_impl: args.custom_str.into_iter().collect::<HashSet<_>>(),
         no_display_fromstr: args.no_display_fromstr.into_iter().collect::<HashSet<_>>(),
+        min_len: args.min_len.into_iter().collect::<HashMap<_, _>>(),
     };
 
     let generator = RustGenerator::new(&spec, options);

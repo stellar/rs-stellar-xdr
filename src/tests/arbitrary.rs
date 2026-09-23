@@ -29,6 +29,19 @@ fn arbitrary_stays_within_max() {
     }
 }
 
+/// The minimum length is an invariant too, so input that runs out before the
+/// minimum is padded rather than producing a shorter value.
+#[test]
+fn arbitrary_stays_within_min() {
+    let mut u = Unstructured::new(&[]);
+    assert_eq!(BytesM::<5, 2>::arbitrary(&mut u).unwrap().as_vec(), &[0, 0]);
+    let u = Unstructured::new(&[]);
+    assert_eq!(
+        BytesM::<5, 2>::arbitrary_take_rest(u).unwrap().as_vec(),
+        &[0, 0]
+    );
+}
+
 /// Input past the limit must be left for the fields that follow, rather than
 /// read into elements that are then thrown away.
 #[test]

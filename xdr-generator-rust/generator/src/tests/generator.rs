@@ -1,15 +1,22 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::generator::RustGenerator;
 use crate::options::RustOptions;
 
 fn generate_from_xdr(xdr: &str) -> String {
+    generate_from_xdr_with_options(
+        xdr,
+        RustOptions {
+            custom_default_impl: HashSet::new(),
+            custom_str_impl: HashSet::new(),
+            no_display_fromstr: HashSet::new(),
+            min_len: HashMap::new(),
+        },
+    )
+}
+
+fn generate_from_xdr_with_options(xdr: &str, options: RustOptions) -> String {
     let spec = xdr_parser::parser::parse(xdr).unwrap();
-    let options = RustOptions {
-        custom_default_impl: HashSet::new(),
-        custom_str_impl: HashSet::new(),
-        no_display_fromstr: HashSet::new(),
-    };
     let generator = RustGenerator::new(&spec, options);
     let mut output = String::new();
     let module_file = std::path::Path::new("generated.rs");
@@ -32,6 +39,7 @@ fn generate_const_from_xdr(xdr: &str) -> String {
         custom_default_impl: HashSet::new(),
         custom_str_impl: HashSet::new(),
         no_display_fromstr: HashSet::new(),
+        min_len: HashMap::new(),
     };
     let generator = RustGenerator::new(&spec, options);
     let mut output = String::new();
@@ -427,4 +435,35 @@ fn test_no_const_form_for_heap_free_types() {
     );
     assert_not_contains(&output, "pub struct Flat {");
     assert_contains(&output, "pub use super::Flat;");
+}
+
+#[test]
+fn test_min_len_on_opaque_member() {
+    let output = generate_from_xdr_with_options(
+        r"
+        struct Foo { opaque a<64>; opaque b<>; opaque c<64>; };
+    ",
+        RustOptions {
+            min_len: HashMap::from([("Foo.a".to_string(), 1), ("Foo.b".to_string(), 2)]),
+            ..RustOptions::default()
+        },
+    );
+    assert_contains(&output, "pub a: BytesM::<64, 1>,");
+    assert_contains(&output, "pub b: BytesM::<{ u32::MAX }, 2>,");
+    assert_contains(&output, "pub c: BytesM::<64>,");
+    assert_contains(&output, "a: BytesM::<64, 1>::read_xdr(r)?,");
+}
+
+#[test]
+#[should_panic(expected = "min length configured for Foo.a, which is not variable-length opaque")]
+fn test_min_len_on_non_opaque_member_panics() {
+    generate_from_xdr_with_options(
+        r"
+        struct Foo { int a; };
+    ",
+        RustOptions {
+            min_len: HashMap::from([("Foo.a".to_string(), 1)]),
+            ..RustOptions::default()
+        },
+    );
 }

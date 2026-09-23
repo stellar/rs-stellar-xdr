@@ -23,7 +23,7 @@ use super::*;
 )]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
-    pub payload: BytesM<64>,
+    pub payload: BytesM<64, 1>,
 }
 
 impl ReadXdr for SignerKeyEd25519SignedPayload {
@@ -32,7 +32,7 @@ impl ReadXdr for SignerKeyEd25519SignedPayload {
         r.with_limited_depth(|r| {
             Ok(Self {
                 ed25519: Uint256::read_xdr(r)?,
-                payload: BytesM::<64>::read_xdr(r)?,
+                payload: BytesM::<64, 1>::read_xdr(r)?,
             })
         })
     }
@@ -58,7 +58,7 @@ impl<'de> serde::Deserialize<'de> for SignerKeyEd25519SignedPayload {
         #[derive(Deserialize)]
         struct SignerKeyEd25519SignedPayload {
             ed25519: Uint256,
-            payload: BytesM<64>,
+            payload: BytesM<64, 1>,
         }
         #[derive(Deserialize)]
         #[serde(untagged)]

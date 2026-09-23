@@ -55,6 +55,8 @@ generate: generate-files xdr-version xdr-json xdr-definitions-json
 
 CUSTOM_DEFAULT_IMPL=TransactionEnvelope
 CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
+# Minimum lengths the XDR definitions do not express, as Type.member=N.
+MIN_LEN=SignerKeyEd25519SignedPayload.payload=1
 
 generate-files: src/generated.rs
 
@@ -63,7 +65,8 @@ src/generated.rs: $(sort $(wildcard xdr/*.x))
 		$(addprefix --input ,$(sort $(wildcard xdr/*.x))) \
 		--output $@ \
 		--custom-default $(CUSTOM_DEFAULT_IMPL) \
-		--custom-str $(CUSTOM_STR_IMPL)
+		--custom-str $(CUSTOM_STR_IMPL) \
+		--min-len $(MIN_LEN)
 	rustfmt $@ && find src/generated -name '*.rs' | xargs rustfmt
 
 xdr-version: $(wildcard .git/modules/xdr/**/*) $(wildcard xdr/*.x)

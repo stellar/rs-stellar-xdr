@@ -132,6 +132,7 @@ pub enum Error {
     Invalid,
     Unsupported,
     LengthExceedsMax,
+    LengthBelowMin,
     LengthMismatch,
     NonZeroPadding,
     Utf8Error(core::str::Utf8Error),
@@ -153,6 +154,7 @@ impl PartialEq for Error {
             (Self::Invalid, Self::Invalid)
             | (Self::Unsupported, Self::Unsupported)
             | (Self::LengthExceedsMax, Self::LengthExceedsMax)
+            | (Self::LengthBelowMin, Self::LengthBelowMin)
             | (Self::LengthMismatch, Self::LengthMismatch)
             | (Self::NonZeroPadding, Self::NonZeroPadding) => true,
 
@@ -193,6 +195,7 @@ impl error::Error for Error {
             Error::Invalid
             | Error::Unsupported
             | Error::LengthExceedsMax
+            | Error::LengthBelowMin
             | Error::LengthMismatch
             | Error::NonZeroPadding => None,
 
@@ -221,6 +224,7 @@ impl fmt::Display for Error {
             Error::Invalid => write!(f, "xdr value invalid"),
             Error::Unsupported => write!(f, "xdr value unsupported"),
             Error::LengthExceedsMax => write!(f, "xdr value max length exceeded"),
+            Error::LengthBelowMin => write!(f, "xdr value min length not met"),
             Error::LengthMismatch => write!(f, "xdr value length does not match"),
             Error::NonZeroPadding => write!(f, "xdr padding contains non-zero bytes"),
             Error::Utf8Error(e) => write!(f, "{e}"),
@@ -1071,6 +1075,17 @@ pub(crate) const fn arbitrary_max_len(max: u32) -> usize {
     }
 }
 
+/// Pads `v` with zeros up to `min` elements, so an `Arbitrary` impl that
+/// consumed too little input still produces a value within the type's minimum
+/// length.
+#[cfg(feature = "arbitrary")]
+pub(crate) fn arbitrary_pad_to_min(v: &mut Vec<u8>, min: u32) {
+    let min = arbitrary_max_len(min);
+    if v.len() < min {
+        v.resize(min, 0);
+    }
+}
+
 /// The length limit is an invariant of the type, and a derived impl would
 /// produce values outside it, because `MAX` lives in a const parameter the
 /// derive cannot see.
@@ -1628,29 +1643,32 @@ impl<T: WriteXdr, const MAX: u32> WriteXdr for VecM<T, MAX> {
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct BytesM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
+pub struct BytesM<const MAX: u32 = { u32::MAX }, const MIN: u32 = 0>(Vec<u8>);
 
 #[cfg(not(feature = "alloc"))]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct BytesM<const MAX: u32 = { u32::MAX }>(Vec<u8>);
+pub struct BytesM<const MAX: u32 = { u32::MAX }, const MIN: u32 = 0>(Vec<u8>);
 
-/// Length limited to `MAX`, as for [`VecM`].
+/// Length limited to `MAX`, as for [`VecM`], and padded with zeros to at least
+/// `MIN`.
 #[cfg(feature = "arbitrary")]
-impl<'a, const MAX: u32> Arbitrary<'a> for BytesM<MAX> {
+impl<'a, const MAX: u32, const MIN: u32> Arbitrary<'a> for BytesM<MAX, MIN> {
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self(
-            u.arbitrary_iter()?
-                .take(arbitrary_max_len(MAX))
-                .collect::<arbitrary::Result<Vec<u8>>>()?,
-        ))
+        let mut v = u
+            .arbitrary_iter()?
+            .take(arbitrary_max_len(MAX))
+            .collect::<arbitrary::Result<Vec<u8>>>()?;
+        arbitrary_pad_to_min(&mut v, MIN);
+        Ok(Self(v))
     }
 
     fn arbitrary_take_rest(u: arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        Ok(Self(
-            u.arbitrary_take_rest_iter()?
-                .take(arbitrary_max_len(MAX))
-                .collect::<arbitrary::Result<Vec<u8>>>()?,
-        ))
+        let mut v = u
+            .arbitrary_take_rest_iter()?
+            .take(arbitrary_max_len(MAX))
+            .collect::<arbitrary::Result<Vec<u8>>>()?;
+        arbitrary_pad_to_min(&mut v, MIN);
+        Ok(Self(v))
     }
 
     fn size_hint(depth: usize) -> (usize, Option<usize>) {
@@ -1658,7 +1676,7 @@ impl<'a, const MAX: u32> Arbitrary<'a> for BytesM<MAX> {
     }
 }
 
-impl<const MAX: u32> core::fmt::Display for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> core::fmt::Display for BytesM<MAX, MIN> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         #[cfg(feature = "alloc")]
         let v = &self.0;
@@ -1671,7 +1689,7 @@ impl<const MAX: u32> core::fmt::Display for BytesM<MAX> {
     }
 }
 
-impl<const MAX: u32> core::fmt::Debug for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> core::fmt::Debug for BytesM<MAX, MIN> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         #[cfg(feature = "alloc")]
         let v = &self.0;
@@ -1687,14 +1705,14 @@ impl<const MAX: u32> core::fmt::Debug for BytesM<MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<const MAX: u32> core::str::FromStr for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> core::str::FromStr for BytesM<MAX, MIN> {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         hex::decode(s).map_err(|_| Error::InvalidHex)?.try_into()
     }
 }
 
-impl<const MAX: u32> Deref for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> Deref for BytesM<MAX, MIN> {
     type Target = Vec<u8>;
 
     fn deref(&self) -> &Self::Target {
@@ -1703,9 +1721,13 @@ impl<const MAX: u32> Deref for BytesM<MAX> {
 }
 
 #[cfg(feature = "schemars")]
-impl<const MAX: u32> schemars::JsonSchema for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> schemars::JsonSchema for BytesM<MAX, MIN> {
     fn schema_name() -> String {
-        format!("BytesM<{MAX}>")
+        if MIN == 0 {
+            format!("BytesM<{MAX}>")
+        } else {
+            format!("BytesM<{MAX}, {MIN}>")
+        }
     }
 
     fn is_referenceable() -> bool {
@@ -1726,7 +1748,7 @@ impl<const MAX: u32> schemars::JsonSchema for BytesM<MAX> {
             let string = *schema.string.unwrap_or_default().clone();
             schema.string = Some(Box::new(schemars::schema::StringValidation {
                 max_length: MAX.checked_mul(2).map(Some).unwrap_or_default(),
-                min_length: None,
+                min_length: if MIN == 0 { None } else { MIN.checked_mul(2) },
                 ..string
             }));
             schema.into()
@@ -1736,14 +1758,26 @@ impl<const MAX: u32> schemars::JsonSchema for BytesM<MAX> {
     }
 }
 
+/// Zeros of length `MIN`, the shortest value the type holds.
+#[cfg(feature = "alloc")]
+impl<const MAX: u32, const MIN: u32> Default for BytesM<MAX, MIN> {
+    fn default() -> Self {
+        Self(core::iter::repeat_n(0, MIN as usize).collect())
+    }
+}
+
+/// Only for a `MIN` of zero, since without `alloc` there is nothing to hold
+/// the zeros of a longer minimum.
+#[cfg(not(feature = "alloc"))]
 impl<const MAX: u32> Default for BytesM<MAX> {
     fn default() -> Self {
         Self(Vec::default())
     }
 }
 
-impl<const MAX: u32> BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> BytesM<MAX, MIN> {
     pub const MAX_LEN: usize = { MAX as usize };
+    pub const MIN_LEN: usize = { MIN as usize };
 
     #[must_use]
     #[allow(clippy::unused_self)]
@@ -1752,12 +1786,18 @@ impl<const MAX: u32> BytesM<MAX> {
     }
 
     #[must_use]
+    #[allow(clippy::unused_self)]
+    pub fn min_len(&self) -> usize {
+        Self::MIN_LEN
+    }
+
+    #[must_use]
     pub fn as_vec(&self) -> &Vec<u8> {
         self.as_ref()
     }
 }
 
-impl<const MAX: u32> BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> BytesM<MAX, MIN> {
     #[must_use]
     #[cfg(feature = "alloc")]
     pub fn to_vec(&self) -> Vec<u8> {
@@ -1770,7 +1810,7 @@ impl<const MAX: u32> BytesM<MAX> {
     }
 }
 
-impl<const MAX: u32> BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> BytesM<MAX, MIN> {
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> Result<String, Error> {
         self.try_into()
@@ -1794,12 +1834,14 @@ impl<const MAX: u32> BytesM<MAX> {
     }
 }
 
-impl<const MAX: u32> TryFrom<Vec<u8>> for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> TryFrom<Vec<u8>> for BytesM<MAX, MIN> {
     type Error = Error;
 
     fn try_from(v: Vec<u8>) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        if len <= MAX {
+        if len < MIN {
+            Err(Error::LengthBelowMin)
+        } else if len <= MAX {
             Ok(BytesM(v))
         } else {
             Err(Error::LengthExceedsMax)
@@ -1807,22 +1849,22 @@ impl<const MAX: u32> TryFrom<Vec<u8>> for BytesM<MAX> {
     }
 }
 
-impl<const MAX: u32> From<BytesM<MAX>> for Vec<u8> {
+impl<const MAX: u32, const MIN: u32> From<BytesM<MAX, MIN>> for Vec<u8> {
     #[must_use]
-    fn from(v: BytesM<MAX>) -> Self {
+    fn from(v: BytesM<MAX, MIN>) -> Self {
         v.0
     }
 }
 
 #[cfg(feature = "alloc")]
-impl<const MAX: u32> From<&BytesM<MAX>> for Vec<u8> {
+impl<const MAX: u32, const MIN: u32> From<&BytesM<MAX, MIN>> for Vec<u8> {
     #[must_use]
-    fn from(v: &BytesM<MAX>) -> Self {
+    fn from(v: &BytesM<MAX, MIN>) -> Self {
         v.0.clone()
     }
 }
 
-impl<const MAX: u32> AsRef<Vec<u8>> for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> AsRef<Vec<u8>> for BytesM<MAX, MIN> {
     #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0
@@ -1830,7 +1872,7 @@ impl<const MAX: u32> AsRef<Vec<u8>> for BytesM<MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<const MAX: u32> TryFrom<&Vec<u8>> for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> TryFrom<&Vec<u8>> for BytesM<MAX, MIN> {
     type Error = Error;
 
     fn try_from(v: &Vec<u8>) -> Result<Self, Error> {
@@ -1839,12 +1881,14 @@ impl<const MAX: u32> TryFrom<&Vec<u8>> for BytesM<MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<const MAX: u32> TryFrom<&[u8]> for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> TryFrom<&[u8]> for BytesM<MAX, MIN> {
     type Error = Error;
 
     fn try_from(v: &[u8]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        if len <= MAX {
+        if len < MIN {
+            Err(Error::LengthBelowMin)
+        } else if len <= MAX {
             Ok(BytesM(v.to_vec()))
         } else {
             Err(Error::LengthExceedsMax)
@@ -1852,7 +1896,7 @@ impl<const MAX: u32> TryFrom<&[u8]> for BytesM<MAX> {
     }
 }
 
-impl<const MAX: u32> AsRef<[u8]> for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> AsRef<[u8]> for BytesM<MAX, MIN> {
     #[cfg(feature = "alloc")]
     #[must_use]
     fn as_ref(&self) -> &[u8] {
@@ -1866,12 +1910,14 @@ impl<const MAX: u32> AsRef<[u8]> for BytesM<MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<const N: usize, const MAX: u32> TryFrom<[u8; N]> for BytesM<MAX> {
+impl<const N: usize, const MAX: u32, const MIN: u32> TryFrom<[u8; N]> for BytesM<MAX, MIN> {
     type Error = Error;
 
     fn try_from(v: [u8; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        if len <= MAX {
+        if len < MIN {
+            Err(Error::LengthBelowMin)
+        } else if len <= MAX {
             Ok(BytesM(v.to_vec()))
         } else {
             Err(Error::LengthExceedsMax)
@@ -1880,22 +1926,24 @@ impl<const N: usize, const MAX: u32> TryFrom<[u8; N]> for BytesM<MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<const N: usize, const MAX: u32> TryFrom<BytesM<MAX>> for [u8; N] {
-    type Error = BytesM<MAX>;
+impl<const N: usize, const MAX: u32, const MIN: u32> TryFrom<BytesM<MAX, MIN>> for [u8; N] {
+    type Error = BytesM<MAX, MIN>;
 
-    fn try_from(v: BytesM<MAX>) -> core::result::Result<Self, Self::Error> {
-        let s: [u8; N] = v.0.try_into().map_err(BytesM::<MAX>)?;
+    fn try_from(v: BytesM<MAX, MIN>) -> core::result::Result<Self, Self::Error> {
+        let s: [u8; N] = v.0.try_into().map_err(BytesM::<MAX, MIN>)?;
         Ok(s)
     }
 }
 
 #[cfg(feature = "alloc")]
-impl<const N: usize, const MAX: u32> TryFrom<&[u8; N]> for BytesM<MAX> {
+impl<const N: usize, const MAX: u32, const MIN: u32> TryFrom<&[u8; N]> for BytesM<MAX, MIN> {
     type Error = Error;
 
     fn try_from(v: &[u8; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        if len <= MAX {
+        if len < MIN {
+            Err(Error::LengthBelowMin)
+        } else if len <= MAX {
             Ok(BytesM(v.to_vec()))
         } else {
             Err(Error::LengthExceedsMax)
@@ -1904,12 +1952,16 @@ impl<const N: usize, const MAX: u32> TryFrom<&[u8; N]> for BytesM<MAX> {
 }
 
 #[cfg(not(feature = "alloc"))]
-impl<const N: usize, const MAX: u32> TryFrom<&'static [u8; N]> for BytesM<MAX> {
+impl<const N: usize, const MAX: u32, const MIN: u32> TryFrom<&'static [u8; N]>
+    for BytesM<MAX, MIN>
+{
     type Error = Error;
 
     fn try_from(v: &'static [u8; N]) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        if len <= MAX {
+        if len < MIN {
+            Err(Error::LengthBelowMin)
+        } else if len <= MAX {
             Ok(BytesM(v))
         } else {
             Err(Error::LengthExceedsMax)
@@ -1918,12 +1970,14 @@ impl<const N: usize, const MAX: u32> TryFrom<&'static [u8; N]> for BytesM<MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<const MAX: u32> TryFrom<&String> for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> TryFrom<&String> for BytesM<MAX, MIN> {
     type Error = Error;
 
     fn try_from(v: &String) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        if len <= MAX {
+        if len < MIN {
+            Err(Error::LengthBelowMin)
+        } else if len <= MAX {
             Ok(BytesM(v.as_bytes().to_vec()))
         } else {
             Err(Error::LengthExceedsMax)
@@ -1932,12 +1986,14 @@ impl<const MAX: u32> TryFrom<&String> for BytesM<MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<const MAX: u32> TryFrom<String> for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> TryFrom<String> for BytesM<MAX, MIN> {
     type Error = Error;
 
     fn try_from(v: String) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        if len <= MAX {
+        if len < MIN {
+            Err(Error::LengthBelowMin)
+        } else if len <= MAX {
             Ok(BytesM(v.into()))
         } else {
             Err(Error::LengthExceedsMax)
@@ -1946,30 +2002,32 @@ impl<const MAX: u32> TryFrom<String> for BytesM<MAX> {
 }
 
 #[cfg(feature = "alloc")]
-impl<const MAX: u32> TryFrom<BytesM<MAX>> for String {
+impl<const MAX: u32, const MIN: u32> TryFrom<BytesM<MAX, MIN>> for String {
     type Error = Error;
 
-    fn try_from(v: BytesM<MAX>) -> Result<Self, Error> {
+    fn try_from(v: BytesM<MAX, MIN>) -> Result<Self, Error> {
         Ok(String::from_utf8(v.0)?)
     }
 }
 
 #[cfg(feature = "alloc")]
-impl<const MAX: u32> TryFrom<&BytesM<MAX>> for String {
+impl<const MAX: u32, const MIN: u32> TryFrom<&BytesM<MAX, MIN>> for String {
     type Error = Error;
 
-    fn try_from(v: &BytesM<MAX>) -> Result<Self, Error> {
+    fn try_from(v: &BytesM<MAX, MIN>) -> Result<Self, Error> {
         Ok(core::str::from_utf8(v.as_ref())?.to_owned())
     }
 }
 
 #[cfg(feature = "alloc")]
-impl<const MAX: u32> TryFrom<&str> for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> TryFrom<&str> for BytesM<MAX, MIN> {
     type Error = Error;
 
     fn try_from(v: &str) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        if len <= MAX {
+        if len < MIN {
+            Err(Error::LengthBelowMin)
+        } else if len <= MAX {
             Ok(BytesM(v.into()))
         } else {
             Err(Error::LengthExceedsMax)
@@ -1978,12 +2036,14 @@ impl<const MAX: u32> TryFrom<&str> for BytesM<MAX> {
 }
 
 #[cfg(not(feature = "alloc"))]
-impl<const MAX: u32> TryFrom<&'static str> for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> TryFrom<&'static str> for BytesM<MAX, MIN> {
     type Error = Error;
 
     fn try_from(v: &'static str) -> Result<Self, Error> {
         let len: u32 = v.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
-        if len <= MAX {
+        if len < MIN {
+            Err(Error::LengthBelowMin)
+        } else if len <= MAX {
             Ok(BytesM(v.as_bytes()))
         } else {
             Err(Error::LengthExceedsMax)
@@ -1991,21 +2051,24 @@ impl<const MAX: u32> TryFrom<&'static str> for BytesM<MAX> {
     }
 }
 
-impl<'a, const MAX: u32> TryFrom<&'a BytesM<MAX>> for &'a str {
+impl<'a, const MAX: u32, const MIN: u32> TryFrom<&'a BytesM<MAX, MIN>> for &'a str {
     type Error = Error;
 
-    fn try_from(v: &'a BytesM<MAX>) -> Result<Self, Error> {
+    fn try_from(v: &'a BytesM<MAX, MIN>) -> Result<Self, Error> {
         Ok(core::str::from_utf8(v.as_ref())?)
     }
 }
 
-impl<const MAX: u32> ReadXdr for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> ReadXdr for BytesM<MAX, MIN> {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let len: u32 = u32::read_xdr(r)?;
             if len > MAX {
                 return Err(Error::LengthExceedsMax);
+            }
+            if len < MIN {
+                return Err(Error::LengthBelowMin);
             }
 
             r.consume_len(len as usize)?;
@@ -2026,7 +2089,7 @@ impl<const MAX: u32> ReadXdr for BytesM<MAX> {
     }
 }
 
-impl<const MAX: u32> WriteXdr for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> WriteXdr for BytesM<MAX, MIN> {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {

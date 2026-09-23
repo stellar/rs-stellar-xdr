@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 /// Rust-specific configuration options for code generation.
 #[derive(Debug, Clone, Default)]
@@ -9,4 +9,7 @@ pub struct RustOptions {
     pub custom_str_impl: HashSet<String>,
     /// Types that should NOT have Display/FromStr/schemars generated
     pub no_display_fromstr: HashSet<String>,
+    /// Minimum lengths for variable-length opaque struct members, keyed by
+    /// `Type.member`, for minimums the XDR definitions do not express.
+    pub min_len: HashMap<String, u32>,
 }

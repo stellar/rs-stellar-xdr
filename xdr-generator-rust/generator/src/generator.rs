@@ -579,7 +579,7 @@ impl RustGenerator {
         let is_fixed_array_type = is_fixed_array(&t.type_);
         let is_var_array_type = is_var_array(&t.type_);
 
-        let resolved = resolve_type(&t.type_, None, &self.type_info, custom_str);
+        let resolved = resolve_type(&t.type_, None, &self.type_info, custom_str, None);
 
         let size = match &t.type_ {
             xdr_parser::ast::Type::OpaqueFixed(s)
@@ -646,7 +646,19 @@ impl RustGenerator {
     ) -> (StructMemberOutput, ConstStructMemberOutput) {
         let name = field_name(&m.name);
         let serde_rename = field_json_rename(&m.name);
-        let resolved = resolve_type(&m.type_, Some(parent), &self.type_info, custom_str);
+        let min_len = self
+            .options
+            .min_len
+            .get(&format!("{parent}.{}", m.name))
+            .copied();
+        if min_len.is_some() {
+            assert!(
+                matches!(m.type_, Type::OpaqueVar(_)),
+                "min length configured for {parent}.{}, which is not variable-length opaque",
+                m.name
+            );
+        }
+        let resolved = resolve_type(&m.type_, Some(parent), &self.type_info, custom_str, min_len);
         let const_type = const_type(&m.type_, Some(parent), &self.type_info);
 
         (
@@ -687,7 +699,7 @@ impl RustGenerator {
                 let resolved = arm
                     .type_
                     .as_ref()
-                    .map(|t| resolve_type(t, Some(parent), &self.type_info, custom_str));
+                    .map(|t| resolve_type(t, Some(parent), &self.type_info, custom_str, None));
                 let const_type = arm
                     .type_
                     .as_ref()

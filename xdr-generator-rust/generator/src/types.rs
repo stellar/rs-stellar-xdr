@@ -14,13 +14,20 @@ pub struct ResolvedType {
 /// Resolve all Rust type information for an XDR type in one call.
 ///
 /// When `custom_str` is true, `serde_as_type` is forced to `None`.
+///
+/// `min_len` is a minimum length for a variable-length opaque type, which the
+/// XDR definitions do not express.
 pub(crate) fn resolve_type(
     type_: &Type,
     parent: Option<&str>,
     type_info: &TypeInfo,
     custom_str: bool,
+    min_len: Option<u32>,
 ) -> ResolvedType {
-    let m = TypeMapping::new(type_, Some(type_info), parent);
+    let m = TypeMapping {
+        min_len,
+        ..TypeMapping::new(type_, Some(type_info), parent)
+    };
     ResolvedType {
         type_ref: m.type_ref(),
         turbofish_type: m.turbofish_type(),
@@ -90,6 +97,9 @@ struct TypeMapping<'a> {
     type_: &'a Type,
     type_info: Option<&'a TypeInfo>,
     parent_type: Option<&'a str>,
+    /// Minimum length of a variable-length opaque type, applied to this type
+    /// only and not to its children.
+    min_len: Option<u32>,
 }
 
 impl<'a> TypeMapping<'a> {
@@ -98,6 +108,7 @@ impl<'a> TypeMapping<'a> {
             type_,
             type_info,
             parent_type,
+            min_len: None,
         }
     }
 
@@ -107,6 +118,7 @@ impl<'a> TypeMapping<'a> {
             type_,
             type_info: self.type_info,
             parent_type: self.parent_type,
+            min_len: None,
         }
     }
 
@@ -132,9 +144,13 @@ impl<'a> TypeMapping<'a> {
             Type::Double => "f64".to_string(),
             Type::Bool => "bool".to_string(),
             Type::OpaqueFixed(size) => format!("[u8; {}]", size_to_usize_string(size)),
-            Type::OpaqueVar(max) => match max {
-                Some(size) => format!("BytesM::<{}>", size_to_u32_string(size)),
-                None => "BytesM".to_string(),
+            Type::OpaqueVar(max) => match (max, self.min_len) {
+                (Some(size), None) => format!("BytesM::<{}>", size_to_u32_string(size)),
+                (Some(size), Some(min)) => {
+                    format!("BytesM::<{}, {min}>", size_to_u32_string(size))
+                }
+                (None, None) => "BytesM".to_string(),
+                (None, Some(min)) => format!("BytesM::<{{ u32::MAX }}, {min}>"),
             },
             Type::String(max) => match max {
                 Some(size) => format!("StringM::<{}>", size_to_u32_string(size)),

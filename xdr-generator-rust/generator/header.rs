@@ -1978,11 +1978,11 @@ impl<const MAX: u32, const MIN: u32> ReadXdr for BytesM<MAX, MIN> {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let len: u32 = u32::read_xdr(r)?;
-            if len > MAX {
-                return Err(Error::LengthExceedsMax);
-            }
             if len < MIN {
                 return Err(Error::LengthBelowMin);
+            }
+            if len > MAX {
+                return Err(Error::LengthExceedsMax);
             }
 
             r.consume_len(len as usize)?;

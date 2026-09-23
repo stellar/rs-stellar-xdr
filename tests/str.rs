@@ -214,10 +214,7 @@ fn signer_key_ed25519_signed_payload_to_string_invalid_empty_payload() {
         payload: [].try_into().unwrap(),
     }
     .to_string();
-    assert_eq!(
-        s,
-        "<INVALID:SignerKeyEd25519SignedPayload { ed25519: Uint256(0000000000000000000000000000000000000000000000000000000000000000), payload: BytesM() }>"
-    );
+    assert_eq!(s, "<INVALID:SignerKeyEd25519SignedPayload:EMPTY_PAYLOAD>");
 }
 
 #[test]
@@ -355,10 +352,7 @@ fn signer_key_to_string_with_signed_payload_ed25519_invalid_empty_payload() {
         payload: [].try_into().unwrap(),
     })
     .to_string();
-    assert_eq!(
-        s,
-        "<INVALID:SignerKeyEd25519SignedPayload { ed25519: Uint256(0000000000000000000000000000000000000000000000000000000000000000), payload: BytesM() }>"
-    );
+    assert_eq!(s, "<INVALID:SignerKeyEd25519SignedPayload:EMPTY_PAYLOAD>");
 }
 
 #[test]

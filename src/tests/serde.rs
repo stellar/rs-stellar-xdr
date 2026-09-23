@@ -1,8 +1,8 @@
 #![cfg(all(feature = "std", feature = "serde"))]
 
-use stellar_xdr::{BytesM, Hash, StringM, VecM};
+use crate::{BytesM, Hash, StringM, VecM};
 
-use stellar_xdr::{AccountId, ContractEvent, ContractEventType, Int128Parts};
+use crate::{AccountId, ContractEvent, ContractEventType, Int128Parts};
 
 use std::str::FromStr;
 

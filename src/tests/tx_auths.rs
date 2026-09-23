@@ -1,6 +1,6 @@
 #![cfg(feature = "alloc")]
 
-use stellar_xdr::{
+use crate::{
     Asset, ContractId, Error, FeeBumpTransaction, FeeBumpTransactionEnvelope,
     FeeBumpTransactionExt, FeeBumpTransactionInnerTx, Hash, HostFunction, InvokeContractArgs,
     InvokeHostFunctionOp, Memo, MuxedAccount, Operation, OperationBody, PaymentOp, Preconditions,

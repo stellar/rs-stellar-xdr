@@ -7,7 +7,7 @@ use super::*;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct SignerKeyEd25519SignedPayload {
     pub ed25519: Uint256,
-    pub payload: BytesM<64>,
+    pub payload: BytesM<64, 1>,
 }
 
 impl SignerKeyEd25519SignedPayload {

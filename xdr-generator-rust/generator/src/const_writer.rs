@@ -218,7 +218,7 @@ impl Collector<'_> {
                 // already a reference to the value, so it is passed along
                 // as-is rather than borrowed again; a `match` binding of one is
                 // a double reference that auto-deref resolves at the call.
-                let const_ty = const_type(type_, parent, self.type_info);
+                let const_ty = const_type(type_, parent, self.type_info, None);
                 let pass = if const_ty.starts_with('&') {
                     ConstPass::AsIs
                 } else {
@@ -266,7 +266,7 @@ impl Collector<'_> {
         let Type::Optional(inner) = type_ else {
             unreachable!("need_option called with a non-optional type")
         };
-        let param = const_type(type_, parent, self.type_info);
+        let param = const_type(type_, parent, self.type_info, None);
         // Where the option is cyclic the const form holds a reference to the
         // inner value rather than the value itself, which is a different Rust
         // type and so needs a method of its own. Such an option is a pair of

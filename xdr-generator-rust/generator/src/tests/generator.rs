@@ -34,13 +34,19 @@ fn generate_from_xdr_with_options(xdr: &str, options: RustOptions) -> String {
 /// per-definition file under it, concatenated — since that is where the const
 /// forms live.
 fn generate_const_from_xdr(xdr: &str) -> String {
+    generate_const_from_xdr_with_options(
+        xdr,
+        RustOptions {
+            custom_default_impl: HashSet::new(),
+            custom_str_impl: HashSet::new(),
+            no_display_fromstr: HashSet::new(),
+            min_len: HashMap::new(),
+        },
+    )
+}
+
+fn generate_const_from_xdr_with_options(xdr: &str, options: RustOptions) -> String {
     let spec = xdr_parser::parser::parse(xdr).unwrap();
-    let options = RustOptions {
-        custom_default_impl: HashSet::new(),
-        custom_str_impl: HashSet::new(),
-        no_display_fromstr: HashSet::new(),
-        min_len: HashMap::new(),
-    };
     let generator = RustGenerator::new(&spec, options);
     let mut output = String::new();
     let module_file = std::path::Path::new("generated.rs");
@@ -452,6 +458,22 @@ fn test_min_len_on_opaque_member() {
     assert_contains(&output, "pub b: BytesM::<{ u32::MAX }, 2>,");
     assert_contains(&output, "pub c: BytesM::<64>,");
     assert_contains(&output, "a: BytesM::<64, 1>::read_xdr(r)?,");
+}
+
+#[test]
+fn test_min_len_on_opaque_member_const() {
+    let output = generate_const_from_xdr_with_options(
+        r"
+        struct Foo { opaque a<64>; opaque b<>; opaque c<64>; };
+    ",
+        RustOptions {
+            min_len: HashMap::from([("Foo.a".to_string(), 1), ("Foo.b".to_string(), 2)]),
+            ..RustOptions::default()
+        },
+    );
+    assert_contains(&output, "pub a: BytesM<64, 1>,");
+    assert_contains(&output, "pub b: BytesM<{ u32::MAX }, 2>,");
+    assert_contains(&output, "pub c: BytesM<64>,");
 }
 
 #[test]

@@ -1,6 +1,6 @@
 use core::{ops::Deref, slice};
 
-use super::{pad_len, Error, ErrorLengthExceedsMax};
+use super::{pad_len, Error, ErrorLengthExceedsMax, ErrorLengthOutOfRange};
 
 #[cfg(feature = "arbitrary")]
 use arbitrary::Arbitrary;
@@ -398,14 +398,15 @@ impl<T, const MAX: u32> TryFrom<&'static [T]> for VecM<T, MAX> {
 }
 
 /// A borrowing equivalent of [`super::BytesM`] that wraps a byte slice instead of
-/// owning a `Vec`, enforcing the same maximum length `MAX` at construction.
+/// owning a `Vec`, enforcing the same maximum length `MAX` and minimum length
+/// `MIN` at construction.
 ///
 /// Usable in const contexts to build values of this module's types from slices
 /// of fixed-size arrays, without heap allocation.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct BytesM<const MAX: u32 = { u32::MAX }>(&'static [u8]);
+pub struct BytesM<const MAX: u32 = { u32::MAX }, const MIN: u32 = 0>(&'static [u8]);
 
-impl<const MAX: u32> core::fmt::Display for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> core::fmt::Display for BytesM<MAX, MIN> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         for b in self.0 {
             write!(f, "{b:02x}")?;
@@ -414,7 +415,7 @@ impl<const MAX: u32> core::fmt::Display for BytesM<MAX> {
     }
 }
 
-impl<const MAX: u32> core::fmt::Debug for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> core::fmt::Debug for BytesM<MAX, MIN> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "BytesM(")?;
         for b in self.0 {
@@ -425,7 +426,7 @@ impl<const MAX: u32> core::fmt::Debug for BytesM<MAX> {
     }
 }
 
-impl<const MAX: u32> Deref for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> Deref for BytesM<MAX, MIN> {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
@@ -433,46 +434,54 @@ impl<const MAX: u32> Deref for BytesM<MAX> {
     }
 }
 
+/// Only for a `MIN` of zero, since there is no `'static` slice of zeros for
+/// every longer minimum.
 impl<const MAX: u32> Default for BytesM<MAX> {
     fn default() -> Self {
         Self(&[])
     }
 }
 
-impl<const MAX: u32> BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> BytesM<MAX, MIN> {
     pub const MAX_LEN: usize = { MAX as usize };
+    pub const MIN_LEN: usize = { MIN as usize };
 
     /// Constructs a `BytesM` from the given slice, erroring if the length
-    /// of the slice exceeds `MAX`.
+    /// of the slice is less than `MIN` or exceeds `MAX`.
     ///
-    /// The error is [`ErrorLengthExceedsMax`] rather than [`Error`] so the result
-    /// can be matched in a const context; use `?` to convert it to [`Error`].
+    /// The error is [`ErrorLengthOutOfRange`] rather than [`Error`] so the
+    /// result can be matched in a const context; use `?` to convert it to
+    /// [`Error`].
     ///
     /// ### Errors
     ///
-    /// If the length of the slice exceeds `MAX`.
-    pub const fn try_from_slice(v: &'static [u8]) -> Result<Self, ErrorLengthExceedsMax> {
-        if v.len() <= Self::MAX_LEN {
-            Ok(Self(v))
+    /// If the length of the slice is less than `MIN` or exceeds `MAX`.
+    pub const fn try_from_slice(v: &'static [u8]) -> Result<Self, ErrorLengthOutOfRange> {
+        if v.len() < Self::MIN_LEN {
+            Err(ErrorLengthOutOfRange::BelowMin)
+        } else if v.len() > Self::MAX_LEN {
+            Err(ErrorLengthOutOfRange::ExceedsMax)
         } else {
-            Err(ErrorLengthExceedsMax)
+            Ok(Self(v))
         }
     }
 
     /// Constructs a `BytesM` from the given slice, panicking if the length
-    /// of the slice exceeds `MAX`.
+    /// of the slice is less than `MIN` or exceeds `MAX`.
     ///
-    /// Usable in const contexts, where an over-length slice is a compile-time
-    /// error. Prefer [`Self::try_from_slice`] where a [`Result`] is wanted.
+    /// Usable in const contexts, where a slice of the wrong length is a
+    /// compile-time error. Prefer [`Self::try_from_slice`] where a [`Result`]
+    /// is wanted.
     ///
     /// ### Panics
     ///
-    /// If the length of the slice exceeds `MAX`.
+    /// If the length of the slice is less than `MIN` or exceeds `MAX`.
     #[must_use]
     pub const fn try_from_slice_or_panic(v: &'static [u8]) -> Self {
         match Self::try_from_slice(v) {
             Ok(r) => r,
-            Err(ErrorLengthExceedsMax) => panic!("xdr value max length exceeded"),
+            Err(ErrorLengthOutOfRange::BelowMin) => panic!("xdr value min length not met"),
+            Err(ErrorLengthOutOfRange::ExceedsMax) => panic!("xdr value max length exceeded"),
         }
     }
 
@@ -480,6 +489,12 @@ impl<const MAX: u32> BytesM<MAX> {
     #[allow(clippy::unused_self)]
     pub const fn max_len(&self) -> usize {
         Self::MAX_LEN
+    }
+
+    #[must_use]
+    #[allow(clippy::unused_self)]
+    pub const fn min_len(&self) -> usize {
+        Self::MIN_LEN
     }
 
     #[must_use]
@@ -498,7 +513,7 @@ impl<const MAX: u32> BytesM<MAX> {
     }
 }
 
-impl<const MAX: u32> TryFrom<&'static [u8]> for BytesM<MAX> {
+impl<const MAX: u32, const MIN: u32> TryFrom<&'static [u8]> for BytesM<MAX, MIN> {
     type Error = Error;
 
     fn try_from(v: &'static [u8]) -> Result<Self, Error> {
@@ -670,7 +685,7 @@ impl<const MAX: u32> TryFrom<&'static str> for StringM<MAX> {
 #[cfg(feature = "arbitrary")]
 mod arbitrary_impls {
     use super::{BytesM, StringM, VecM};
-    use crate::generated::arbitrary_max_len;
+    use crate::generated::{arbitrary_max_len, arbitrary_pad_to_min};
     use arbitrary::{Arbitrary, Result, Unstructured};
 
     /// Builds an arbitrary `T` behind a `&'static` reference, mirroring
@@ -732,21 +747,25 @@ mod arbitrary_impls {
         }
     }
 
-    impl<'a, const MAX: u32> Arbitrary<'a> for BytesM<MAX> {
+    impl<'a, const MAX: u32, const MIN: u32> Arbitrary<'a> for BytesM<MAX, MIN> {
         fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
-            let v = u
+            let mut v = u
                 .arbitrary_iter()?
                 .take(arbitrary_max_len(MAX))
                 .collect::<Result<Vec<u8>>>()?;
+            // Padded as the owned type's impl pads, so both forms hold the
+            // same value.
+            arbitrary_pad_to_min(&mut v, MIN);
             // Leaked for the same reason as VecM above.
             Ok(Self(Vec::leak(v)))
         }
 
         fn arbitrary_take_rest(u: Unstructured<'a>) -> Result<Self> {
-            let v = u
+            let mut v = u
                 .arbitrary_take_rest_iter()?
                 .take(arbitrary_max_len(MAX))
                 .collect::<Result<Vec<u8>>>()?;
+            arbitrary_pad_to_min(&mut v, MIN);
             Ok(Self(Vec::leak(v)))
         }
 

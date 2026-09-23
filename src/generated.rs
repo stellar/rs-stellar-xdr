@@ -248,8 +248,9 @@ impl fmt::Display for Error {
     }
 }
 
-/// The error returned by the borrowing `Const` types' `try_from_slice` and
-/// `try_from_str` constructors when the input length exceeds the type's `MAX`.
+/// The error returned by the borrowing `Const` `VecM` and `StringM` types'
+/// `try_from_slice` and `try_from_str` constructors when the input length
+/// exceeds the type's `MAX`.
 ///
 /// Unlike [`Error`] it is `Copy` and free of any destructor, so a
 /// `Result<_, ErrorLengthExceedsMax>` can be matched in a const context (a
@@ -274,6 +275,42 @@ impl fmt::Display for ErrorLengthExceedsMax {
 
 #[cfg(feature = "std")]
 impl error::Error for ErrorLengthExceedsMax {}
+
+/// The error returned by the borrowing `Const` `BytesM` type's `try_from_slice`
+/// constructor when the input length is outside the type's `MIN` to `MAX`
+/// range.
+///
+/// Like [`ErrorLengthExceedsMax`] it is `Copy` and free of any destructor, so
+/// it can be matched in a const context. It converts into
+/// [`Error::LengthExceedsMax`] or [`Error::LengthBelowMin`] via [`From`], so
+/// runtime callers can still propagate it with `?`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorLengthOutOfRange {
+    ExceedsMax,
+    BelowMin,
+}
+
+impl From<ErrorLengthOutOfRange> for Error {
+    #[must_use]
+    fn from(e: ErrorLengthOutOfRange) -> Self {
+        match e {
+            ErrorLengthOutOfRange::ExceedsMax => Error::LengthExceedsMax,
+            ErrorLengthOutOfRange::BelowMin => Error::LengthBelowMin,
+        }
+    }
+}
+
+impl fmt::Display for ErrorLengthOutOfRange {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ErrorLengthOutOfRange::ExceedsMax => write!(f, "xdr value max length exceeded"),
+            ErrorLengthOutOfRange::BelowMin => write!(f, "xdr value min length not met"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl error::Error for ErrorLengthOutOfRange {}
 
 impl From<TryFromSliceError> for Error {
     fn from(_: TryFromSliceError) -> Error {

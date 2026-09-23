@@ -52,9 +52,19 @@ pub(crate) fn base_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> Strin
 /// form of its own or an alias to the owned type.
 ///
 /// Mirrors [`type_ref`], including the reference wrapping applied where
-/// `parent_type` makes the type cyclic.
-pub(crate) fn const_type(type_: &Type, parent_type: Option<&str>, type_info: &TypeInfo) -> String {
-    TypeMapping::new(type_, Some(type_info), parent_type).const_type()
+/// `parent_type` makes the type cyclic, and the `min_len` of
+/// [`resolve_type`].
+pub(crate) fn const_type(
+    type_: &Type,
+    parent_type: Option<&str>,
+    type_info: &TypeInfo,
+    min_len: Option<u32>,
+) -> String {
+    TypeMapping {
+        min_len,
+        ..TypeMapping::new(type_, Some(type_info), parent_type)
+    }
+    .const_type()
 }
 
 /// As [`const_type`], but without the reference wrapping for cyclic
@@ -225,9 +235,11 @@ impl<'a> TypeMapping<'a> {
             | Type::Double
             | Type::Bool
             | Type::OpaqueFixed(_) => self.base_type_ref(),
-            Type::OpaqueVar(max) => match max {
-                Some(size) => format!("BytesM<{}>", size_to_u32_string(size)),
-                None => "BytesM".to_string(),
+            Type::OpaqueVar(max) => match (max, self.min_len) {
+                (Some(size), None) => format!("BytesM<{}>", size_to_u32_string(size)),
+                (Some(size), Some(min)) => format!("BytesM<{}, {min}>", size_to_u32_string(size)),
+                (None, None) => "BytesM".to_string(),
+                (None, Some(min)) => format!("BytesM<{{ u32::MAX }}, {min}>"),
             },
             Type::String(max) => match max {
                 Some(size) => format!("StringM<{}>", size_to_u32_string(size)),

@@ -592,7 +592,7 @@ impl RustGenerator {
                 ConstTypeOutput::Newtype(ConstNewtypeOutput {
                     name: name.clone(),
                     cfg: cfg.clone(),
-                    type_ref: const_type(&t.type_, None, &self.type_info),
+                    type_ref: const_type(&t.type_, None, &self.type_info, None),
                 })
             }),
             const_to_xdr: Self::const_to_xdr(&name, cfg.as_deref()),
@@ -659,7 +659,7 @@ impl RustGenerator {
             );
         }
         let resolved = resolve_type(&m.type_, Some(parent), &self.type_info, custom_str, min_len);
-        let const_type = const_type(&m.type_, Some(parent), &self.type_info);
+        let const_type = const_type(&m.type_, Some(parent), &self.type_info, min_len);
 
         (
             StructMemberOutput {
@@ -703,7 +703,7 @@ impl RustGenerator {
                 let const_type = arm
                     .type_
                     .as_ref()
-                    .map(|t| const_type(t, Some(parent), &self.type_info));
+                    .map(|t| const_type(t, Some(parent), &self.type_info, None));
                 let cfg = arm.cfg.as_ref().map(xdr_parser::ast::CfgExpr::render);
 
                 (

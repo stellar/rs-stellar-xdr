@@ -3,7 +3,7 @@
 #![cfg(feature = "const")]
 
 use crate::r#const::{BytesM, StringM, VecM};
-use crate::ErrorLengthExceedsMax;
+use crate::{ErrorLengthExceedsMax, ErrorLengthOutOfRange};
 
 #[test]
 fn consts_try_from_enforce_max_len() {
@@ -16,7 +16,7 @@ fn consts_try_from_enforce_max_len() {
     assert!(BytesM::<3>::try_from_slice(b"abc").is_ok());
     assert_eq!(
         BytesM::<2>::try_from_slice(b"abc"),
-        Err(ErrorLengthExceedsMax)
+        Err(ErrorLengthOutOfRange::ExceedsMax)
     );
 
     assert!(StringM::<3>::try_from_str("abc").is_ok());
@@ -61,6 +61,25 @@ fn vecm_const_try_from_or_panic_panics_enforce_max_len() {
 #[should_panic(expected = "xdr value max length exceeded")]
 fn bytesm_const_try_from_or_panic_panics_enforce_max_len() {
     let _ = BytesM::<2>::try_from_slice_or_panic(b"abc");
+}
+
+#[test]
+fn bytesm_const_try_from_enforces_min_len() {
+    assert!(BytesM::<3, 2>::try_from_slice(b"ab").is_ok());
+    assert_eq!(
+        BytesM::<3, 2>::try_from_slice(b"a"),
+        Err(ErrorLengthOutOfRange::BelowMin)
+    );
+    assert_eq!(
+        BytesM::<3, 2>::try_from_slice(b"abcd"),
+        Err(ErrorLengthOutOfRange::ExceedsMax)
+    );
+}
+
+#[test]
+#[should_panic(expected = "xdr value min length not met")]
+fn bytesm_const_try_from_or_panic_panics_enforce_min_len() {
+    let _ = BytesM::<3, 2>::try_from_slice_or_panic(b"a");
 }
 
 #[test]

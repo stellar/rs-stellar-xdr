@@ -463,3 +463,26 @@ mod owned_value {
         })
     }
 }
+
+/// The owned and const forms of a payload with a minimum length pad the same
+/// way when `Arbitrary` input runs out before the minimum, so both hold, and
+/// encode, the same value.
+#[cfg(feature = "arbitrary")]
+#[test]
+fn const_and_owned_arbitrary_pad_to_min_the_same() {
+    use crate::r#const::ConstWriter;
+    use crate::SignerKeyEd25519SignedPayload;
+    use arbitrary::{Arbitrary, Unstructured};
+
+    // Enough input for the ed25519 key, and none left for the payload.
+    let data = [0x11u8; 32];
+    let o = SignerKeyEd25519SignedPayload::arbitrary(&mut Unstructured::new(&data)).unwrap();
+    let r =
+        r#const::SignerKeyEd25519SignedPayload::arbitrary(&mut Unstructured::new(&data)).unwrap();
+    assert_eq!(o.payload.as_vec(), &[0]);
+    assert_eq!(r.payload.as_slice(), &[0]);
+
+    let mut r_xdr = vec![0u8; r.const_xdr_len()];
+    ConstWriter::new(&mut r_xdr).write_type_signer_key_ed25519_signed_payload(&r);
+    assert_eq!(r_xdr, o.to_xdr(Limits::none()).unwrap());
+}

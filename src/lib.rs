@@ -6,6 +6,8 @@
 #![allow(clippy::tabs_in_doc_comments)]
 #![allow(clippy::doc_markdown)]
 #![allow(clippy::doc_lazy_continuation)]
+#![allow(clippy::unnecessary_semicolon)]
+#![allow(clippy::non_std_lazy_statics)]
 #![allow(unused_attributes)]
 
 //! Library and CLI containing types and functionality for working with Stellar
@@ -61,7 +63,8 @@
 //! APIs for runtime-selected XDR decoding, encoding, schema generation.
 //! 2. `base64` – Enables support for base64 encoding and decoding.
 //! 3. `serde` – Enables support for serializing and deserializing types with
-//! the serde crate.
+//! the serde crate, as XDR-JSON ([SEP-51]). A few values do not round trip
+//! between XDR and XDR-JSON, see the [XDR-JSON exceptions].
 //! 4. `serde_json` – Enables support for built-in functionality specifically
 //! for serde_json. Often not required to use the types with serde_json, and
 //! only necessary to use utility functions that depend on serde_json.
@@ -79,6 +82,9 @@
 //!
 //! Features marked experimental may disappear at anytime, see breaking changes
 //! at anytime, or and may be minimal implementations instead of complete.
+//!
+//! [SEP-51]: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0051.md
+//! [XDR-JSON exceptions]: crate::_xdrjson
 //!
 //! ### CLI
 //!
@@ -147,6 +153,8 @@ pub use generated::*;
 mod default;
 mod jsonschema;
 mod str;
+
+pub mod _xdrjson;
 
 mod scval_conversions;
 pub use scval_conversions::*;

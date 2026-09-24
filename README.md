@@ -74,9 +74,9 @@ at anytime, or and may be minimal implementations instead of complete.
 
 #### XDR-JSON
 
-With the `serde` feature, types serialize to and deserialize from XDR-JSON,
-and XDR converted to XDR-JSON converts back to the same XDR, with the
-following exceptions:
+With the `serde` feature, types serialize to and deserialize from XDR-JSON
+([SEP-51]), and XDR converted to XDR-JSON converts back to the same XDR,
+with the following exceptions:
 
 1. `SignerKeyEd25519SignedPayload` with an empty payload – A signed
 payload strkey requires a payload of 1 to 64 bytes, but the XDR type
@@ -87,6 +87,8 @@ is nested, such as in `SignerKey::Ed25519SignedPayload`.
 2. `ScAddress::MuxedContract` (only with the experimental
 `cap_0084_muxed_contract` feature) – Muxed contract addresses have no strkey
 encoding yet, so they cannot be converted to XDR-JSON.
+
+[SEP-51]: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0051.md
 
 ### CLI
 

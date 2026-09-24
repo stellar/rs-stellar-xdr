@@ -197,17 +197,20 @@ impl core::str::FromStr for NodeId {
     }
 }
 
+/// Formats the signed payload as a `P...` strkey.
+///
+/// An empty payload cannot be rendered as a strkey and is formatted as
+/// `<INVALID:G...:EMPTY_PAYLOAD>`, where `G...` is the ed25519 key as a strkey.
+/// The string is not accepted by [`FromStr`][core::str::FromStr]. See the
+/// [XDR-JSON exceptions](crate#xdr-json).
 impl core::fmt::Display for SignerKeyEd25519SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let SignerKeyEd25519SignedPayload {
             ed25519: Uint256(ed25519),
             payload,
         } = self;
-        // A strkey signed payload must be 1 to 64 bytes. The XDR type caps the
-        // payload at 64 bytes, so the only payload that cannot be rendered as
-        // a strkey is an empty one. Render it as obviously invalid, keeping the
-        // ed25519 key as a G strkey, instead of returning an error, which would
-        // cause to_string to panic.
+        // The XDR type caps the payload at 64 bytes, so the only payload that
+        // cannot be rendered as a strkey is an empty one.
         let Ok(k) = stellar_strkey::ed25519::SignedPayload::new(*ed25519, payload.as_ref()) else {
             let g = stellar_strkey::ed25519::PublicKey(*ed25519);
             return write!(f, "<INVALID:{g}:EMPTY_PAYLOAD>");
@@ -257,6 +260,11 @@ impl core::str::FromStr for SignerKey {
     }
 }
 
+/// Formats the signer key as a strkey.
+///
+/// A signed payload with an empty payload cannot be rendered as a strkey and is
+/// formatted as `<INVALID:G...:EMPTY_PAYLOAD>`. See the
+/// [XDR-JSON exceptions](crate#xdr-json).
 impl core::fmt::Display for SignerKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {

@@ -63,7 +63,8 @@
 //! APIs for runtime-selected XDR decoding, encoding, schema generation.
 //! 2. `base64` – Enables support for base64 encoding and decoding.
 //! 3. `serde` – Enables support for serializing and deserializing types with
-//! the serde crate.
+//! the serde crate, as XDR-JSON ([SEP-51]). A few values do not round trip
+//! between XDR and XDR-JSON, see the [XDR-JSON exceptions].
 //! 4. `serde_json` – Enables support for built-in functionality specifically
 //! for serde_json. Often not required to use the types with serde_json, and
 //! only necessary to use utility functions that depend on serde_json.
@@ -82,23 +83,8 @@
 //! Features marked experimental may disappear at anytime, see breaking changes
 //! at anytime, or and may be minimal implementations instead of complete.
 //!
-//! #### XDR-JSON
-//!
-//! With the `serde` feature, types serialize to and deserialize from XDR-JSON
-//! ([SEP-51]), and XDR converted to XDR-JSON converts back to the same XDR,
-//! with the following exceptions:
-//!
-//! 1. `SignerKeyEd25519SignedPayload` with an empty payload – A signed
-//! payload strkey requires a payload of 1 to 64 bytes, but the XDR type
-//! permits an empty payload. An empty payload is rendered as
-//! `<INVALID:G...:EMPTY_PAYLOAD>`, where `G...` is the ed25519 key as a strkey,
-//! which cannot be converted back to XDR. This also applies wherever the type
-//! is nested, such as in `SignerKey::Ed25519SignedPayload`.
-//! 2. `ScAddress::MuxedContract` (only with the experimental
-//! `cap_0084_muxed_contract` feature) – Muxed contract addresses have no strkey
-//! encoding yet, so they cannot be converted to XDR-JSON.
-//!
 //! [SEP-51]: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0051.md
+//! [XDR-JSON exceptions]: https://docs.rs/stellar-xdr/latest/stellar_xdr/xdr_json/index.html
 //!
 //! ### CLI
 //!
@@ -167,6 +153,8 @@ pub use generated::*;
 mod default;
 mod jsonschema;
 mod str;
+
+pub mod xdr_json;
 
 mod scval_conversions;
 pub use scval_conversions::*;

@@ -202,7 +202,7 @@ impl core::str::FromStr for NodeId {
 /// An empty payload cannot be rendered as a strkey and is formatted as
 /// `<INVALID:G...:EMPTY_PAYLOAD>`, where `G...` is the ed25519 key as a strkey.
 /// The string is not accepted by [`FromStr`][core::str::FromStr]. See the
-/// [XDR-JSON exceptions](crate#xdr-json).
+/// [XDR-JSON exceptions](crate::xdr_json).
 impl core::fmt::Display for SignerKeyEd25519SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let SignerKeyEd25519SignedPayload {
@@ -264,7 +264,7 @@ impl core::str::FromStr for SignerKey {
 ///
 /// A signed payload with an empty payload cannot be rendered as a strkey and is
 /// formatted as `<INVALID:G...:EMPTY_PAYLOAD>`. See the
-/// [XDR-JSON exceptions](crate#xdr-json).
+/// [XDR-JSON exceptions](crate::xdr_json).
 impl core::fmt::Display for SignerKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {

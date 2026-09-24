@@ -84,7 +84,7 @@
 //! at anytime, or and may be minimal implementations instead of complete.
 //!
 //! [SEP-51]: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0051.md
-//! [XDR-JSON exceptions]: https://docs.rs/stellar-xdr/latest/stellar_xdr/xdr_json/index.html
+//! [XDR-JSON exceptions]: crate::_xdrjson
 //!
 //! ### CLI
 //!
@@ -154,7 +154,7 @@ mod default;
 mod jsonschema;
 mod str;
 
-pub mod xdr_json;
+pub mod _xdrjson;
 
 mod scval_conversions;
 pub use scval_conversions::*;

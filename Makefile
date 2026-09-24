@@ -54,7 +54,7 @@ watch:
 generate: generate-files xdr-version xdr-json xdr-definitions-json
 
 CUSTOM_DEFAULT_IMPL=TransactionEnvelope
-CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
+CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,MuxedContract,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
 
 generate-files: src/generated.rs
 

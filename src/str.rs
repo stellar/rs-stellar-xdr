@@ -205,10 +205,12 @@ impl core::fmt::Display for SignerKeyEd25519SignedPayload {
         } = self;
         // A strkey signed payload must be 1 to 64 bytes. The XDR type caps the
         // payload at 64 bytes, so the only payload that cannot be rendered as
-        // a strkey is an empty one. Render it as obviously invalid instead of
-        // returning an error, which would cause to_string to panic.
+        // a strkey is an empty one. Render it as obviously invalid, keeping the
+        // ed25519 key as a G strkey, instead of returning an error, which would
+        // cause to_string to panic.
         let Ok(k) = stellar_strkey::ed25519::SignedPayload::new(*ed25519, payload.as_ref()) else {
-            return f.write_str("<INVALID:SignerKeyEd25519SignedPayload:EMPTY_PAYLOAD>");
+            let g = stellar_strkey::ed25519::PublicKey(*ed25519);
+            return write!(f, "<INVALID:{g}:EMPTY_PAYLOAD>");
         };
         let s = k.to_string();
         f.write_str(&s)?;

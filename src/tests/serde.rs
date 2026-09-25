@@ -102,3 +102,12 @@ fn test_serde_type_field_uses_sep51_json_key() -> Result<(), Box<dyn std::error:
 
     Ok(())
 }
+
+#[test]
+fn test_serde_der_vecm_enforces_max() {
+    assert_eq!(
+        serde_json::from_str::<VecM<u32, 2>>("[1,2]").unwrap(),
+        VecM::<u32, 2>::try_from(vec![1, 2]).unwrap()
+    );
+    assert!(serde_json::from_str::<VecM<u32, 2>>("[1,2,3]").is_err());
+}

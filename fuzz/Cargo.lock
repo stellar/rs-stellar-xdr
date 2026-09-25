@@ -296,8 +296,7 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 [[package]]
 name = "stellar-strkey"
 version = "0.0.18"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f34ff61c0ca6f1c2b4169e8d1633417bd9225f58b6175e4e317204565d16277"
+source = "git+https://github.com/stellar/rs-stellar-strkey?rev=80085faa3e1f851fc28f3b2b941019265d46c314#80085faa3e1f851fc28f3b2b941019265d46c314"
 dependencies = [
  "crate-git-revision",
  "data-encoding",

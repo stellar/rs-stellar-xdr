@@ -11,9 +11,5 @@
 //! as a strkey, which cannot be converted back to XDR. This also applies
 //! wherever the type is nested, such as in
 //! [`SignerKey::Ed25519SignedPayload`][crate::SignerKey::Ed25519SignedPayload].
-//! 2. `ScAddress::MuxedContract` ([CAP-84], only with the experimental
-//! `cap_0084_muxed_contract` feature) – Muxed contract addresses have no strkey
-//! encoding yet, so they cannot be converted to XDR-JSON.
 //!
 //! [SEP-51]: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0051.md
-//! [CAP-84]: https://github.com/stellar/stellar-protocol/blob/master/core/cap-0084.md

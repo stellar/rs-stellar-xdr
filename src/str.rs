@@ -165,7 +165,8 @@ impl core::str::FromStr for MuxedAccount {
             | stellar_strkey::Strkey::SignedPayloadEd25519(_)
             | stellar_strkey::Strkey::Contract(_)
             | stellar_strkey::Strkey::LiquidityPool(_)
-            | stellar_strkey::Strkey::ClaimableBalance(_) => Err(Error::Invalid),
+            | stellar_strkey::Strkey::ClaimableBalance(_)
+            | stellar_strkey::Strkey::MuxedContract(_) => Err(Error::Invalid),
         }
     }
 }
@@ -255,7 +256,8 @@ impl core::str::FromStr for SignerKey {
             stellar_strkey::Strkey::Contract(_)
             | stellar_strkey::Strkey::MuxedAccountEd25519(_)
             | stellar_strkey::Strkey::LiquidityPool(_)
-            | stellar_strkey::Strkey::ClaimableBalance(_) => Err(Error::Invalid),
+            | stellar_strkey::Strkey::ClaimableBalance(_)
+            | stellar_strkey::Strkey::MuxedContract(_) => Err(Error::Invalid),
         }
     }
 }
@@ -315,6 +317,33 @@ impl core::fmt::Display for MuxedEd25519Account {
     }
 }
 
+#[cfg(feature = "cap_0084_muxed_contract")]
+impl core::str::FromStr for crate::MuxedContract {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let strkey = stellar_strkey::Strkey::from_str(s)?;
+        match strkey {
+            stellar_strkey::Strkey::MuxedContract(muxed_contract) => Ok(crate::MuxedContract {
+                id: muxed_contract.id,
+                contract_id: ContractId(Hash(muxed_contract.contract_id)),
+            }),
+            _ => Err(Error::Invalid),
+        }
+    }
+}
+
+#[cfg(feature = "cap_0084_muxed_contract")]
+impl core::fmt::Display for crate::MuxedContract {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let k = stellar_strkey::MuxedContract {
+            contract_id: self.contract_id.0 .0,
+            id: self.id,
+        };
+        let s = k.to_string();
+        f.write_str(&s)
+    }
+}
+
 impl core::str::FromStr for ScAddress {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
@@ -340,9 +369,19 @@ impl core::str::FromStr for ScAddress {
             )) => Ok(ScAddress::ClaimableBalance(
                 ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(claimable_balance)),
             )),
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            stellar_strkey::Strkey::MuxedContract(stellar_strkey::MuxedContract {
+                contract_id,
+                id,
+            }) => Ok(ScAddress::MuxedContract(crate::MuxedContract {
+                id,
+                contract_id: ContractId(Hash(contract_id)),
+            })),
             stellar_strkey::Strkey::PreAuthTx(_)
             | stellar_strkey::Strkey::HashX(_)
             | stellar_strkey::Strkey::SignedPayloadEd25519(_) => Err(Error::Invalid),
+            #[cfg(not(feature = "cap_0084_muxed_contract"))]
+            stellar_strkey::Strkey::MuxedContract(_) => Err(Error::Invalid),
         }
     }
 }
@@ -368,13 +407,8 @@ impl core::fmt::Display for ScAddress {
             }
             ScAddress::ClaimableBalance(claimable_balance_id) => claimable_balance_id.fmt(f),
             ScAddress::LiquidityPool(pool_id) => pool_id.fmt(f),
-            // Muxed contract addresses (CAP-0084) have no strkey encoding yet
-            // (stellar-strkey has no variant for them), so there is no string
-            // representation to produce. Needs to be updated once SEP-23 is
-            // updated. This block should only be ungated after that is complete
-            // and we return the proper encoding here.
             #[cfg(feature = "cap_0084_muxed_contract")]
-            ScAddress::MuxedContract(_) => Err(core::fmt::Error),
+            ScAddress::MuxedContract(muxed_contract) => muxed_contract.fmt(f),
         }
     }
 }

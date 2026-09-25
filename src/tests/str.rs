@@ -1,5 +1,7 @@
 #![cfg(feature = "std")]
 
+#[cfg(feature = "cap_0084_muxed_contract")]
+use crate::MuxedContract;
 use crate::{
     AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, ContractId, Error, Hash,
     Int128Parts, Int256Parts, MuxedAccount, MuxedAccountMed25519, MuxedEd25519Account, NodeId,
@@ -540,6 +542,101 @@ fn sc_address_from_str_with_claimable_balance() {
             ]))
         ))
     );
+}
+
+const MUXED_CONTRACT_STRKEY: &str =
+    "WA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCIA6IG";
+
+#[cfg(feature = "cap_0084_muxed_contract")]
+const MUXED_CONTRACT: MuxedContract = MuxedContract {
+    id: 123_456,
+    contract_id: ContractId(Hash([
+        0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79, 0xe4,
+        0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d, 0x05, 0xc7,
+        0xb1, 0x03,
+    ])),
+};
+
+#[cfg(feature = "cap_0084_muxed_contract")]
+#[test]
+fn muxed_contract_to_string() {
+    assert_eq!(MUXED_CONTRACT.to_string(), MUXED_CONTRACT_STRKEY);
+}
+
+#[cfg(feature = "cap_0084_muxed_contract")]
+#[test]
+fn muxed_contract_from_str() {
+    assert_eq!(
+        MuxedContract::from_str(MUXED_CONTRACT_STRKEY),
+        Ok(MUXED_CONTRACT)
+    );
+}
+
+#[cfg(feature = "cap_0084_muxed_contract")]
+#[test]
+fn muxed_contract_from_str_with_contract() {
+    let v = MuxedContract::from_str("CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE");
+    assert_eq!(v, Err(Error::Invalid));
+}
+
+#[cfg(all(feature = "cap_0084_muxed_contract", feature = "serde"))]
+#[test]
+fn muxed_contract_json() {
+    let json = serde_json::to_string(&MUXED_CONTRACT).unwrap();
+    assert_eq!(json, format!("\"{MUXED_CONTRACT_STRKEY}\""));
+    assert_eq!(
+        serde_json::from_str::<MuxedContract>(&json).unwrap(),
+        MUXED_CONTRACT
+    );
+    assert_eq!(
+        serde_json::from_str::<MuxedContract>(
+            r#"{"id":123456,"contract_id":"CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE"}"#
+        )
+        .unwrap(),
+        MUXED_CONTRACT
+    );
+}
+
+#[cfg(feature = "cap_0084_muxed_contract")]
+#[test]
+fn sc_address_to_string_with_muxed_contract() {
+    let s = ScAddress::MuxedContract(MUXED_CONTRACT).to_string();
+    assert_eq!(s, MUXED_CONTRACT_STRKEY);
+}
+
+#[cfg(feature = "cap_0084_muxed_contract")]
+#[test]
+fn sc_address_from_str_with_muxed_contract() {
+    let v = ScAddress::from_str(MUXED_CONTRACT_STRKEY);
+    assert_eq!(v, Ok(ScAddress::MuxedContract(MUXED_CONTRACT)));
+}
+
+#[cfg(all(feature = "cap_0084_muxed_contract", feature = "serde"))]
+#[test]
+fn sc_address_json_with_muxed_contract() {
+    let a = ScAddress::MuxedContract(MUXED_CONTRACT);
+    let json = serde_json::to_string(&a).unwrap();
+    assert_eq!(json, format!("\"{MUXED_CONTRACT_STRKEY}\""));
+    assert_eq!(serde_json::from_str::<ScAddress>(&json).unwrap(), a);
+}
+
+#[cfg(not(feature = "cap_0084_muxed_contract"))]
+#[test]
+fn sc_address_from_str_with_muxed_contract_without_feature() {
+    let v = ScAddress::from_str(MUXED_CONTRACT_STRKEY);
+    assert_eq!(v, Err(Error::Invalid));
+}
+
+#[test]
+fn muxed_account_from_str_with_muxed_contract() {
+    let v = MuxedAccount::from_str(MUXED_CONTRACT_STRKEY);
+    assert_eq!(v, Err(Error::Invalid));
+}
+
+#[test]
+fn signer_key_from_str_with_muxed_contract() {
+    let v = SignerKey::from_str(MUXED_CONTRACT_STRKEY);
+    assert_eq!(v, Err(Error::Invalid));
 }
 
 #[test]

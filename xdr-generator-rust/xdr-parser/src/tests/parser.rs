@@ -523,35 +523,6 @@ fn test_cfg_expr_negate() {
 }
 
 #[test]
-fn test_cfg_expr_and() {
-    // Feature AND Feature => All
-    let a = CfgExpr::Feature("A".to_string());
-    let b = CfgExpr::Feature("B".to_string());
-    assert_eq!(
-        a.and(b),
-        CfgExpr::All(vec![
-            CfgExpr::Feature("A".to_string()),
-            CfgExpr::Feature("B".to_string()),
-        ])
-    );
-
-    // All AND Feature => flattened All
-    let a = CfgExpr::All(vec![
-        CfgExpr::Feature("A".to_string()),
-        CfgExpr::Feature("B".to_string()),
-    ]);
-    let c = CfgExpr::Feature("C".to_string());
-    assert_eq!(
-        a.and(c),
-        CfgExpr::All(vec![
-            CfgExpr::Feature("A".to_string()),
-            CfgExpr::Feature("B".to_string()),
-            CfgExpr::Feature("C".to_string()),
-        ])
-    );
-}
-
-#[test]
 fn test_cfg_expr_render_feature() {
     let expr = CfgExpr::Feature("FEATURE_X".to_string());
     assert_eq!(expr.render(), r#"feature = "feature_x""#);

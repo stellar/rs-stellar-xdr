@@ -1,6 +1,6 @@
 #![cfg(feature = "std")]
 
-use stellar_xdr::{AccountId, MuxedAccount, MuxedAccountMed25519, PublicKey, Uint256};
+use crate::{AccountId, MuxedAccount, MuxedAccountMed25519, PublicKey, Uint256};
 
 #[test]
 fn from_account_id_to_muxed_account() {

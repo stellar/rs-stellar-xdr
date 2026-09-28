@@ -2,7 +2,7 @@
 
 use bytes_lit::bytes;
 
-use stellar_xdr::{
+use crate::{
     FeeBumpTransaction, FeeBumpTransactionEnvelope, FeeBumpTransactionInnerTx, Limits, Memo,
     MuxedAccount, Preconditions, SequenceNumber, Transaction, TransactionEnvelope, TransactionExt,
     TransactionV0, TransactionV0Envelope, TransactionV0Ext, TransactionV1Envelope, Uint256,
@@ -14,7 +14,7 @@ const NETWORK_ID: [u8; 32] =
     bytes!(0xcee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472);
 
 #[test]
-fn test_transaction_v0_hash() -> Result<(), stellar_xdr::Error> {
+fn test_transaction_v0_hash() -> Result<(), crate::Error> {
     // Test V0 Transaction Envelope
     let v0_tx = TransactionV0 {
         source_account_ed25519: Uint256([0; 32]),
@@ -44,7 +44,7 @@ fn test_transaction_v0_hash() -> Result<(), stellar_xdr::Error> {
 }
 
 #[test]
-fn test_transaction_v1_hash() -> Result<(), stellar_xdr::Error> {
+fn test_transaction_v1_hash() -> Result<(), crate::Error> {
     let v1_tx = Transaction {
         source_account: MuxedAccount::Ed25519(Uint256([0; 32])),
         fee: 100,
@@ -73,7 +73,7 @@ fn test_transaction_v1_hash() -> Result<(), stellar_xdr::Error> {
 }
 
 #[test]
-fn test_fee_bump_transaction_hash() -> Result<(), stellar_xdr::Error> {
+fn test_fee_bump_transaction_hash() -> Result<(), crate::Error> {
     let fee_bump_tx = FeeBumpTransaction {
         fee_source: MuxedAccount::Ed25519(Uint256([0; 32])),
         fee: 200,
@@ -89,7 +89,7 @@ fn test_fee_bump_transaction_hash() -> Result<(), stellar_xdr::Error> {
             },
             signatures: [].try_into()?,
         }),
-        ext: stellar_xdr::FeeBumpTransactionExt::V0,
+        ext: crate::FeeBumpTransactionExt::V0,
     };
 
     let inner_tx_xdr = fee_bump_tx.inner_tx.to_xdr_base64(Limits::none())?;

@@ -1,6 +1,6 @@
 #![cfg(all(feature = "std", feature = "base64"))]
 
-use stellar_xdr::{Error, Limits, OperationBody, ReadXdr, SequenceNumber, TransactionEnvelope};
+use crate::{Error, Limits, OperationBody, ReadXdr, SequenceNumber, TransactionEnvelope};
 
 #[test]
 fn test_parse_pubnet_v18_tx() -> Result<(), Error> {

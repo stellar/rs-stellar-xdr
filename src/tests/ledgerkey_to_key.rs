@@ -1,6 +1,6 @@
 #![cfg(feature = "std")]
 
-use stellar_xdr::{
+use crate::{
     AccountEntry, AccountEntryExt, AccountId, AlphaNum4, Asset, AssetCode4, ClaimableBalanceEntry,
     ClaimableBalanceEntryExt, ClaimableBalanceId, ConfigSettingContractBandwidthV0,
     ConfigSettingEntry, ConfigSettingId, ContractCodeEntry, ContractCodeEntryExt,

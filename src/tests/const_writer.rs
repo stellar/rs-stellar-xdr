@@ -1,24 +1,53 @@
-//! Significantly complex values, each in a const and an owned form that are
-//! identical.
-//!
-//! The `TransactionEnvelope` covers every shape the generator emits: nested
-//! structs, both union kinds with void, scalar, fixed-opaque and heap arms, a
-//! heap-free struct the `const` module aliases rather than replaces, a cyclic
-//! field where the const form borrows and the owned form boxes, `Option` in
-//! both states, `VecM` of borrowing and of heap-free values, an empty `VecM`,
-//! `StringM`, `BytesM`, and u32/u64/i64 scalars.
-//!
-//! The `ScSpecEntry` covers what the envelope cannot: a union whose recursive
-//! arms nest several levels deep, where each level is a `&'static` borrow in
-//! the const form and a `Box` in the owned one, reached through `VecM` elements
-//! as well as through struct fields.
+//! Tests for the const XDR serializer.
 
-pub use const_value::{spec_entry_const, tx_env_const};
-pub use owned_value::{spec_entry_owned, tx_env_owned};
+#![cfg(all(feature = "const", feature = "std"))]
+
+use crate::{r#const, Limits, ScSpecEntry, TransactionEnvelope, WriteXdr};
+
+use const_value::{spec_entry_const, tx_env_const};
+use owned_value::{spec_entry_owned, tx_env_owned};
+
+#[test]
+fn const_and_owned_encode_same() {
+    const R: r#const::TransactionEnvelope = const { tx_env_const() };
+    let o: TransactionEnvelope = tx_env_owned();
+
+    let r_xdr: [u8; R.const_xdr_len()] = R.const_to_xdr();
+    let o_xdr = o.to_xdr(Limits::none()).unwrap();
+    assert_eq!(r_xdr, o_xdr.as_slice());
+}
+
+/// The same check over a value whose recursive arms nest several levels deep,
+/// which is where the const form's `&'static` borrows stand in for the owned
+/// form's `Box`.
+#[test]
+fn const_and_owned_encode_same_spec_entry() {
+    const R: r#const::ScSpecEntry = const { spec_entry_const() };
+    let o: ScSpecEntry = spec_entry_owned();
+
+    let r_xdr: [u8; R.const_xdr_len()] = R.const_to_xdr();
+    let o_xdr = o.to_xdr(Limits::none()).unwrap();
+    assert_eq!(r_xdr, o_xdr.as_slice());
+}
+
+// Significantly complex values, each in a const and an owned form that are
+// identical.
+//
+// The `TransactionEnvelope` covers every shape the generator emits: nested
+// structs, both union kinds with void, scalar, fixed-opaque and heap arms, a
+// heap-free struct the `const` module aliases rather than replaces, a cyclic
+// field where the const form borrows and the owned form boxes, `Option` in
+// both states, `VecM` of borrowing and of heap-free values, an empty `VecM`,
+// `StringM`, `BytesM`, and u32/u64/i64 scalars.
+//
+// The `ScSpecEntry` covers what the envelope cannot: a union whose recursive
+// arms nest several levels deep, where each level is a `&'static` borrow in
+// the const form and a `Box` in the owned one, reached through `VecM` elements
+// as well as through struct fields.
 
 /// The value as `const`, built from the `const` module's types.
 mod const_value {
-    use stellar_xdr::r#const::*;
+    use crate::r#const::*;
 
     #[allow(clippy::too_many_lines)]
     pub const fn tx_env_const() -> TransactionEnvelope {
@@ -257,7 +286,7 @@ mod const_value {
 
 /// The same value owned, built from the generated types.
 mod owned_value {
-    use stellar_xdr::*;
+    use crate::*;
 
     #[allow(clippy::too_many_lines)]
     pub fn tx_env_owned() -> TransactionEnvelope {

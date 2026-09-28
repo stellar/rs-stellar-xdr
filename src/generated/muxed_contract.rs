@@ -18,16 +18,9 @@ use super::*;
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
+    derive(serde_with::SerializeDisplay)
 )]
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct MuxedContract {
-    #[cfg_attr(
-        all(feature = "serde", feature = "alloc"),
-        serde_as(as = "NumberOrString")
-    )]
     pub id: u64,
     pub contract_id: ContractId,
 }
@@ -54,5 +47,34 @@ impl WriteXdr for MuxedContract {
             self.contract_id.write_xdr(w)?;
             Ok(())
         })
+    }
+}
+#[cfg(feature = "cap_0084_muxed_contract")]
+#[cfg(all(feature = "serde", feature = "alloc"))]
+impl<'de> serde::Deserialize<'de> for MuxedContract {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct MuxedContract {
+            id: u64,
+            contract_id: ContractId,
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum MuxedContractOrString<'a> {
+            Str(&'a str),
+            String(String),
+            MuxedContract(MuxedContract),
+        }
+        match MuxedContractOrString::deserialize(deserializer)? {
+            MuxedContractOrString::Str(s) => s.parse().map_err(serde::de::Error::custom),
+            MuxedContractOrString::String(s) => s.parse().map_err(serde::de::Error::custom),
+            MuxedContractOrString::MuxedContract(MuxedContract { id, contract_id }) => {
+                Ok(self::MuxedContract { id, contract_id })
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 #![allow(clippy::missing_errors_doc)]
 
-use super::{Error, ScMap, ScVal};
+use super::{Error, ScContractInstance, ScMap, ScVal};
 
 pub trait Validate {
     type Error;
@@ -30,7 +30,7 @@ impl Validate for ScVal {
             | ScVal::Address(_)
             | ScVal::LedgerKeyContractInstance
             | ScVal::LedgerKeyNonce(_)
-            | ScVal::ContractInstance(_)
+            | ScVal::ContractInstance(ScContractInstance { storage: None, .. })
             | ScVal::ExecutableTag(_) => Ok(()),
 
             ScVal::Vec(Some(v)) => {
@@ -51,7 +51,10 @@ impl Validate for ScVal {
                 }
             }
             ScVal::Vec(None) | ScVal::Map(None) => Err(Error::Invalid),
-            ScVal::Map(Some(m)) => m.validate(),
+            ScVal::Map(Some(m))
+            | ScVal::ContractInstance(ScContractInstance {
+                storage: Some(m), ..
+            }) => m.validate(),
         }
     }
 }
@@ -174,6 +177,73 @@ mod test {
                 .try_into()
                 .unwrap()
             )))
+            .validate(),
+            Err(Error::Invalid)
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "alloc")]
+    fn contract_instance() {
+        use super::super::{ContractExecutable, Hash, ScContractInstance, ScMap, ScMapEntry};
+        extern crate alloc;
+        use alloc::vec;
+        let scmap = |entries: Vec<(ScVal, ScVal)>| {
+            ScMap(
+                entries
+                    .into_iter()
+                    .map(|(key, val)| ScMapEntry { key, val })
+                    .collect::<Vec<_>>()
+                    .try_into()
+                    .unwrap(),
+            )
+        };
+        let instance = |storage: Option<ScMap>| {
+            ScVal::ContractInstance(ScContractInstance {
+                executable: ContractExecutable::Wasm(Hash([0; 32])),
+                storage,
+            })
+        };
+        // Instance storage is a map, so it has the same requirements as any
+        // other map.
+        assert_eq!(instance(None).validate(), Ok(()));
+        assert_eq!(
+            instance(Some(scmap(vec![
+                (ScVal::U32(1), ScVal::Void),
+                (ScVal::U32(2), ScVal::Void),
+            ])))
+            .validate(),
+            Ok(())
+        );
+        assert_eq!(
+            instance(Some(scmap(vec![
+                (ScVal::U32(2), ScVal::Void),
+                (ScVal::U32(1), ScVal::Void),
+            ])))
+            .validate(),
+            Err(Error::Invalid)
+        );
+        assert_eq!(
+            instance(Some(scmap(vec![
+                (ScVal::U32(1), ScVal::Void),
+                (ScVal::U32(1), ScVal::Void),
+            ])))
+            .validate(),
+            Err(Error::Invalid)
+        );
+        assert_eq!(
+            instance(Some(scmap(vec![(ScVal::U32(1), ScVal::Vec(None))]))).validate(),
+            Err(Error::Invalid)
+        );
+        // Invalid storage is also caught when the instance is inside a map.
+        assert_eq!(
+            ScVal::Map(Some(scmap(vec![(
+                ScVal::U32(0),
+                instance(Some(scmap(vec![
+                    (ScVal::U32(2), ScVal::Void),
+                    (ScVal::U32(1), ScVal::Void),
+                ]))),
+            )])))
             .validate(),
             Err(Error::Invalid)
         );

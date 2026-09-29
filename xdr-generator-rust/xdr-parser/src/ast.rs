@@ -118,27 +118,6 @@ impl CfgExpr {
         }
     }
 
-    /// Combine two cfg expressions with `all(...)`, flattening nested `All`.
-    ///
-    /// Useful for combining an `#ifdef`-derived cfg with a file-based cfg.
-    #[must_use]
-    pub fn and(self, other: CfgExpr) -> CfgExpr {
-        let mut parts = Vec::new();
-        match self {
-            CfgExpr::All(inner) => parts.extend(inner),
-            other_expr => parts.push(other_expr),
-        }
-        match other {
-            CfgExpr::All(inner) => parts.extend(inner),
-            other_expr => parts.push(other_expr),
-        }
-        if parts.len() == 1 {
-            parts.remove(0)
-        } else {
-            CfgExpr::All(parts)
-        }
-    }
-
     /// Evaluate this expression against a set of enabled features.
     /// Feature names are compared case-insensitively.
     #[must_use]

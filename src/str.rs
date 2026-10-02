@@ -160,13 +160,13 @@ impl core::str::FromStr for MuxedAccount {
                 ed25519: Uint256(ed25519),
                 id,
             })),
-            stellar_strkey::Strkey::PrivateKeyEd25519(_)
-            | stellar_strkey::Strkey::PreAuthTx(_)
+            stellar_strkey::Strkey::PreAuthTx(_)
             | stellar_strkey::Strkey::HashX(_)
             | stellar_strkey::Strkey::SignedPayloadEd25519(_)
             | stellar_strkey::Strkey::Contract(_)
             | stellar_strkey::Strkey::LiquidityPool(_)
-            | stellar_strkey::Strkey::ClaimableBalance(_) => Err(Error::Invalid),
+            | stellar_strkey::Strkey::ClaimableBalance(_)
+            | stellar_strkey::Strkey::MuxedContract(_) => Err(Error::Invalid),
         }
     }
 }
@@ -198,15 +198,23 @@ impl core::str::FromStr for NodeId {
     }
 }
 
+/// Formats the signed payload as a `P...` strkey.
+///
+/// An empty payload cannot be rendered as a strkey and is formatted as
+/// `<INVALID:G...:EMPTY_PAYLOAD>`, where `G...` is the ed25519 key as a strkey.
+/// The string is not accepted by [`FromStr`][core::str::FromStr]. See the
+/// [XDR-JSON exceptions](crate::_xdrjson).
 impl core::fmt::Display for SignerKeyEd25519SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let SignerKeyEd25519SignedPayload {
             ed25519: Uint256(ed25519),
             payload,
         } = self;
-        let k = stellar_strkey::ed25519::SignedPayload {
-            ed25519: *ed25519,
-            payload: payload.into(),
+        // The XDR type caps the payload at 64 bytes, so the only payload that
+        // cannot be rendered as a strkey is an empty one.
+        let Ok(k) = stellar_strkey::ed25519::SignedPayload::new(*ed25519, payload.as_ref()) else {
+            let g = stellar_strkey::ed25519::PublicKey(*ed25519);
+            return write!(f, "<INVALID:{g}:EMPTY_PAYLOAD>");
         };
         let s = k.to_string();
         f.write_str(&s)?;
@@ -217,11 +225,10 @@ impl core::fmt::Display for SignerKeyEd25519SignedPayload {
 impl core::str::FromStr for SignerKeyEd25519SignedPayload {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
-        let stellar_strkey::ed25519::SignedPayload { ed25519, payload } =
-            stellar_strkey::ed25519::SignedPayload::from_str(s)?;
+        let sp = stellar_strkey::ed25519::SignedPayload::from_str(s)?;
         Ok(SignerKeyEd25519SignedPayload {
-            ed25519: Uint256(ed25519),
-            payload: payload.try_into()?,
+            ed25519: Uint256(*sp.ed25519()),
+            payload: sp.payload().try_into()?,
         })
     }
 }
@@ -240,23 +247,26 @@ impl core::str::FromStr for SignerKey {
             stellar_strkey::Strkey::HashX(stellar_strkey::HashX(h)) => {
                 Ok(SignerKey::HashX(Uint256(h)))
             }
-            stellar_strkey::Strkey::SignedPayloadEd25519(
-                stellar_strkey::ed25519::SignedPayload { ed25519, payload },
-            ) => Ok(SignerKey::Ed25519SignedPayload(
-                SignerKeyEd25519SignedPayload {
-                    ed25519: Uint256(ed25519),
-                    payload: payload.try_into()?,
-                },
-            )),
-            stellar_strkey::Strkey::PrivateKeyEd25519(_)
-            | stellar_strkey::Strkey::Contract(_)
+            stellar_strkey::Strkey::SignedPayloadEd25519(sp) => Ok(
+                SignerKey::Ed25519SignedPayload(SignerKeyEd25519SignedPayload {
+                    ed25519: Uint256(*sp.ed25519()),
+                    payload: sp.payload().try_into()?,
+                }),
+            ),
+            stellar_strkey::Strkey::Contract(_)
             | stellar_strkey::Strkey::MuxedAccountEd25519(_)
             | stellar_strkey::Strkey::LiquidityPool(_)
-            | stellar_strkey::Strkey::ClaimableBalance(_) => Err(Error::Invalid),
+            | stellar_strkey::Strkey::ClaimableBalance(_)
+            | stellar_strkey::Strkey::MuxedContract(_) => Err(Error::Invalid),
         }
     }
 }
 
+/// Formats the signer key as a strkey.
+///
+/// A signed payload with an empty payload cannot be rendered as a strkey and is
+/// formatted as `<INVALID:G...:EMPTY_PAYLOAD>`. See the
+/// [XDR-JSON exceptions](crate::_xdrjson).
 impl core::fmt::Display for SignerKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
@@ -307,6 +317,33 @@ impl core::fmt::Display for MuxedEd25519Account {
     }
 }
 
+#[cfg(feature = "cap_0084_muxed_contract")]
+impl core::str::FromStr for crate::MuxedContract {
+    type Err = Error;
+    fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
+        let strkey = stellar_strkey::Strkey::from_str(s)?;
+        match strkey {
+            stellar_strkey::Strkey::MuxedContract(muxed_contract) => Ok(crate::MuxedContract {
+                id: muxed_contract.id,
+                contract_id: ContractId(Hash(muxed_contract.contract_id)),
+            }),
+            _ => Err(Error::Invalid),
+        }
+    }
+}
+
+#[cfg(feature = "cap_0084_muxed_contract")]
+impl core::fmt::Display for crate::MuxedContract {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let k = stellar_strkey::MuxedContract {
+            contract_id: self.contract_id.0 .0,
+            id: self.id,
+        };
+        let s = k.to_string();
+        f.write_str(&s)
+    }
+}
+
 impl core::str::FromStr for ScAddress {
     type Err = Error;
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
@@ -332,10 +369,19 @@ impl core::str::FromStr for ScAddress {
             )) => Ok(ScAddress::ClaimableBalance(
                 ClaimableBalanceId::ClaimableBalanceIdTypeV0(Hash(claimable_balance)),
             )),
-            stellar_strkey::Strkey::PrivateKeyEd25519(_)
-            | stellar_strkey::Strkey::PreAuthTx(_)
+            #[cfg(feature = "cap_0084_muxed_contract")]
+            stellar_strkey::Strkey::MuxedContract(stellar_strkey::MuxedContract {
+                contract_id,
+                id,
+            }) => Ok(ScAddress::MuxedContract(crate::MuxedContract {
+                id,
+                contract_id: ContractId(Hash(contract_id)),
+            })),
+            stellar_strkey::Strkey::PreAuthTx(_)
             | stellar_strkey::Strkey::HashX(_)
             | stellar_strkey::Strkey::SignedPayloadEd25519(_) => Err(Error::Invalid),
+            #[cfg(not(feature = "cap_0084_muxed_contract"))]
+            stellar_strkey::Strkey::MuxedContract(_) => Err(Error::Invalid),
         }
     }
 }
@@ -361,13 +407,8 @@ impl core::fmt::Display for ScAddress {
             }
             ScAddress::ClaimableBalance(claimable_balance_id) => claimable_balance_id.fmt(f),
             ScAddress::LiquidityPool(pool_id) => pool_id.fmt(f),
-            // Muxed contract addresses (CAP-0084) have no strkey encoding yet
-            // (stellar-strkey has no variant for them), so there is no string
-            // representation to produce. Needs to be updated once SEP-23 is
-            // updated. This block should only be ungated after that is complete
-            // and we return the proper encoding here.
             #[cfg(feature = "cap_0084_muxed_contract")]
-            ScAddress::MuxedContract(_) => Err(core::fmt::Error),
+            ScAddress::MuxedContract(muxed_contract) => muxed_contract.fmt(f),
         }
     }
 }

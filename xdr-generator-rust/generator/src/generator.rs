@@ -351,7 +351,7 @@ impl RustGenerator {
     ///
     /// This is where additional cfg conditions (e.g. file-based cfg derived
     /// from `def.file_index()`) should be combined with the `#ifdef`-derived
-    /// cfg before rendering. Use `CfgExpr::and()` to combine them.
+    /// cfg before rendering.
     // Takes &self as the extension point described above, even though the
     // current implementation needs no generator state.
     #[allow(clippy::unused_self)]

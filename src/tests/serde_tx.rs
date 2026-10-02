@@ -1,6 +1,6 @@
 #![cfg(all(feature = "std", feature = "serde"))]
 
-use stellar_xdr::{
+use crate::{
     AccountId, AlphaNum4, AssetCode4, ChangeTrustAsset, ChangeTrustOp, Memo, MuxedAccount,
     Operation, OperationBody, Preconditions, SequenceNumber, Transaction, TransactionEnvelope,
     TransactionExt, TransactionV1Envelope, Uint256,
@@ -28,7 +28,7 @@ fn test_serde_tx() -> Result<(), Box<dyn std::error::Error>> {
                 body: OperationBody::ChangeTrust(ChangeTrustOp {
                     line: ChangeTrustAsset::CreditAlphanum4(AlphaNum4 {
                         asset_code: AssetCode4(*b"ABCD"),
-                        issuer: AccountId(stellar_xdr::PublicKey::PublicKeyTypeEd25519(Uint256([
+                        issuer: AccountId(crate::PublicKey::PublicKeyTypeEd25519(Uint256([
                             0x43, 0xd0, 0x9f, 0x49, 0x2a, 0x2a, 0xe3, 0xaa, 0x0a, 0xed, 0x8e, 0xce,
                             0xdc, 0xb2, 0x26, 0xa4, 0xf7, 0x50, 0xa9, 0x0e, 0xcb, 0x4e, 0x09, 0xf9,
                             0xac, 0x76, 0x4a, 0x55, 0x37, 0xca, 0xd8, 0x77,

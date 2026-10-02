@@ -15,6 +15,7 @@
 
 #![allow(
     clippy::missing_errors_doc,
+    clippy::too_many_lines,
     clippy::unreadable_literal,
     clippy::wildcard_imports
 )]
@@ -1047,7 +1048,8 @@ impl<T: WriteXdr, const N: usize> WriteXdr for [T; N] {
 #[cfg_attr(
     feature = "serde",
     serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize)
+    derive(serde::Serialize, serde::Deserialize),
+    serde(try_from = "Vec<T>")
 )]
 pub struct VecM<T, const MAX: u32 = { u32::MAX }>(Vec<T>);
 

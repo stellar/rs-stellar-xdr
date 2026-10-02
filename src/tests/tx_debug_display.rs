@@ -1,4 +1,4 @@
-use stellar_xdr::{BytesM, Error, Hash, StringM, VecM};
+use crate::{BytesM, Error, Hash, StringM, VecM};
 
 #[test]
 fn test_debug() {

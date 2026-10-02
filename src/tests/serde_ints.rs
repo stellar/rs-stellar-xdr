@@ -1,6 +1,6 @@
 #![cfg(all(feature = "std", feature = "serde"))]
 
-use stellar_xdr::{ConfigSettingEntry, ScNonceKey, ScVal, SequenceNumber};
+use crate::{ConfigSettingEntry, ScNonceKey, ScVal, SequenceNumber};
 
 #[test]
 fn test_serde_typedef_64bit() -> Result<(), Box<dyn std::error::Error>> {

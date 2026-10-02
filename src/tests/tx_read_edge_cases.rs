@@ -1,8 +1,8 @@
 #![cfg(all(feature = "std", feature = "base64"))]
 
+use crate::Error;
+use crate::{Limited, Limits, ReadXdr, WriteXdr};
 use std::io::{self, Cursor};
-use stellar_xdr::Error;
-use stellar_xdr::{Limited, Limits, ReadXdr, WriteXdr};
 
 #[test]
 fn test_read_interrupts_and_residuals() -> Result<(), Error> {

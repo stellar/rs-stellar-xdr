@@ -1,8 +1,8 @@
 #![cfg(all(feature = "std", feature = "serde"))]
 
-use stellar_xdr::{BytesM, Hash, StringM, VecM};
+use crate::{BytesM, Hash, StringM, VecM};
 
-use stellar_xdr::{AccountId, ContractEvent, ContractEventType, Int128Parts};
+use crate::{AccountId, ContractEvent, ContractEventType, Int128Parts};
 
 use std::str::FromStr;
 
@@ -101,4 +101,13 @@ fn test_serde_type_field_uses_sep51_json_key() -> Result<(), Box<dyn std::error:
     assert_eq!(serde_json::from_str::<ContractEvent>(legacy_json)?, event);
 
     Ok(())
+}
+
+#[test]
+fn test_serde_der_vecm_enforces_max() {
+    assert_eq!(
+        serde_json::from_str::<VecM<u32, 2>>("[1,2]").unwrap(),
+        VecM::<u32, 2>::try_from(vec![1, 2]).unwrap()
+    );
+    assert!(serde_json::from_str::<VecM<u32, 2>>("[1,2,3]").is_err());
 }

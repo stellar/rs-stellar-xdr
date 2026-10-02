@@ -2292,6 +2292,30 @@ impl<const MAX: u32> AsRef<[u8]> for StringM<MAX> {
     }
 }
 
+impl<const MAX: u32> PartialEq<[u8]> for StringM<MAX> {
+    fn eq(&self, other: &[u8]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const MAX: u32> PartialEq<&[u8]> for StringM<MAX> {
+    fn eq(&self, other: &&[u8]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<[u8; N]> for StringM<MAX> {
+    fn eq(&self, other: &[u8; N]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<&[u8; N]> for StringM<MAX> {
+    fn eq(&self, other: &&[u8; N]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
 #[cfg(feature = "alloc")]
 impl<const N: usize, const MAX: u32> TryFrom<[u8; N]> for StringM<MAX> {
     type Error = Error;
@@ -3273,6 +3297,17 @@ mod test {
             <BytesM<3> as ReadXdr>::read_xdr(&mut lr),
             Err(Error::LengthLimitExceeded)
         );
+    }
+
+    #[test]
+    fn stringm_eq_byte_strings() {
+        let v = StringM::<3>::try_from("123").unwrap();
+        assert_eq!(v, *b"123");
+        assert_eq!(v, b"123");
+        assert_eq!(v, b"123"[..]);
+        assert_eq!(v, &b"123"[..]);
+        assert_ne!(v, b"12");
+        assert_ne!(v, &b"124"[..]);
     }
 
     #[test]

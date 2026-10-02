@@ -3222,8 +3222,14 @@ mod test {
         assert_eq!(v, b"123");
         assert_eq!(v, b"123"[..]);
         assert_eq!(v, &b"123"[..]);
-        assert_ne!(v, b"12");
+        assert_ne!(v, *b"124");
+        assert_ne!(v, b"124");
+        assert_ne!(v, b"124"[..]);
         assert_ne!(v, &b"124"[..]);
+        assert_ne!(v, b"12");
+        assert_ne!(v, &b"1234"[..]);
+        assert_ne!(v, b"");
+        assert_ne!(StringM::<3>::default(), b"1");
     }
 
     #[test]

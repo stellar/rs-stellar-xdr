@@ -2406,11 +2406,11 @@ mod duration;
 pub use super::Duration;
 #[allow(unused_imports)]
 pub use duration::*;
-mod time_point_milliseconds;
+mod time_point_ms;
 #[cfg(feature = "ms_close_time")]
-pub use super::TimePointMilliseconds;
+pub use super::TimePointMs;
 #[allow(unused_imports)]
-pub use time_point_milliseconds::*;
+pub use time_point_ms::*;
 mod extension_point;
 pub use super::ExtensionPoint;
 #[allow(unused_imports)]

@@ -468,7 +468,7 @@ pub enum TypeVariant {
     TimePoint,
     Duration,
     #[cfg(feature = "ms_close_time")]
-    TimePointMilliseconds,
+    TimePointMs,
     ExtensionPoint,
     CryptoKeyType,
     PublicKeyType,
@@ -956,7 +956,7 @@ impl TypeVariant {
         TypeVariant::TimePoint,
         TypeVariant::Duration,
         #[cfg(feature = "ms_close_time")]
-        TypeVariant::TimePointMilliseconds,
+        TypeVariant::TimePointMs,
         TypeVariant::ExtensionPoint,
         TypeVariant::CryptoKeyType,
         TypeVariant::PublicKeyType,
@@ -1450,7 +1450,7 @@ impl TypeVariant {
         "TimePoint",
         "Duration",
         #[cfg(feature = "ms_close_time")]
-        "TimePointMilliseconds",
+        "TimePointMs",
         "ExtensionPoint",
         "CryptoKeyType",
         "PublicKeyType",
@@ -1966,7 +1966,7 @@ impl TypeVariant {
             Self::TimePoint => "TimePoint",
             Self::Duration => "Duration",
             #[cfg(feature = "ms_close_time")]
-            Self::TimePointMilliseconds => "TimePointMilliseconds",
+            Self::TimePointMs => "TimePointMs",
             Self::ExtensionPoint => "ExtensionPoint",
             Self::CryptoKeyType => "CryptoKeyType",
             Self::PublicKeyType => "PublicKeyType",
@@ -2689,7 +2689,7 @@ impl TypeVariant {
             Self::TimePoint => gen.into_root_schema_for::<TimePoint>(),
             Self::Duration => gen.into_root_schema_for::<Duration>(),
             #[cfg(feature = "ms_close_time")]
-            Self::TimePointMilliseconds => gen.into_root_schema_for::<TimePointMilliseconds>(),
+            Self::TimePointMs => gen.into_root_schema_for::<TimePointMs>(),
             Self::ExtensionPoint => gen.into_root_schema_for::<ExtensionPoint>(),
             Self::CryptoKeyType => gen.into_root_schema_for::<CryptoKeyType>(),
             Self::PublicKeyType => gen.into_root_schema_for::<PublicKeyType>(),
@@ -3235,7 +3235,7 @@ impl core::str::FromStr for TypeVariant {
             "TimePoint" => Ok(Self::TimePoint),
             "Duration" => Ok(Self::Duration),
             #[cfg(feature = "ms_close_time")]
-            "TimePointMilliseconds" => Ok(Self::TimePointMilliseconds),
+            "TimePointMs" => Ok(Self::TimePointMs),
             "ExtensionPoint" => Ok(Self::ExtensionPoint),
             "CryptoKeyType" => Ok(Self::CryptoKeyType),
             "PublicKeyType" => Ok(Self::PublicKeyType),
@@ -3735,7 +3735,7 @@ pub enum Type {
     TimePoint(Box<TimePoint>),
     Duration(Box<Duration>),
     #[cfg(feature = "ms_close_time")]
-    TimePointMilliseconds(Box<TimePointMilliseconds>),
+    TimePointMs(Box<TimePointMs>),
     ExtensionPoint(Box<ExtensionPoint>),
     CryptoKeyType(Box<CryptoKeyType>),
     PublicKeyType(Box<PublicKeyType>),
@@ -4223,7 +4223,7 @@ impl Type {
         TypeVariant::TimePoint,
         TypeVariant::Duration,
         #[cfg(feature = "ms_close_time")]
-        TypeVariant::TimePointMilliseconds,
+        TypeVariant::TimePointMs,
         TypeVariant::ExtensionPoint,
         TypeVariant::CryptoKeyType,
         TypeVariant::PublicKeyType,
@@ -4717,7 +4717,7 @@ impl Type {
         "TimePoint",
         "Duration",
         #[cfg(feature = "ms_close_time")]
-        "TimePointMilliseconds",
+        "TimePointMs",
         "ExtensionPoint",
         "CryptoKeyType",
         "PublicKeyType",
@@ -6765,11 +6765,9 @@ impl Type {
                 r.with_limited_depth(|r| Ok(Self::Duration(Box::new(Duration::read_xdr(r)?))))
             }
             #[cfg(feature = "ms_close_time")]
-            TypeVariant::TimePointMilliseconds => r.with_limited_depth(|r| {
-                Ok(Self::TimePointMilliseconds(Box::new(
-                    TimePointMilliseconds::read_xdr(r)?,
-                )))
-            }),
+            TypeVariant::TimePointMs => {
+                r.with_limited_depth(|r| Ok(Self::TimePointMs(Box::new(TimePointMs::read_xdr(r)?))))
+            }
             TypeVariant::ExtensionPoint => r.with_limited_depth(|r| {
                 Ok(Self::ExtensionPoint(Box::new(ExtensionPoint::read_xdr(r)?)))
             }),
@@ -8878,9 +8876,9 @@ impl Type {
                     .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
             #[cfg(feature = "ms_close_time")]
-            TypeVariant::TimePointMilliseconds => Box::new(
-                ReadXdrIter::<_, TimePointMilliseconds>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TimePointMilliseconds(Box::new(t)))),
+            TypeVariant::TimePointMs => Box::new(
+                ReadXdrIter::<_, TimePointMs>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimePointMs(Box::new(t)))),
             ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, ExtensionPoint>::new(&mut r.inner, r.limits.clone())
@@ -11269,9 +11267,9 @@ impl Type {
                     .map(|r| r.map(|t| Self::Duration(Box::new(t.0)))),
             ),
             #[cfg(feature = "ms_close_time")]
-            TypeVariant::TimePointMilliseconds => Box::new(
-                ReadXdrIter::<_, Frame<TimePointMilliseconds>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TimePointMilliseconds(Box::new(t.0)))),
+            TypeVariant::TimePointMs => Box::new(
+                ReadXdrIter::<_, Frame<TimePointMs>>::new(&mut r.inner, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimePointMs(Box::new(t.0)))),
             ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, Frame<ExtensionPoint>>::new(&mut r.inner, r.limits.clone())
@@ -13242,9 +13240,9 @@ impl Type {
                     .map(|r| r.map(|t| Self::Duration(Box::new(t)))),
             ),
             #[cfg(feature = "ms_close_time")]
-            TypeVariant::TimePointMilliseconds => Box::new(
-                ReadXdrIter::<_, TimePointMilliseconds>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::TimePointMilliseconds(Box::new(t)))),
+            TypeVariant::TimePointMs => Box::new(
+                ReadXdrIter::<_, TimePointMs>::new(dec, r.limits.clone())
+                    .map(|r| r.map(|t| Self::TimePointMs(Box::new(t)))),
             ),
             TypeVariant::ExtensionPoint => Box::new(
                 ReadXdrIter::<_, ExtensionPoint>::new(dec, r.limits.clone())
@@ -14640,9 +14638,9 @@ impl Type {
             TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::Duration => Ok(Self::Duration(Box::new(serde_json::from_reader(r)?))),
             #[cfg(feature = "ms_close_time")]
-            TypeVariant::TimePointMilliseconds => Ok(Self::TimePointMilliseconds(Box::new(
-                serde_json::from_reader(r)?,
-            ))),
+            TypeVariant::TimePointMs => {
+                Ok(Self::TimePointMs(Box::new(serde_json::from_reader(r)?)))
+            }
             TypeVariant::ExtensionPoint => {
                 Ok(Self::ExtensionPoint(Box::new(serde_json::from_reader(r)?)))
             }
@@ -16161,7 +16159,7 @@ impl Type {
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             #[cfg(feature = "ms_close_time")]
-            TypeVariant::TimePointMilliseconds => Ok(Self::TimePointMilliseconds(Box::new(
+            TypeVariant::TimePointMs => Ok(Self::TimePointMs(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
             TypeVariant::ExtensionPoint => Ok(Self::ExtensionPoint(Box::new(
@@ -18594,10 +18592,10 @@ impl Type {
             .map(|t| Self::Duration(Box::new(t)))
             .map_err(Error::Json),
             #[cfg(feature = "ms_close_time")]
-            TypeVariant::TimePointMilliseconds => serde_ignored::deserialize(r, |path| {
+            TypeVariant::TimePointMs => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
             })
-            .map(|t| Self::TimePointMilliseconds(Box::new(t)))
+            .map(|t| Self::TimePointMs(Box::new(t)))
             .map_err(Error::Json),
             TypeVariant::ExtensionPoint => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
@@ -20025,9 +20023,7 @@ impl Type {
             TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(TimePoint::arbitrary(u)?))),
             TypeVariant::Duration => Ok(Self::Duration(Box::new(Duration::arbitrary(u)?))),
             #[cfg(feature = "ms_close_time")]
-            TypeVariant::TimePointMilliseconds => Ok(Self::TimePointMilliseconds(Box::new(
-                TimePointMilliseconds::arbitrary(u)?,
-            ))),
+            TypeVariant::TimePointMs => Ok(Self::TimePointMs(Box::new(TimePointMs::arbitrary(u)?))),
             TypeVariant::ExtensionPoint => Ok(Self::ExtensionPoint(Box::new(
                 ExtensionPoint::arbitrary(u)?,
             ))),
@@ -20744,7 +20740,7 @@ impl Type {
             TypeVariant::TimePoint => Self::TimePoint(Box::default()),
             TypeVariant::Duration => Self::Duration(Box::default()),
             #[cfg(feature = "ms_close_time")]
-            TypeVariant::TimePointMilliseconds => Self::TimePointMilliseconds(Box::default()),
+            TypeVariant::TimePointMs => Self::TimePointMs(Box::default()),
             TypeVariant::ExtensionPoint => Self::ExtensionPoint(Box::default()),
             TypeVariant::CryptoKeyType => Self::CryptoKeyType(Box::default()),
             TypeVariant::PublicKeyType => Self::PublicKeyType(Box::default()),
@@ -21240,7 +21236,7 @@ impl Type {
             Self::TimePoint(ref v) => v.as_ref(),
             Self::Duration(ref v) => v.as_ref(),
             #[cfg(feature = "ms_close_time")]
-            Self::TimePointMilliseconds(ref v) => v.as_ref(),
+            Self::TimePointMs(ref v) => v.as_ref(),
             Self::ExtensionPoint(ref v) => v.as_ref(),
             Self::CryptoKeyType(ref v) => v.as_ref(),
             Self::PublicKeyType(ref v) => v.as_ref(),
@@ -21760,7 +21756,7 @@ impl Type {
             Self::TimePoint(_) => "TimePoint",
             Self::Duration(_) => "Duration",
             #[cfg(feature = "ms_close_time")]
-            Self::TimePointMilliseconds(_) => "TimePointMilliseconds",
+            Self::TimePointMs(_) => "TimePointMs",
             Self::ExtensionPoint(_) => "ExtensionPoint",
             Self::CryptoKeyType(_) => "CryptoKeyType",
             Self::PublicKeyType(_) => "PublicKeyType",
@@ -22330,7 +22326,7 @@ impl Type {
             Self::TimePoint(_) => TypeVariant::TimePoint,
             Self::Duration(_) => TypeVariant::Duration,
             #[cfg(feature = "ms_close_time")]
-            Self::TimePointMilliseconds(_) => TypeVariant::TimePointMilliseconds,
+            Self::TimePointMs(_) => TypeVariant::TimePointMs,
             Self::ExtensionPoint(_) => TypeVariant::ExtensionPoint,
             Self::CryptoKeyType(_) => TypeVariant::CryptoKeyType,
             Self::PublicKeyType(_) => TypeVariant::PublicKeyType,
@@ -22838,7 +22834,7 @@ impl WriteXdr for Type {
             Self::TimePoint(v) => v.write_xdr(w),
             Self::Duration(v) => v.write_xdr(w),
             #[cfg(feature = "ms_close_time")]
-            Self::TimePointMilliseconds(v) => v.write_xdr(w),
+            Self::TimePointMs(v) => v.write_xdr(w),
             Self::ExtensionPoint(v) => v.write_xdr(w),
             Self::CryptoKeyType(v) => v.write_xdr(w),
             Self::PublicKeyType(v) => v.write_xdr(w),

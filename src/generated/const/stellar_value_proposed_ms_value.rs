@@ -7,7 +7,7 @@ use super::*;
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct StellarValueProposedMsValue {
-    pub close_time_ms: TimePointMilliseconds,
+    pub close_time_ms: TimePointMs,
     pub tx_set_hash: Hash,
     pub previous_ledger_hash: Hash,
     pub previous_ledger_version: u32,
@@ -59,7 +59,7 @@ impl ConstWriter<'_> {
         &mut self,
         v: &StellarValueProposedMsValue,
     ) {
-        self.write_type_time_point_milliseconds(&v.close_time_ms);
+        self.write_type_time_point_ms(&v.close_time_ms);
         self.write_type_hash(&v.tx_set_hash);
         self.write_type_hash(&v.previous_ledger_hash);
         self.write_u32(v.previous_ledger_version);

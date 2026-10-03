@@ -827,8 +827,11 @@ impl ReadXdr for bool {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = u32::read_xdr(r)?;
-            let b = i == 1;
-            Ok(b)
+            match i {
+                0 => Ok(false),
+                1 => Ok(true),
+                _ => Err(Error::Invalid),
+            }
         })
     }
 }

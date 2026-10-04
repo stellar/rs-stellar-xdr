@@ -827,8 +827,11 @@ impl ReadXdr for bool {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = u32::read_xdr(r)?;
-            let b = i == 1;
-            Ok(b)
+            match i {
+                0 => Ok(false),
+                1 => Ok(true),
+                _ => Err(Error::Invalid),
+            }
         })
     }
 }
@@ -2468,17 +2471,23 @@ impl<R: Read> SkipWhitespace<R> {
 #[cfg(feature = "std")]
 impl<R: Read> Read for SkipWhitespace<R> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let n = self.inner.read(buf)?;
+        // Keep reading while the inner reader returns only whitespace, because
+        // returning zero bytes would signal EOF to the caller.
+        loop {
+            let n = self.inner.read(buf)?;
 
-        let mut written = 0;
-        for read in 0..n {
-            if !buf[read].is_ascii_whitespace() {
-                buf[written] = buf[read];
-                written += 1;
+            let mut written = 0;
+            for read in 0..n {
+                if !buf[read].is_ascii_whitespace() {
+                    buf[written] = buf[read];
+                    written += 1;
+                }
+            }
+
+            if written > 0 || n == 0 || buf.is_empty() {
+                return Ok(written);
             }
         }
-
-        Ok(written)
     }
 }
 
@@ -2520,6 +2529,37 @@ mod test_skip_whitespace {
             skip.read_to_end(&mut output).unwrap();
             assert_eq!(output, t.output, "#{i}");
         }
+    }
+
+    #[test]
+    fn test_whitespace_only_read_is_not_eof() {
+        let mut skip = SkipWhitespace::new(&b"   ab"[..]);
+        let mut buf = [0u8; 2];
+        let n = skip.read(&mut buf).unwrap();
+        assert_eq!(&buf[..n], b"a");
+        let n = skip.read(&mut buf).unwrap();
+        assert_eq!(&buf[..n], b"b");
+        let n = skip.read(&mut buf).unwrap();
+        assert_eq!(n, 0);
+    }
+}
+
+#[cfg(all(test, feature = "std"))]
+mod test_bool {
+    use super::*;
+
+    #[test]
+    fn test_read() {
+        assert_eq!(bool::from_xdr([0, 0, 0, 0], Limits::none()), Ok(false));
+        assert_eq!(bool::from_xdr([0, 0, 0, 1], Limits::none()), Ok(true));
+        assert_eq!(
+            bool::from_xdr([0, 0, 0, 2], Limits::none()),
+            Err(Error::Invalid)
+        );
+        assert_eq!(
+            bool::from_xdr([0xff, 0xff, 0xff, 0xff], Limits::none()),
+            Err(Error::Invalid)
+        );
     }
 }
 

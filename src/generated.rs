@@ -2292,6 +2292,54 @@ impl<const MAX: u32> AsRef<[u8]> for StringM<MAX> {
     }
 }
 
+impl<const MAX: u32> PartialEq<[u8]> for StringM<MAX> {
+    fn eq(&self, other: &[u8]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const MAX: u32> PartialEq<&[u8]> for StringM<MAX> {
+    fn eq(&self, other: &&[u8]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<[u8; N]> for StringM<MAX> {
+    fn eq(&self, other: &[u8; N]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<&[u8; N]> for StringM<MAX> {
+    fn eq(&self, other: &&[u8; N]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const MAX: u32> PartialEq<StringM<MAX>> for [u8] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
+    }
+}
+
+impl<const MAX: u32> PartialEq<StringM<MAX>> for &[u8] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<StringM<MAX>> for [u8; N] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<StringM<MAX>> for &[u8; N] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
+    }
+}
+
 #[cfg(feature = "alloc")]
 impl<const N: usize, const MAX: u32> TryFrom<[u8; N]> for StringM<MAX> {
     type Error = Error;
@@ -3273,6 +3321,35 @@ mod test {
             <BytesM<3> as ReadXdr>::read_xdr(&mut lr),
             Err(Error::LengthLimitExceeded)
         );
+    }
+
+    #[test]
+    fn stringm_eq_byte_strings() {
+        let v = StringM::<3>::try_from("123").unwrap();
+        assert_eq!(v, *b"123");
+        assert_eq!(v, b"123");
+        assert_eq!(v, b"123"[..]);
+        assert_eq!(v, &b"123"[..]);
+        assert_ne!(v, *b"124");
+        assert_ne!(v, b"124");
+        assert_ne!(v, b"124"[..]);
+        assert_ne!(v, &b"124"[..]);
+        assert_ne!(v, b"12");
+        assert_ne!(v, &b"1234"[..]);
+        assert_ne!(v, b"");
+        assert_ne!(StringM::<3>::default(), b"1");
+        assert_eq!(*b"123", v);
+        assert_eq!(b"123", v);
+        assert_eq!(b"123"[..], v);
+        assert_eq!(&b"123"[..], v);
+        assert_ne!(*b"124", v);
+        assert_ne!(b"124", v);
+        assert_ne!(b"124"[..], v);
+        assert_ne!(&b"124"[..], v);
+        assert_ne!(b"12", v);
+        assert_ne!(&b"1234"[..], v);
+        assert_ne!(b"", v);
+        assert_ne!(b"1", StringM::<3>::default());
     }
 
     #[test]
@@ -5666,9 +5743,9 @@ pub use time_point::*;
 mod duration;
 #[allow(unused_imports)]
 pub use duration::*;
-mod time_point_milliseconds;
+mod time_point_ms;
 #[allow(unused_imports)]
-pub use time_point_milliseconds::*;
+pub use time_point_ms::*;
 mod extension_point;
 #[allow(unused_imports)]
 pub use extension_point::*;

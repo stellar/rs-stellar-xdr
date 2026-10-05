@@ -2,7 +2,7 @@
 use super::*;
 
 #[cfg(feature = "ms_close_time")]
-impl TimePointMilliseconds {
+impl TimePointMs {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
     /// Evaluable in a const context, so a caller (such as a proc-macro) can
@@ -11,7 +11,7 @@ impl TimePointMilliseconds {
     pub const fn const_xdr_len(&self) -> usize {
         let mut empty: [u8; 0] = [];
         let mut w = ConstWriter::new(&mut empty);
-        w.write_type_time_point_milliseconds(self);
+        w.write_type_time_point_ms(self);
         w.len()
     }
 
@@ -30,7 +30,7 @@ impl TimePointMilliseconds {
     pub const fn const_to_xdr<const N: usize>(&self) -> [u8; N] {
         let mut buf = [0u8; N];
         let mut w = ConstWriter::new(&mut buf);
-        w.write_type_time_point_milliseconds(self);
+        w.write_type_time_point_ms(self);
         assert!(
             w.len() == N,
             "const_to_xdr: N does not equal the XDR-encoded length"
@@ -41,8 +41,8 @@ impl TimePointMilliseconds {
 
 impl ConstWriter<'_> {
     #[cfg(feature = "ms_close_time")]
-    /// Serializes a [`TimePointMilliseconds`], mirroring `<TimePointMilliseconds as WriteXdr>::write_xdr`.
-    pub const fn write_type_time_point_milliseconds(&mut self, v: &TimePointMilliseconds) {
+    /// Serializes a [`TimePointMs`], mirroring `<TimePointMs as WriteXdr>::write_xdr`.
+    pub const fn write_type_time_point_ms(&mut self, v: &TimePointMs) {
         self.write_u64(v.0);
     }
 }

@@ -1,10 +1,10 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-/// TimePointMilliseconds is an XDR Typedef defined as:
+/// TimePointMs is an XDR Typedef defined as:
 ///
 /// ```text
-/// typedef uint64 TimePointMilliseconds;
+/// typedef uint64 TimePointMs;
 /// ```
 ///
 #[cfg(feature = "ms_close_time")]
@@ -20,7 +20,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Debug)]
-pub struct TimePointMilliseconds(
+pub struct TimePointMs(
     #[cfg_attr(
         all(feature = "serde", feature = "alloc"),
         serde_as(as = "NumberOrString")
@@ -29,23 +29,23 @@ pub struct TimePointMilliseconds(
 );
 
 #[cfg(feature = "ms_close_time")]
-impl From<TimePointMilliseconds> for u64 {
+impl From<TimePointMs> for u64 {
     #[must_use]
-    fn from(x: TimePointMilliseconds) -> Self {
+    fn from(x: TimePointMs) -> Self {
         x.0
     }
 }
 
 #[cfg(feature = "ms_close_time")]
-impl From<u64> for TimePointMilliseconds {
+impl From<u64> for TimePointMs {
     #[must_use]
     fn from(x: u64) -> Self {
-        TimePointMilliseconds(x)
+        TimePointMs(x)
     }
 }
 
 #[cfg(feature = "ms_close_time")]
-impl AsRef<u64> for TimePointMilliseconds {
+impl AsRef<u64> for TimePointMs {
     #[must_use]
     fn as_ref(&self) -> &u64 {
         &self.0
@@ -53,19 +53,19 @@ impl AsRef<u64> for TimePointMilliseconds {
 }
 
 #[cfg(feature = "ms_close_time")]
-impl ReadXdr for TimePointMilliseconds {
+impl ReadXdr for TimePointMs {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = u64::read_xdr(r)?;
-            let v = TimePointMilliseconds(i);
+            let v = TimePointMs(i);
             Ok(v)
         })
     }
 }
 
 #[cfg(feature = "ms_close_time")]
-impl WriteXdr for TimePointMilliseconds {
+impl WriteXdr for TimePointMs {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| self.0.write_xdr(w))

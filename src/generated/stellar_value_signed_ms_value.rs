@@ -6,7 +6,7 @@ use super::*;
 /// ```text
 /// struct
 ///         {
-///             TimePointMilliseconds closeTimeMs; // closeTime == closeTimeMs / 1000
+///             TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000
 ///             LedgerCloseValueSignature lcValueSignature;
 ///         }
 /// ```
@@ -24,7 +24,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct StellarValueSignedMsValue {
-    pub close_time_ms: TimePointMilliseconds,
+    pub close_time_ms: TimePointMs,
     pub lc_value_signature: LedgerCloseValueSignature,
 }
 
@@ -34,7 +34,7 @@ impl ReadXdr for StellarValueSignedMsValue {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                close_time_ms: TimePointMilliseconds::read_xdr(r)?,
+                close_time_ms: TimePointMs::read_xdr(r)?,
                 lc_value_signature: LedgerCloseValueSignature::read_xdr(r)?,
             })
         })

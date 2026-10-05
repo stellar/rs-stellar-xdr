@@ -5666,9 +5666,9 @@ pub use time_point::*;
 mod duration;
 #[allow(unused_imports)]
 pub use duration::*;
-mod time_point_milliseconds;
+mod time_point_ms;
 #[allow(unused_imports)]
-pub use time_point_milliseconds::*;
+pub use time_point_ms::*;
 mod extension_point;
 #[allow(unused_imports)]
 pub use extension_point::*;

@@ -6,7 +6,7 @@ use super::*;
 /// ```text
 /// struct
 ///         {
-///             TimePointMilliseconds closeTimeMs; // closeTime == closeTimeMs / 1000
+///             TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000
 ///             Hash txSetHash;
 ///             Hash previousLedgerHash;
 ///             uint32 previousLedgerVersion;
@@ -27,7 +27,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct StellarValueProposedMsValue {
-    pub close_time_ms: TimePointMilliseconds,
+    pub close_time_ms: TimePointMs,
     pub tx_set_hash: Hash,
     pub previous_ledger_hash: Hash,
     pub previous_ledger_version: u32,
@@ -40,7 +40,7 @@ impl ReadXdr for StellarValueProposedMsValue {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                close_time_ms: TimePointMilliseconds::read_xdr(r)?,
+                close_time_ms: TimePointMs::read_xdr(r)?,
                 tx_set_hash: Hash::read_xdr(r)?,
                 previous_ledger_hash: Hash::read_xdr(r)?,
                 previous_ledger_version: u32::read_xdr(r)?,

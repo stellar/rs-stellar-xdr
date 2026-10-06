@@ -1,7 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-#[cfg(feature = "ms_close_time")]
 impl TimePointMs {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
@@ -40,7 +39,6 @@ impl TimePointMs {
 }
 
 impl ConstWriter<'_> {
-    #[cfg(feature = "ms_close_time")]
     /// Serializes a [`TimePointMs`], mirroring `<TimePointMs as WriteXdr>::write_xdr`.
     pub const fn write_type_time_point_ms(&mut self, v: &TimePointMs) {
         self.write_u64(v.0);

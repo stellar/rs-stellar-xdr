@@ -18,7 +18,6 @@ use super::*;
 ///             uint32 previousLedgerVersion;
 ///             LedgerCloseValueSignature lcValueSignature;
 ///         } proposedValue;
-/// #ifdef MS_CLOSE_TIME
 ///     case STELLAR_VALUE_SIGNED_MS:
 ///         struct
 ///         {
@@ -34,7 +33,6 @@ use super::*;
 ///             uint32 previousLedgerVersion;
 ///             LedgerCloseValueSignature lcValueSignature;
 ///         } proposedMsValue;
-/// #endif // MS_CLOSE_TIME
 ///     }
 /// ```
 ///
@@ -54,9 +52,7 @@ pub enum StellarValueExt {
     Basic,
     Signed(LedgerCloseValueSignature),
     EmptyTxSet(StellarValueProposedValue),
-    #[cfg(feature = "ms_close_time")]
     SignedMs(StellarValueSignedMsValue),
-    #[cfg(feature = "ms_close_time")]
     EmptyTxSetMs(StellarValueProposedMsValue),
 }
 
@@ -72,9 +68,7 @@ impl StellarValueExt {
         StellarValueType::Basic,
         StellarValueType::Signed,
         StellarValueType::EmptyTxSet,
-        #[cfg(feature = "ms_close_time")]
         StellarValueType::SignedMs,
-        #[cfg(feature = "ms_close_time")]
         StellarValueType::EmptyTxSetMs,
     ];
     pub const VARIANTS: [StellarValueType; Self::_VARIANTS.len()] = {
@@ -86,15 +80,7 @@ impl StellarValueExt {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &[
-        "Basic",
-        "Signed",
-        "EmptyTxSet",
-        #[cfg(feature = "ms_close_time")]
-        "SignedMs",
-        #[cfg(feature = "ms_close_time")]
-        "EmptyTxSetMs",
-    ];
+    const _VARIANTS_STR: &[&str] = &["Basic", "Signed", "EmptyTxSet", "SignedMs", "EmptyTxSetMs"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -111,9 +97,7 @@ impl StellarValueExt {
             Self::Basic => "Basic",
             Self::Signed(_) => "Signed",
             Self::EmptyTxSet(_) => "EmptyTxSet",
-            #[cfg(feature = "ms_close_time")]
             Self::SignedMs(_) => "SignedMs",
-            #[cfg(feature = "ms_close_time")]
             Self::EmptyTxSetMs(_) => "EmptyTxSetMs",
         }
     }
@@ -125,9 +109,7 @@ impl StellarValueExt {
             Self::Basic => StellarValueType::Basic,
             Self::Signed(_) => StellarValueType::Signed,
             Self::EmptyTxSet(_) => StellarValueType::EmptyTxSet,
-            #[cfg(feature = "ms_close_time")]
             Self::SignedMs(_) => StellarValueType::SignedMs,
-            #[cfg(feature = "ms_close_time")]
             Self::EmptyTxSetMs(_) => StellarValueType::EmptyTxSetMs,
         }
     }
@@ -172,11 +154,9 @@ impl ReadXdr for StellarValueExt {
                 StellarValueType::EmptyTxSet => {
                     Self::EmptyTxSet(StellarValueProposedValue::read_xdr(r)?)
                 }
-                #[cfg(feature = "ms_close_time")]
                 StellarValueType::SignedMs => {
                     Self::SignedMs(StellarValueSignedMsValue::read_xdr(r)?)
                 }
-                #[cfg(feature = "ms_close_time")]
                 StellarValueType::EmptyTxSetMs => {
                     Self::EmptyTxSetMs(StellarValueProposedMsValue::read_xdr(r)?)
                 }
@@ -198,9 +178,7 @@ impl WriteXdr for StellarValueExt {
                 Self::Basic => ().write_xdr(w)?,
                 Self::Signed(v) => v.write_xdr(w)?,
                 Self::EmptyTxSet(v) => v.write_xdr(w)?,
-                #[cfg(feature = "ms_close_time")]
                 Self::SignedMs(v) => v.write_xdr(w)?,
-                #[cfg(feature = "ms_close_time")]
                 Self::EmptyTxSetMs(v) => v.write_xdr(w)?,
             };
             Ok(())

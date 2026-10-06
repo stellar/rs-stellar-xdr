@@ -2407,7 +2407,6 @@ pub use super::Duration;
 #[allow(unused_imports)]
 pub use duration::*;
 mod time_point_ms;
-#[cfg(feature = "ms_close_time")]
 pub use super::TimePointMs;
 #[allow(unused_imports)]
 pub use time_point_ms::*;

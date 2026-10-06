@@ -31,7 +31,6 @@ use super::*;
 ///             uint32 previousLedgerVersion;
 ///             LedgerCloseValueSignature lcValueSignature;
 ///         } proposedValue;
-/// #ifdef MS_CLOSE_TIME
 ///     case STELLAR_VALUE_SIGNED_MS:
 ///         struct
 ///         {
@@ -47,7 +46,6 @@ use super::*;
 ///             uint32 previousLedgerVersion;
 ///             LedgerCloseValueSignature lcValueSignature;
 ///         } proposedMsValue;
-/// #endif // MS_CLOSE_TIME
 ///     }
 ///     ext;
 /// };

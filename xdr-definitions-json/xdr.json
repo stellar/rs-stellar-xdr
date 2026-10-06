@@ -39,7 +39,7 @@
     },
     {
       "name": "xdr/Stellar-ledger.x",
-      "sha256": "b6dec791414821d0bae7a11abb4a6b6143ce3e09d0030c580c9ece1815418b13"
+      "sha256": "35c1d96aa2f39e737c3088e8b35bdf2099bed35f3959934a0552b76d92cdf9c5"
     },
     {
       "name": "xdr/Stellar-overlay.x",
@@ -51,7 +51,7 @@
     },
     {
       "name": "xdr/Stellar-types.x",
-      "sha256": "1bf41da09307489c04c454d9081a3ddcd52d04ed9af173abeb308fe4907dc590"
+      "sha256": "be1f32162c58275273ae2805a57bb69ec2fdb9ccc2313556f42bf08b9763e757"
     }
   ],
   "resolved_features": [],
@@ -7126,7 +7126,7 @@
     {
       "kind": "enum",
       "name": "StellarValueType",
-      "source": "enum StellarValueType\n{\n    STELLAR_VALUE_BASIC = 0,\n    STELLAR_VALUE_SIGNED = 1,\n    STELLAR_VALUE_EMPTY_TX_SET = 2\n#ifdef MS_CLOSE_TIME\n    ,\n    STELLAR_VALUE_SIGNED_MS = 3,\n    STELLAR_VALUE_EMPTY_TX_SET_MS = 4\n#endif // MS_CLOSE_TIME\n};",
+      "source": "enum StellarValueType\n{\n    STELLAR_VALUE_BASIC = 0,\n    STELLAR_VALUE_SIGNED = 1,\n    STELLAR_VALUE_EMPTY_TX_SET = 2,\n    STELLAR_VALUE_SIGNED_MS = 3,\n    STELLAR_VALUE_EMPTY_TX_SET_MS = 4\n};",
       "file_index": 9,
       "member_prefix": "STELLAR_VALUE_",
       "members": [
@@ -7141,6 +7141,14 @@
         {
           "name": "STELLAR_VALUE_EMPTY_TX_SET",
           "value": 2
+        },
+        {
+          "name": "STELLAR_VALUE_SIGNED_MS",
+          "value": 3
+        },
+        {
+          "name": "STELLAR_VALUE_EMPTY_TX_SET_MS",
+          "value": 4
         }
       ]
     },
@@ -7205,10 +7213,77 @@
       ]
     },
     {
+      "kind": "struct",
+      "name": "StellarValueSignedMsValue",
+      "fixed_size": null,
+      "source": "struct\n        {\n            TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000\n            LedgerCloseValueSignature lcValueSignature;\n        }",
+      "file_index": 9,
+      "fields": [
+        {
+          "name": "closeTimeMs",
+          "type": {
+            "kind": "ref",
+            "name": "TimePointMs"
+          }
+        },
+        {
+          "name": "lcValueSignature",
+          "type": {
+            "kind": "ref",
+            "name": "LedgerCloseValueSignature"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "struct",
+      "name": "StellarValueProposedMsValue",
+      "fixed_size": null,
+      "source": "struct\n        {\n            TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        }",
+      "file_index": 9,
+      "fields": [
+        {
+          "name": "closeTimeMs",
+          "type": {
+            "kind": "ref",
+            "name": "TimePointMs"
+          }
+        },
+        {
+          "name": "txSetHash",
+          "type": {
+            "kind": "ref",
+            "name": "Hash"
+          }
+        },
+        {
+          "name": "previousLedgerHash",
+          "type": {
+            "kind": "ref",
+            "name": "Hash"
+          }
+        },
+        {
+          "name": "previousLedgerVersion",
+          "type": {
+            "kind": "ref",
+            "name": "uint32"
+          }
+        },
+        {
+          "name": "lcValueSignature",
+          "type": {
+            "kind": "ref",
+            "name": "LedgerCloseValueSignature"
+          }
+        }
+      ]
+    },
+    {
       "kind": "union",
       "name": "StellarValueExt",
       "fixed_size": null,
-      "source": "union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n    case STELLAR_VALUE_EMPTY_TX_SET:\n        struct\n        {\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedValue;\n#ifdef MS_CLOSE_TIME\n    case STELLAR_VALUE_SIGNED_MS:\n        struct\n        {\n            TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000\n            LedgerCloseValueSignature lcValueSignature;\n        } signedMsValue;\n    case STELLAR_VALUE_EMPTY_TX_SET_MS:\n        struct\n        {\n            TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedMsValue;\n#endif // MS_CLOSE_TIME\n    }",
+      "source": "union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n    case STELLAR_VALUE_EMPTY_TX_SET:\n        struct\n        {\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedValue;\n    case STELLAR_VALUE_SIGNED_MS:\n        struct\n        {\n            TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000\n            LedgerCloseValueSignature lcValueSignature;\n        } signedMsValue;\n    case STELLAR_VALUE_EMPTY_TX_SET_MS:\n        struct\n        {\n            TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedMsValue;\n    }",
       "file_index": 9,
       "discriminant": {
         "name": "v",
@@ -7252,6 +7327,32 @@
             "kind": "ref",
             "name": "StellarValueProposedValue"
           }
+        },
+        {
+          "cases": [
+            {
+              "value": 3,
+              "name": "STELLAR_VALUE_SIGNED_MS"
+            }
+          ],
+          "name": "signedMsValue",
+          "type": {
+            "kind": "ref",
+            "name": "StellarValueSignedMsValue"
+          }
+        },
+        {
+          "cases": [
+            {
+              "value": 4,
+              "name": "STELLAR_VALUE_EMPTY_TX_SET_MS"
+            }
+          ],
+          "name": "proposedMsValue",
+          "type": {
+            "kind": "ref",
+            "name": "StellarValueProposedMsValue"
+          }
         }
       ]
     },
@@ -7259,7 +7360,7 @@
       "kind": "struct",
       "name": "StellarValue",
       "fixed_size": null,
-      "source": "struct StellarValue\n{\n    Hash txSetHash;      // transaction set to apply to previous ledger\n    TimePoint closeTime; // network close time\n\n    // upgrades to apply to the previous ledger (usually empty)\n    // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop\n    // unknown steps during consensus if needed.\n    // see notes below on 'LedgerUpgrade' for more detail\n    // max size is dictated by number of upgrade types (+ room for future)\n    UpgradeType upgrades<6>;\n\n    // reserved for future use\n    union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n    case STELLAR_VALUE_EMPTY_TX_SET:\n        struct\n        {\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedValue;\n#ifdef MS_CLOSE_TIME\n    case STELLAR_VALUE_SIGNED_MS:\n        struct\n        {\n            TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000\n            LedgerCloseValueSignature lcValueSignature;\n        } signedMsValue;\n    case STELLAR_VALUE_EMPTY_TX_SET_MS:\n        struct\n        {\n            TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedMsValue;\n#endif // MS_CLOSE_TIME\n    }\n    ext;\n};",
+      "source": "struct StellarValue\n{\n    Hash txSetHash;      // transaction set to apply to previous ledger\n    TimePoint closeTime; // network close time\n\n    // upgrades to apply to the previous ledger (usually empty)\n    // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop\n    // unknown steps during consensus if needed.\n    // see notes below on 'LedgerUpgrade' for more detail\n    // max size is dictated by number of upgrade types (+ room for future)\n    UpgradeType upgrades<6>;\n\n    // reserved for future use\n    union switch (StellarValueType v)\n    {\n    case STELLAR_VALUE_BASIC:\n        void;\n    case STELLAR_VALUE_SIGNED:\n        LedgerCloseValueSignature lcValueSignature;\n    case STELLAR_VALUE_EMPTY_TX_SET:\n        struct\n        {\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedValue;\n    case STELLAR_VALUE_SIGNED_MS:\n        struct\n        {\n            TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000\n            LedgerCloseValueSignature lcValueSignature;\n        } signedMsValue;\n    case STELLAR_VALUE_EMPTY_TX_SET_MS:\n        struct\n        {\n            TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000\n            Hash txSetHash;\n            Hash previousLedgerHash;\n            uint32 previousLedgerVersion;\n            LedgerCloseValueSignature lcValueSignature;\n        } proposedMsValue;\n    }\n    ext;\n};",
       "file_index": 9,
       "fields": [
         {
@@ -18043,6 +18144,16 @@
       "kind": "typedef",
       "name": "Duration",
       "source": "typedef uint64 Duration;",
+      "file_index": 12,
+      "type": {
+        "kind": "ref",
+        "name": "uint64"
+      }
+    },
+    {
+      "kind": "typedef",
+      "name": "TimePointMs",
+      "source": "typedef uint64 TimePointMs;",
       "file_index": 12,
       "type": {
         "kind": "ref",

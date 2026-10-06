@@ -271,8 +271,68 @@
               "$ref": "#/definitions/StellarValueProposedValue"
             }
           }
+        },
+        {
+          "type": "object",
+          "required": [
+            "signed_ms"
+          ],
+          "properties": {
+            "signed_ms": {
+              "$ref": "#/definitions/StellarValueSignedMsValue"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "empty_tx_set_ms"
+          ],
+          "properties": {
+            "empty_tx_set_ms": {
+              "$ref": "#/definitions/StellarValueProposedMsValue"
+            }
+          }
         }
       ]
+    },
+    "StellarValueProposedMsValue": {
+      "description": "StellarValueProposedMsValue is an XDR NestedStruct defined as:\n\n```text struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } ```",
+      "type": "object",
+      "required": [
+        "close_time_ms",
+        "lc_value_signature",
+        "previous_ledger_hash",
+        "previous_ledger_version",
+        "tx_set_hash"
+      ],
+      "properties": {
+        "close_time_ms": {
+          "$ref": "#/definitions/TimePointMs"
+        },
+        "lc_value_signature": {
+          "$ref": "#/definitions/LedgerCloseValueSignature"
+        },
+        "previous_ledger_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "previous_ledger_version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "tx_set_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
     },
     "StellarValueProposedValue": {
       "description": "StellarValueProposedValue is an XDR NestedStruct defined as:\n\n```text struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } ```",
@@ -308,8 +368,28 @@
         }
       }
     },
+    "StellarValueSignedMsValue": {
+      "description": "StellarValueSignedMsValue is an XDR NestedStruct defined as:\n\n```text struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 LedgerCloseValueSignature lcValueSignature; } ```",
+      "type": "object",
+      "required": [
+        "close_time_ms",
+        "lc_value_signature"
+      ],
+      "properties": {
+        "close_time_ms": {
+          "$ref": "#/definitions/TimePointMs"
+        },
+        "lc_value_signature": {
+          "$ref": "#/definitions/LedgerCloseValueSignature"
+        }
+      }
+    },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defined as:\n\n```text typedef uint64 TimePoint; ```",
+      "type": "string"
+    },
+    "TimePointMs": {
+      "description": "TimePointMs is an XDR Typedef defined as:\n\n```text typedef uint64 TimePointMs; ```",
       "type": "string"
     },
     "UpgradeType": {

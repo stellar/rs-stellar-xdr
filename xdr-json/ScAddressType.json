@@ -8,6 +8,7 @@
     "contract",
     "muxed_account",
     "claimable_balance",
-    "liquidity_pool"
+    "liquidity_pool",
+    "muxed_contract"
   ]
 }

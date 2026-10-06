@@ -6,6 +6,8 @@
   "enum": [
     "basic",
     "signed",
-    "empty_tx_set"
+    "empty_tx_set",
+    "signed_ms",
+    "empty_tx_set_ms"
   ]
 }

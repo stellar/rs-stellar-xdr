@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "TestNextType",
+  "description": "TestNextType is an XDR Struct defined as:\n\n```text struct TestNextType { int32 value; }; ```",
+  "type": "object",
+  "required": [
+    "value"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "value": {
+      "type": "integer",
+      "format": "int32"
+    }
+  },
+  "unevaluatedProperties": false
+}

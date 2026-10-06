@@ -89,6 +89,15 @@
     "bn254_fr_mul",
     "bn254_fr_pow",
     "bn254_fr_inv",
-    "bn254_g1_msm"
+    "bn254_g1_msm",
+    "ml_dsa44_decode_verifying_key",
+    "ml_dsa65_decode_verifying_key",
+    "ml_dsa87_decode_verifying_key",
+    "ml_dsa44_decode_signature",
+    "ml_dsa65_decode_signature",
+    "ml_dsa87_decode_signature",
+    "verify_ml_dsa44_sig",
+    "verify_ml_dsa65_sig",
+    "verify_ml_dsa87_sig"
   ]
 }

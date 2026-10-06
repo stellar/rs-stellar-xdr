@@ -71,7 +71,7 @@ xdr-version: $(wildcard .git/modules/xdr/**/*) $(wildcard xdr/*.x)
 
 xdr-json: src/generated.rs
 	mkdir -p xdr-json
-	cargo run --features cli -- types schema-files --out-dir xdr-json
+	cargo run --all-features -- types schema-files --out-dir xdr-json
 
 xdr-definitions-json: $(sort $(wildcard xdr/*.x))
 	mkdir -p xdr-definitions-json

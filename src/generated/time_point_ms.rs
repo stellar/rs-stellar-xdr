@@ -7,7 +7,6 @@ use super::*;
 /// typedef uint64 TimePointMs;
 /// ```
 ///
-#[cfg(feature = "ms_close_time")]
 #[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
 #[cfg_attr(feature = "alloc", derive(Default))]
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -28,7 +27,6 @@ pub struct TimePointMs(
     pub u64,
 );
 
-#[cfg(feature = "ms_close_time")]
 impl From<TimePointMs> for u64 {
     #[must_use]
     fn from(x: TimePointMs) -> Self {
@@ -36,7 +34,6 @@ impl From<TimePointMs> for u64 {
     }
 }
 
-#[cfg(feature = "ms_close_time")]
 impl From<u64> for TimePointMs {
     #[must_use]
     fn from(x: u64) -> Self {
@@ -44,7 +41,6 @@ impl From<u64> for TimePointMs {
     }
 }
 
-#[cfg(feature = "ms_close_time")]
 impl AsRef<u64> for TimePointMs {
     #[must_use]
     fn as_ref(&self) -> &u64 {
@@ -52,7 +48,6 @@ impl AsRef<u64> for TimePointMs {
     }
 }
 
-#[cfg(feature = "ms_close_time")]
 impl ReadXdr for TimePointMs {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -64,7 +59,6 @@ impl ReadXdr for TimePointMs {
     }
 }
 
-#[cfg(feature = "ms_close_time")]
 impl WriteXdr for TimePointMs {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {

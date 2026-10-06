@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "StellarValueSignedMsValue",
+  "description": "StellarValueSignedMsValue is an XDR NestedStruct defined as:\n\n```text struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 LedgerCloseValueSignature lcValueSignature; } ```",
+  "type": "object",
+  "required": [
+    "close_time_ms",
+    "lc_value_signature"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "close_time_ms": {
+      "$ref": "#/definitions/TimePointMs"
+    },
+    "lc_value_signature": {
+      "$ref": "#/definitions/LedgerCloseValueSignature"
+    }
+  },
+  "unevaluatedProperties": false,
+  "definitions": {
+    "LedgerCloseValueSignature": {
+      "description": "LedgerCloseValueSignature is an XDR Struct defined as:\n\n```text struct LedgerCloseValueSignature { NodeID nodeID;       // which node introduced the value Signature signature; // nodeID's signature }; ```",
+      "type": "object",
+      "required": [
+        "node_id",
+        "signature"
+      ],
+      "properties": {
+        "node_id": {
+          "$ref": "#/definitions/NodeId"
+        },
+        "signature": {
+          "$ref": "#/definitions/Signature"
+        }
+      }
+    },
+    "NodeId": {
+      "type": "string"
+    },
+    "Signature": {
+      "description": "Signature is an XDR Typedef defined as:\n\n```text typedef opaque Signature<64>; ```",
+      "type": "string",
+      "maxLength": 128,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
+    },
+    "TimePointMs": {
+      "description": "TimePointMs is an XDR Typedef defined as:\n\n```text typedef uint64 TimePointMs; ```",
+      "type": "string"
+    }
+  }
+}

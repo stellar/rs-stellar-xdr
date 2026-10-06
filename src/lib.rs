@@ -134,8 +134,6 @@ pub const VERSION: Version = Version {
         "test_feature",
         #[cfg(feature = "cap_0084_muxed_contract")]
         "cap_0084_muxed_contract",
-        #[cfg(feature = "ms_close_time")]
-        "ms_close_time",
         #[cfg(feature = "cap_0087_ml_dsa")]
         "cap_0087_ml_dsa",
     ],

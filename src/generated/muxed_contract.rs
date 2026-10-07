@@ -11,7 +11,6 @@ use super::*;
 /// };
 /// ```
 ///
-#[cfg(feature = "cap_0084_muxed_contract")]
 #[cfg_attr(feature = "alloc", derive(Default))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
@@ -25,7 +24,6 @@ pub struct MuxedContract {
     pub contract_id: ContractId,
 }
 
-#[cfg(feature = "cap_0084_muxed_contract")]
 impl ReadXdr for MuxedContract {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
@@ -38,7 +36,6 @@ impl ReadXdr for MuxedContract {
     }
 }
 
-#[cfg(feature = "cap_0084_muxed_contract")]
 impl WriteXdr for MuxedContract {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
@@ -49,7 +46,6 @@ impl WriteXdr for MuxedContract {
         })
     }
 }
-#[cfg(feature = "cap_0084_muxed_contract")]
 #[cfg(all(feature = "serde", feature = "alloc"))]
 impl<'de> serde::Deserialize<'de> for MuxedContract {
     fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>

@@ -21,7 +21,6 @@ impl_json_schema_string!(ContractId);
 impl_json_schema_string!(MuxedAccount);
 impl_json_schema_string!(MuxedAccountMed25519);
 impl_json_schema_string!(MuxedEd25519Account);
-#[cfg(feature = "cap_0084_muxed_contract")]
 impl_json_schema_string!(MuxedContract);
 impl_json_schema_string!(SignerKey);
 impl_json_schema_string!(SignerKeyEd25519SignedPayload);

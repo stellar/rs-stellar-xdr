@@ -1077,7 +1077,6 @@ pub use super::MuxedEd25519Account;
 #[allow(unused_imports)]
 pub use muxed_ed25519_account::*;
 mod muxed_contract;
-#[cfg(feature = "cap_0084_muxed_contract")]
 pub use super::MuxedContract;
 #[allow(unused_imports)]
 pub use muxed_contract::*;

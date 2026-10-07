@@ -28,7 +28,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-contract-config-setting.x",
-        "56eb21162887b96ec423cab36e924ab085d52f885b7d41bcd3cd040e8dfe616d",
+        "63e548e5cab4823747325bc370760c7437a026f13b389de809e52542ecd41d2f",
     ),
     (
         "xdr/Stellar-contract-env-meta.x",
@@ -44,7 +44,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-contract.x",
-        "b87e9474002c0a089a8aa6f4c4e76e74fa497a7c20e3656532f0ac7762374e4e",
+        "7f8a55a7d03c35979fc540f9bd14873668d6970adb6957323b485838114a7da2",
     ),
     (
         "xdr/Stellar-exporter.x",

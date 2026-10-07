@@ -187,9 +187,7 @@ use super::*;
 ///      // Cost of performing BN254 scalar element inversion
 ///     Bn254FrInv = 84,
 ///     // Cost of performing BN254 G1 multi-scalar multiplication (MSM)
-///     Bn254G1Msm = 85
-/// #ifdef CAP_0087_ML_DSA
-///     ,
+///     Bn254G1Msm = 85,
 ///     // Cost of decoding and expanding an ML-DSA-44 verifying key
 ///     MlDsa44DecodeVerifyingKey = 86,
 ///     // Cost of decoding and expanding an ML-DSA-65 verifying key
@@ -208,7 +206,6 @@ use super::*;
 ///     VerifyMlDsa65Sig = 93,
 ///     // Cost of verifying an ML-DSA-87 signature, linear in message + context length
 ///     VerifyMlDsa87Sig = 94
-/// #endif
 /// };
 /// ```
 ///
@@ -311,23 +308,14 @@ pub enum ContractCostType {
     Bn254FrPow = 83,
     Bn254FrInv = 84,
     Bn254G1Msm = 85,
-    #[cfg(feature = "cap_0087_ml_dsa")]
     MlDsa44DecodeVerifyingKey = 86,
-    #[cfg(feature = "cap_0087_ml_dsa")]
     MlDsa65DecodeVerifyingKey = 87,
-    #[cfg(feature = "cap_0087_ml_dsa")]
     MlDsa87DecodeVerifyingKey = 88,
-    #[cfg(feature = "cap_0087_ml_dsa")]
     MlDsa44DecodeSignature = 89,
-    #[cfg(feature = "cap_0087_ml_dsa")]
     MlDsa65DecodeSignature = 90,
-    #[cfg(feature = "cap_0087_ml_dsa")]
     MlDsa87DecodeSignature = 91,
-    #[cfg(feature = "cap_0087_ml_dsa")]
     VerifyMlDsa44Sig = 92,
-    #[cfg(feature = "cap_0087_ml_dsa")]
     VerifyMlDsa65Sig = 93,
-    #[cfg(feature = "cap_0087_ml_dsa")]
     VerifyMlDsa87Sig = 94,
 }
 
@@ -419,23 +407,14 @@ impl ContractCostType {
         ContractCostType::Bn254FrPow,
         ContractCostType::Bn254FrInv,
         ContractCostType::Bn254G1Msm,
-        #[cfg(feature = "cap_0087_ml_dsa")]
         ContractCostType::MlDsa44DecodeVerifyingKey,
-        #[cfg(feature = "cap_0087_ml_dsa")]
         ContractCostType::MlDsa65DecodeVerifyingKey,
-        #[cfg(feature = "cap_0087_ml_dsa")]
         ContractCostType::MlDsa87DecodeVerifyingKey,
-        #[cfg(feature = "cap_0087_ml_dsa")]
         ContractCostType::MlDsa44DecodeSignature,
-        #[cfg(feature = "cap_0087_ml_dsa")]
         ContractCostType::MlDsa65DecodeSignature,
-        #[cfg(feature = "cap_0087_ml_dsa")]
         ContractCostType::MlDsa87DecodeSignature,
-        #[cfg(feature = "cap_0087_ml_dsa")]
         ContractCostType::VerifyMlDsa44Sig,
-        #[cfg(feature = "cap_0087_ml_dsa")]
         ContractCostType::VerifyMlDsa65Sig,
-        #[cfg(feature = "cap_0087_ml_dsa")]
         ContractCostType::VerifyMlDsa87Sig,
     ];
     pub const VARIANTS: [ContractCostType; Self::_VARIANTS.len()] = {
@@ -534,23 +513,14 @@ impl ContractCostType {
         "Bn254FrPow",
         "Bn254FrInv",
         "Bn254G1Msm",
-        #[cfg(feature = "cap_0087_ml_dsa")]
         "MlDsa44DecodeVerifyingKey",
-        #[cfg(feature = "cap_0087_ml_dsa")]
         "MlDsa65DecodeVerifyingKey",
-        #[cfg(feature = "cap_0087_ml_dsa")]
         "MlDsa87DecodeVerifyingKey",
-        #[cfg(feature = "cap_0087_ml_dsa")]
         "MlDsa44DecodeSignature",
-        #[cfg(feature = "cap_0087_ml_dsa")]
         "MlDsa65DecodeSignature",
-        #[cfg(feature = "cap_0087_ml_dsa")]
         "MlDsa87DecodeSignature",
-        #[cfg(feature = "cap_0087_ml_dsa")]
         "VerifyMlDsa44Sig",
-        #[cfg(feature = "cap_0087_ml_dsa")]
         "VerifyMlDsa65Sig",
-        #[cfg(feature = "cap_0087_ml_dsa")]
         "VerifyMlDsa87Sig",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
@@ -652,23 +622,14 @@ impl ContractCostType {
             Self::Bn254FrPow => "Bn254FrPow",
             Self::Bn254FrInv => "Bn254FrInv",
             Self::Bn254G1Msm => "Bn254G1Msm",
-            #[cfg(feature = "cap_0087_ml_dsa")]
             Self::MlDsa44DecodeVerifyingKey => "MlDsa44DecodeVerifyingKey",
-            #[cfg(feature = "cap_0087_ml_dsa")]
             Self::MlDsa65DecodeVerifyingKey => "MlDsa65DecodeVerifyingKey",
-            #[cfg(feature = "cap_0087_ml_dsa")]
             Self::MlDsa87DecodeVerifyingKey => "MlDsa87DecodeVerifyingKey",
-            #[cfg(feature = "cap_0087_ml_dsa")]
             Self::MlDsa44DecodeSignature => "MlDsa44DecodeSignature",
-            #[cfg(feature = "cap_0087_ml_dsa")]
             Self::MlDsa65DecodeSignature => "MlDsa65DecodeSignature",
-            #[cfg(feature = "cap_0087_ml_dsa")]
             Self::MlDsa87DecodeSignature => "MlDsa87DecodeSignature",
-            #[cfg(feature = "cap_0087_ml_dsa")]
             Self::VerifyMlDsa44Sig => "VerifyMlDsa44Sig",
-            #[cfg(feature = "cap_0087_ml_dsa")]
             Self::VerifyMlDsa65Sig => "VerifyMlDsa65Sig",
-            #[cfg(feature = "cap_0087_ml_dsa")]
             Self::VerifyMlDsa87Sig => "VerifyMlDsa87Sig",
         }
     }
@@ -791,23 +752,14 @@ impl TryFrom<i32> for ContractCostType {
             83 => ContractCostType::Bn254FrPow,
             84 => ContractCostType::Bn254FrInv,
             85 => ContractCostType::Bn254G1Msm,
-            #[cfg(feature = "cap_0087_ml_dsa")]
             86 => ContractCostType::MlDsa44DecodeVerifyingKey,
-            #[cfg(feature = "cap_0087_ml_dsa")]
             87 => ContractCostType::MlDsa65DecodeVerifyingKey,
-            #[cfg(feature = "cap_0087_ml_dsa")]
             88 => ContractCostType::MlDsa87DecodeVerifyingKey,
-            #[cfg(feature = "cap_0087_ml_dsa")]
             89 => ContractCostType::MlDsa44DecodeSignature,
-            #[cfg(feature = "cap_0087_ml_dsa")]
             90 => ContractCostType::MlDsa65DecodeSignature,
-            #[cfg(feature = "cap_0087_ml_dsa")]
             91 => ContractCostType::MlDsa87DecodeSignature,
-            #[cfg(feature = "cap_0087_ml_dsa")]
             92 => ContractCostType::VerifyMlDsa44Sig,
-            #[cfg(feature = "cap_0087_ml_dsa")]
             93 => ContractCostType::VerifyMlDsa65Sig,
-            #[cfg(feature = "cap_0087_ml_dsa")]
             94 => ContractCostType::VerifyMlDsa87Sig,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),

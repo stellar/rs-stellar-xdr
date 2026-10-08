@@ -1,0 +1,15 @@
+[package]
+name = "stellar-xdr-soroban-env-ord-tests"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+# Its own workspace root, so soroban-env-host is not a dependency of the parent
+# package. soroban-env-host depends on its own pinned copy of stellar-xdr, so
+# values are passed between the two copies by round tripping through XDR.
+[workspace]
+
+[dev-dependencies]
+stellar-xdr = { path = "..", features = ["std"] }
+soroban-env-host = { git = "https://github.com/stellar/rs-soroban-env", rev = "ca1e609e60c7e0d2457e59d12c6c738ee1412d74", features = ["testutils"] }
+rand = "0.9.0"

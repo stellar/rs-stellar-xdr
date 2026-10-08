@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "TimePointMs",
+  "description": "TimePointMs is an XDR Typedef defined as:\n\n```text typedef uint64 TimePointMs; ```",
+  "type": "string"
+}

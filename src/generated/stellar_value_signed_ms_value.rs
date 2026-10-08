@@ -6,12 +6,11 @@ use super::*;
 /// ```text
 /// struct
 ///         {
-///             TimePointMilliseconds closeTimeMs; // closeTime == closeTimeMs / 1000
+///             TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000
 ///             LedgerCloseValueSignature lcValueSignature;
 ///         }
 /// ```
 ///
-#[cfg(feature = "ms_close_time")]
 #[cfg_attr(feature = "alloc", derive(Default))]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
@@ -24,24 +23,22 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct StellarValueSignedMsValue {
-    pub close_time_ms: TimePointMilliseconds,
+    pub close_time_ms: TimePointMs,
     pub lc_value_signature: LedgerCloseValueSignature,
 }
 
-#[cfg(feature = "ms_close_time")]
 impl ReadXdr for StellarValueSignedMsValue {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             Ok(Self {
-                close_time_ms: TimePointMilliseconds::read_xdr(r)?,
+                close_time_ms: TimePointMs::read_xdr(r)?,
                 lc_value_signature: LedgerCloseValueSignature::read_xdr(r)?,
             })
         })
     }
 }
 
-#[cfg(feature = "ms_close_time")]
 impl WriteXdr for StellarValueSignedMsValue {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {

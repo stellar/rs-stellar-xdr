@@ -10,11 +10,8 @@ use super::*;
 ///     SC_ADDRESS_TYPE_CONTRACT = 1,
 ///     SC_ADDRESS_TYPE_MUXED_ACCOUNT = 2,
 ///     SC_ADDRESS_TYPE_CLAIMABLE_BALANCE = 3,
-///     SC_ADDRESS_TYPE_LIQUIDITY_POOL = 4
-/// #ifdef CAP_0084_MUXED_CONTRACT
-///     ,
+///     SC_ADDRESS_TYPE_LIQUIDITY_POOL = 4,
 ///     SC_ADDRESS_TYPE_MUXED_CONTRACT = 5
-/// #endif
 /// };
 /// ```
 ///
@@ -36,7 +33,6 @@ pub enum ScAddressType {
     MuxedAccount = 2,
     ClaimableBalance = 3,
     LiquidityPool = 4,
-    #[cfg(feature = "cap_0084_muxed_contract")]
     MuxedContract = 5,
 }
 
@@ -47,7 +43,6 @@ impl ScAddressType {
         ScAddressType::MuxedAccount,
         ScAddressType::ClaimableBalance,
         ScAddressType::LiquidityPool,
-        #[cfg(feature = "cap_0084_muxed_contract")]
         ScAddressType::MuxedContract,
     ];
     pub const VARIANTS: [ScAddressType; Self::_VARIANTS.len()] = {
@@ -65,7 +60,6 @@ impl ScAddressType {
         "MuxedAccount",
         "ClaimableBalance",
         "LiquidityPool",
-        #[cfg(feature = "cap_0084_muxed_contract")]
         "MuxedContract",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
@@ -86,7 +80,6 @@ impl ScAddressType {
             Self::MuxedAccount => "MuxedAccount",
             Self::ClaimableBalance => "ClaimableBalance",
             Self::LiquidityPool => "LiquidityPool",
-            #[cfg(feature = "cap_0084_muxed_contract")]
             Self::MuxedContract => "MuxedContract",
         }
     }
@@ -128,7 +121,6 @@ impl TryFrom<i32> for ScAddressType {
             2 => ScAddressType::MuxedAccount,
             3 => ScAddressType::ClaimableBalance,
             4 => ScAddressType::LiquidityPool,
-            #[cfg(feature = "cap_0084_muxed_contract")]
             5 => ScAddressType::MuxedContract,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),

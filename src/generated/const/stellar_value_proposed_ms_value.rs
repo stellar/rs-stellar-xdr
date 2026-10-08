@@ -3,18 +3,16 @@ use super::*;
 
 /// StellarValueProposedMsValue is a borrowing equivalent of [`StellarValueProposedMsValue`](super::super::StellarValueProposedMsValue)
 /// over `'static` data, for const XDR encoding.
-#[cfg(feature = "ms_close_time")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct StellarValueProposedMsValue {
-    pub close_time_ms: TimePointMilliseconds,
+    pub close_time_ms: TimePointMs,
     pub tx_set_hash: Hash,
     pub previous_ledger_hash: Hash,
     pub previous_ledger_version: u32,
     pub lc_value_signature: LedgerCloseValueSignature,
 }
 
-#[cfg(feature = "ms_close_time")]
 impl StellarValueProposedMsValue {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
@@ -53,13 +51,12 @@ impl StellarValueProposedMsValue {
 }
 
 impl ConstWriter<'_> {
-    #[cfg(feature = "ms_close_time")]
     /// Serializes a [`StellarValueProposedMsValue`], mirroring `<StellarValueProposedMsValue as WriteXdr>::write_xdr`.
     pub const fn write_type_stellar_value_proposed_ms_value(
         &mut self,
         v: &StellarValueProposedMsValue,
     ) {
-        self.write_type_time_point_milliseconds(&v.close_time_ms);
+        self.write_type_time_point_ms(&v.close_time_ms);
         self.write_type_hash(&v.tx_set_hash);
         self.write_type_hash(&v.previous_ledger_hash);
         self.write_u32(v.previous_ledger_version);

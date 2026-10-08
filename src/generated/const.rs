@@ -1077,7 +1077,6 @@ pub use super::MuxedEd25519Account;
 #[allow(unused_imports)]
 pub use muxed_ed25519_account::*;
 mod muxed_contract;
-#[cfg(feature = "cap_0084_muxed_contract")]
 pub use super::MuxedContract;
 #[allow(unused_imports)]
 pub use muxed_contract::*;
@@ -2406,11 +2405,10 @@ mod duration;
 pub use super::Duration;
 #[allow(unused_imports)]
 pub use duration::*;
-mod time_point_milliseconds;
-#[cfg(feature = "ms_close_time")]
-pub use super::TimePointMilliseconds;
+mod time_point_ms;
+pub use super::TimePointMs;
 #[allow(unused_imports)]
-pub use time_point_milliseconds::*;
+pub use time_point_ms::*;
 mod extension_point;
 pub use super::ExtensionPoint;
 #[allow(unused_imports)]

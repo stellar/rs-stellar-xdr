@@ -28,7 +28,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-contract-config-setting.x",
-        "56eb21162887b96ec423cab36e924ab085d52f885b7d41bcd3cd040e8dfe616d",
+        "63e548e5cab4823747325bc370760c7437a026f13b389de809e52542ecd41d2f",
     ),
     (
         "xdr/Stellar-contract-env-meta.x",
@@ -44,7 +44,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-contract.x",
-        "b87e9474002c0a089a8aa6f4c4e76e74fa497a7c20e3656532f0ac7762374e4e",
+        "7f8a55a7d03c35979fc540f9bd14873668d6970adb6957323b485838114a7da2",
     ),
     (
         "xdr/Stellar-exporter.x",
@@ -60,7 +60,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-ledger.x",
-        "b6dec791414821d0bae7a11abb4a6b6143ce3e09d0030c580c9ece1815418b13",
+        "35c1d96aa2f39e737c3088e8b35bdf2099bed35f3959934a0552b76d92cdf9c5",
     ),
     (
         "xdr/Stellar-overlay.x",
@@ -72,7 +72,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-types.x",
-        "1bf41da09307489c04c454d9081a3ddcd52d04ed9af173abeb308fe4907dc590",
+        "be1f32162c58275273ae2805a57bb69ec2fdb9ccc2313556f42bf08b9763e757",
     ),
 ];
 
@@ -2292,6 +2292,54 @@ impl<const MAX: u32> AsRef<[u8]> for StringM<MAX> {
     }
 }
 
+impl<const MAX: u32> PartialEq<[u8]> for StringM<MAX> {
+    fn eq(&self, other: &[u8]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const MAX: u32> PartialEq<&[u8]> for StringM<MAX> {
+    fn eq(&self, other: &&[u8]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<[u8; N]> for StringM<MAX> {
+    fn eq(&self, other: &[u8; N]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<&[u8; N]> for StringM<MAX> {
+    fn eq(&self, other: &&[u8; N]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const MAX: u32> PartialEq<StringM<MAX>> for [u8] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
+    }
+}
+
+impl<const MAX: u32> PartialEq<StringM<MAX>> for &[u8] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<StringM<MAX>> for [u8; N] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<StringM<MAX>> for &[u8; N] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
+    }
+}
+
 #[cfg(feature = "alloc")]
 impl<const N: usize, const MAX: u32> TryFrom<[u8; N]> for StringM<MAX> {
     type Error = Error;
@@ -3273,6 +3321,35 @@ mod test {
             <BytesM<3> as ReadXdr>::read_xdr(&mut lr),
             Err(Error::LengthLimitExceeded)
         );
+    }
+
+    #[test]
+    fn stringm_eq_byte_strings() {
+        let v = StringM::<3>::try_from("123").unwrap();
+        assert_eq!(v, *b"123");
+        assert_eq!(v, b"123");
+        assert_eq!(v, b"123"[..]);
+        assert_eq!(v, &b"123"[..]);
+        assert_ne!(v, *b"124");
+        assert_ne!(v, b"124");
+        assert_ne!(v, b"124"[..]);
+        assert_ne!(v, &b"124"[..]);
+        assert_ne!(v, b"12");
+        assert_ne!(v, &b"1234"[..]);
+        assert_ne!(v, b"");
+        assert_ne!(StringM::<3>::default(), b"1");
+        assert_eq!(*b"123", v);
+        assert_eq!(b"123", v);
+        assert_eq!(b"123"[..], v);
+        assert_eq!(&b"123"[..], v);
+        assert_ne!(*b"124", v);
+        assert_ne!(b"124", v);
+        assert_ne!(b"124"[..], v);
+        assert_ne!(&b"124"[..], v);
+        assert_ne!(b"12", v);
+        assert_ne!(&b"1234"[..], v);
+        assert_ne!(b"", v);
+        assert_ne!(b"1", StringM::<3>::default());
     }
 
     #[test]
@@ -5666,9 +5743,9 @@ pub use time_point::*;
 mod duration;
 #[allow(unused_imports)]
 pub use duration::*;
-mod time_point_milliseconds;
+mod time_point_ms;
 #[allow(unused_imports)]
-pub use time_point_milliseconds::*;
+pub use time_point_ms::*;
 mod extension_point;
 #[allow(unused_imports)]
 pub use extension_point::*;

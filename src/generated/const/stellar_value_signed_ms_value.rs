@@ -3,15 +3,13 @@ use super::*;
 
 /// StellarValueSignedMsValue is a borrowing equivalent of [`StellarValueSignedMsValue`](super::super::StellarValueSignedMsValue)
 /// over `'static` data, for const XDR encoding.
-#[cfg(feature = "ms_close_time")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct StellarValueSignedMsValue {
-    pub close_time_ms: TimePointMilliseconds,
+    pub close_time_ms: TimePointMs,
     pub lc_value_signature: LedgerCloseValueSignature,
 }
 
-#[cfg(feature = "ms_close_time")]
 impl StellarValueSignedMsValue {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
@@ -50,13 +48,12 @@ impl StellarValueSignedMsValue {
 }
 
 impl ConstWriter<'_> {
-    #[cfg(feature = "ms_close_time")]
     /// Serializes a [`StellarValueSignedMsValue`], mirroring `<StellarValueSignedMsValue as WriteXdr>::write_xdr`.
     pub const fn write_type_stellar_value_signed_ms_value(
         &mut self,
         v: &StellarValueSignedMsValue,
     ) {
-        self.write_type_time_point_milliseconds(&v.close_time_ms);
+        self.write_type_time_point_ms(&v.close_time_ms);
         self.write_type_ledger_close_value_signature(&v.lc_value_signature);
     }
 }

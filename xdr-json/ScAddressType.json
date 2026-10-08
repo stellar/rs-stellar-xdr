@@ -1,13 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   "title": "ScAddressType",
-  "description": "ScAddressType is an XDR Enum defined as:\n\n```text enum SCAddressType { SC_ADDRESS_TYPE_ACCOUNT = 0, SC_ADDRESS_TYPE_CONTRACT = 1, SC_ADDRESS_TYPE_MUXED_ACCOUNT = 2, SC_ADDRESS_TYPE_CLAIMABLE_BALANCE = 3, SC_ADDRESS_TYPE_LIQUIDITY_POOL = 4 #ifdef CAP_0084_MUXED_CONTRACT , SC_ADDRESS_TYPE_MUXED_CONTRACT = 5 #endif }; ```",
+  "description": "ScAddressType is an XDR Enum defined as:\n\n```text enum SCAddressType { SC_ADDRESS_TYPE_ACCOUNT = 0, SC_ADDRESS_TYPE_CONTRACT = 1, SC_ADDRESS_TYPE_MUXED_ACCOUNT = 2, SC_ADDRESS_TYPE_CLAIMABLE_BALANCE = 3, SC_ADDRESS_TYPE_LIQUIDITY_POOL = 4, SC_ADDRESS_TYPE_MUXED_CONTRACT = 5 }; ```",
   "type": "string",
   "enum": [
     "account",
     "contract",
     "muxed_account",
     "claimable_balance",
-    "liquidity_pool"
+    "liquidity_pool",
+    "muxed_contract"
   ]
 }

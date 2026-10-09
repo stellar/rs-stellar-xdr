@@ -189,6 +189,11 @@ jobs:
           else
             echo "PR for $BRANCH already open."
           fi
+          # Only the main-tracking PR merges itself; a pinned PR is a draft against XDR
+          # that is not on main yet and must wait for a human.
+          if [ -z "$XDR_REF" ]; then
+            gh pr merge -R "$GITHUB_REPOSITORY" "$BRANCH" --auto --squash
+          fi
           # Consumers pin the head SHA, so state it where a caller can read it back without
           # re-deriving it from the branch, which for main-tracking runs moves.
           {

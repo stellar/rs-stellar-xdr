@@ -63,7 +63,6 @@ impl SurveyMessageResponseType {
 }
 
 impl Name for SurveyMessageResponseType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -97,7 +96,6 @@ impl TryFrom<i32> for SurveyMessageResponseType {
 }
 
 impl From<SurveyMessageResponseType> for i32 {
-    #[must_use]
     fn from(e: SurveyMessageResponseType) -> Self {
         e as Self
     }

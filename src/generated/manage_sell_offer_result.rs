@@ -155,14 +155,12 @@ impl ManageSellOfferResult {
 }
 
 impl Name for ManageSellOfferResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ManageSellOfferResultCode> for ManageSellOfferResult {
-    #[must_use]
     fn discriminant(&self) -> ManageSellOfferResultCode {
         Self::discriminant(self)
     }

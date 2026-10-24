@@ -76,7 +76,6 @@ impl SignerKeyType {
 }
 
 impl Name for SignerKeyType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -113,7 +112,6 @@ impl TryFrom<i32> for SignerKeyType {
 }
 
 impl From<SignerKeyType> for i32 {
-    #[must_use]
     fn from(e: SignerKeyType) -> Self {
         e as Self
     }

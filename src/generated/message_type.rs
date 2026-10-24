@@ -180,7 +180,6 @@ impl MessageType {
 }
 
 impl Name for MessageType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -234,7 +233,6 @@ impl TryFrom<i32> for MessageType {
 }
 
 impl From<MessageType> for i32 {
-    #[must_use]
     fn from(e: MessageType) -> Self {
         e as Self
     }

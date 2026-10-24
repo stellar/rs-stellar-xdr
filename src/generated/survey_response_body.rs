@@ -81,14 +81,12 @@ impl SurveyResponseBody {
 }
 
 impl Name for SurveyResponseBody {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<SurveyMessageResponseType> for SurveyResponseBody {
-    #[must_use]
     fn discriminant(&self) -> SurveyMessageResponseType {
         Self::discriminant(self)
     }

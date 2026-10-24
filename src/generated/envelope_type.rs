@@ -116,7 +116,6 @@ impl EnvelopeType {
 }
 
 impl Name for EnvelopeType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -160,7 +159,6 @@ impl TryFrom<i32> for EnvelopeType {
 }
 
 impl From<EnvelopeType> for i32 {
-    #[must_use]
     fn from(e: EnvelopeType) -> Self {
         e as Self
     }

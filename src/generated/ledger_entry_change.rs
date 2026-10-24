@@ -104,14 +104,12 @@ impl LedgerEntryChange {
 }
 
 impl Name for LedgerEntryChange {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<LedgerEntryChangeType> for LedgerEntryChange {
-    #[must_use]
     fn discriminant(&self) -> LedgerEntryChangeType {
         Self::discriminant(self)
     }

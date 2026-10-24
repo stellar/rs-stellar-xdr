@@ -197,7 +197,6 @@ impl ScSpecType {
 }
 
 impl Name for ScSpecType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -256,7 +255,6 @@ impl TryFrom<i32> for ScSpecType {
 }
 
 impl From<ScSpecType> for i32 {
-    #[must_use]
     fn from(e: ScSpecType) -> Self {
         e as Self
     }

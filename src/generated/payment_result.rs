@@ -137,14 +137,12 @@ impl PaymentResult {
 }
 
 impl Name for PaymentResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<PaymentResultCode> for PaymentResult {
-    #[must_use]
     fn discriminant(&self) -> PaymentResultCode {
         Self::discriminant(self)
     }

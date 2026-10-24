@@ -29,21 +29,18 @@ impl core::fmt::Debug for AssetCode12 {
     }
 }
 impl From<AssetCode12> for [u8; 12] {
-    #[must_use]
     fn from(x: AssetCode12) -> Self {
         x.0
     }
 }
 
 impl From<[u8; 12]> for AssetCode12 {
-    #[must_use]
     fn from(x: [u8; 12]) -> Self {
         AssetCode12(x)
     }
 }
 
 impl AsRef<[u8; 12]> for AssetCode12 {
-    #[must_use]
     fn as_ref(&self) -> &[u8; 12] {
         &self.0
     }
@@ -98,7 +95,6 @@ impl TryFrom<&[u8]> for AssetCode12 {
 }
 
 impl AsRef<[u8]> for AssetCode12 {
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }

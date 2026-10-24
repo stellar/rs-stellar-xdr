@@ -97,14 +97,12 @@ impl BeginSponsoringFutureReservesResult {
 }
 
 impl Name for BeginSponsoringFutureReservesResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<BeginSponsoringFutureReservesResultCode> for BeginSponsoringFutureReservesResult {
-    #[must_use]
     fn discriminant(&self) -> BeginSponsoringFutureReservesResultCode {
         Self::discriminant(self)
     }

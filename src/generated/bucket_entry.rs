@@ -98,14 +98,12 @@ impl BucketEntry {
 }
 
 impl Name for BucketEntry {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<BucketEntryType> for BucketEntry {
-    #[must_use]
     fn discriminant(&self) -> BucketEntryType {
         Self::discriminant(self)
     }

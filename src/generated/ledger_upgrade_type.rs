@@ -96,7 +96,6 @@ impl LedgerUpgradeType {
 }
 
 impl Name for LedgerUpgradeType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -136,7 +135,6 @@ impl TryFrom<i32> for LedgerUpgradeType {
 }
 
 impl From<LedgerUpgradeType> for i32 {
-    #[must_use]
     fn from(e: LedgerUpgradeType) -> Self {
         e as Self
     }

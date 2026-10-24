@@ -81,7 +81,6 @@ impl HostFunctionType {
 }
 
 impl Name for HostFunctionType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -118,7 +117,6 @@ impl TryFrom<i32> for HostFunctionType {
 }
 
 impl From<HostFunctionType> for i32 {
-    #[must_use]
     fn from(e: HostFunctionType) -> Self {
         e as Self
     }

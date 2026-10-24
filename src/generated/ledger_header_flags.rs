@@ -72,7 +72,6 @@ impl LedgerHeaderFlags {
 }
 
 impl Name for LedgerHeaderFlags {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -108,7 +107,6 @@ impl TryFrom<i32> for LedgerHeaderFlags {
 }
 
 impl From<LedgerHeaderFlags> for i32 {
-    #[must_use]
     fn from(e: LedgerHeaderFlags) -> Self {
         e as Self
     }

@@ -82,14 +82,12 @@ impl Claimant {
 }
 
 impl Name for Claimant {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ClaimantType> for Claimant {
-    #[must_use]
     fn discriminant(&self) -> ClaimantType {
         Self::discriminant(self)
     }

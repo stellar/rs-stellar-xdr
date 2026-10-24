@@ -196,7 +196,6 @@ impl OperationType {
 }
 
 impl Name for OperationType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -256,7 +255,6 @@ impl TryFrom<i32> for OperationType {
 }
 
 impl From<OperationType> for i32 {
-    #[must_use]
     fn from(e: OperationType) -> Self {
         e as Self
     }

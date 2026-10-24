@@ -95,7 +95,6 @@ impl SetTrustLineFlagsResultCode {
 }
 
 impl Name for SetTrustLineFlagsResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -134,7 +133,6 @@ impl TryFrom<i32> for SetTrustLineFlagsResultCode {
 }
 
 impl From<SetTrustLineFlagsResultCode> for i32 {
-    #[must_use]
     fn from(e: SetTrustLineFlagsResultCode) -> Self {
         e as Self
     }

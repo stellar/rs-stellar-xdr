@@ -28,21 +28,18 @@ pub struct SequenceNumber(
 );
 
 impl From<SequenceNumber> for i64 {
-    #[must_use]
     fn from(x: SequenceNumber) -> Self {
         x.0
     }
 }
 
 impl From<i64> for SequenceNumber {
-    #[must_use]
     fn from(x: i64) -> Self {
         SequenceNumber(x)
     }
 }
 
 impl AsRef<i64> for SequenceNumber {
-    #[must_use]
     fn as_ref(&self) -> &i64 {
         &self.0
     }

@@ -100,7 +100,6 @@ impl AllowTrustResultCode {
 }
 
 impl Name for AllowTrustResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -140,7 +139,6 @@ impl TryFrom<i32> for AllowTrustResultCode {
 }
 
 impl From<AllowTrustResultCode> for i32 {
-    #[must_use]
     fn from(e: AllowTrustResultCode) -> Self {
         e as Self
     }

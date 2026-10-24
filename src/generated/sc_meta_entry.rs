@@ -78,14 +78,12 @@ impl ScMetaEntry {
 }
 
 impl Name for ScMetaEntry {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ScMetaKind> for ScMetaEntry {
-    #[must_use]
     fn discriminant(&self) -> ScMetaKind {
         Self::discriminant(self)
     }

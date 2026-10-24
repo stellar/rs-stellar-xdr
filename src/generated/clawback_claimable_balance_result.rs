@@ -97,14 +97,12 @@ impl ClawbackClaimableBalanceResult {
 }
 
 impl Name for ClawbackClaimableBalanceResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ClawbackClaimableBalanceResultCode> for ClawbackClaimableBalanceResult {
-    #[must_use]
     fn discriminant(&self) -> ClawbackClaimableBalanceResultCode {
         Self::discriminant(self)
     }

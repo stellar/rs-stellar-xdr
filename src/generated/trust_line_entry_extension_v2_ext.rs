@@ -78,14 +78,12 @@ impl TrustLineEntryExtensionV2Ext {
 }
 
 impl Name for TrustLineEntryExtensionV2Ext {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<i32> for TrustLineEntryExtensionV2Ext {
-    #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }

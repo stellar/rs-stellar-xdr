@@ -19,21 +19,18 @@ use super::*;
 pub struct AccountId(pub PublicKey);
 
 impl From<AccountId> for PublicKey {
-    #[must_use]
     fn from(x: AccountId) -> Self {
         x.0
     }
 }
 
 impl From<PublicKey> for AccountId {
-    #[must_use]
     fn from(x: PublicKey) -> Self {
         AccountId(x)
     }
 }
 
 impl AsRef<PublicKey> for AccountId {
-    #[must_use]
     fn as_ref(&self) -> &PublicKey {
         &self.0
     }

@@ -143,7 +143,6 @@ impl {{ u.name }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 impl Name for {{ u.name }} {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -153,7 +152,6 @@ impl Name for {{ u.name }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 impl Discriminant<{{ u.discriminant_type }}> for {{ u.name }} {
-    #[must_use]
     fn discriminant(&self) -> {{ u.discriminant_type }} {
         Self::discriminant(self)
     }

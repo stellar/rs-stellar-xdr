@@ -92,14 +92,12 @@ impl Preconditions {
 }
 
 impl Name for Preconditions {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<PreconditionType> for Preconditions {
-    #[must_use]
     fn discriminant(&self) -> PreconditionType {
         Self::discriminant(self)
     }

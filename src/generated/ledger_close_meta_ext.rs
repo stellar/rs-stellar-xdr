@@ -83,14 +83,12 @@ impl LedgerCloseMetaExt {
 }
 
 impl Name for LedgerCloseMetaExt {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<i32> for LedgerCloseMetaExt {
-    #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }

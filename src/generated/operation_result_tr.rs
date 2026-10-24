@@ -264,14 +264,12 @@ impl OperationResultTr {
 }
 
 impl Name for OperationResultTr {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<OperationType> for OperationResultTr {
-    #[must_use]
     fn discriminant(&self) -> OperationType {
         Self::discriminant(self)
     }

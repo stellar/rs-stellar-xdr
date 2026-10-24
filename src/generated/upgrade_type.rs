@@ -21,21 +21,18 @@ use super::*;
 pub struct UpgradeType(pub BytesM<128>);
 
 impl From<UpgradeType> for BytesM<128> {
-    #[must_use]
     fn from(x: UpgradeType) -> Self {
         x.0
     }
 }
 
 impl From<BytesM<128>> for UpgradeType {
-    #[must_use]
     fn from(x: BytesM<128>) -> Self {
         UpgradeType(x)
     }
 }
 
 impl AsRef<BytesM<128>> for UpgradeType {
-    #[must_use]
     fn as_ref(&self) -> &BytesM<128> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for UpgradeType {
 }
 
 impl From<UpgradeType> for Vec<u8> {
-    #[must_use]
     fn from(x: UpgradeType) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<u8>> for UpgradeType {
 }
 
 impl AsRef<Vec<u8>> for UpgradeType {
-    #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<u8>> for UpgradeType {
 
 impl AsRef<[u8]> for UpgradeType {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         self.0 .0
     }

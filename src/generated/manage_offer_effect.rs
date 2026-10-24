@@ -72,7 +72,6 @@ impl ManageOfferEffect {
 }
 
 impl Name for ManageOfferEffect {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -108,7 +107,6 @@ impl TryFrom<i32> for ManageOfferEffect {
 }
 
 impl From<ManageOfferEffect> for i32 {
-    #[must_use]
     fn from(e: ManageOfferEffect) -> Self {
         e as Self
     }

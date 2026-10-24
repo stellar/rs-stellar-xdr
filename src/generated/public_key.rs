@@ -75,14 +75,12 @@ impl PublicKey {
 }
 
 impl Name for PublicKey {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<PublicKeyType> for PublicKey {
-    #[must_use]
     fn discriminant(&self) -> PublicKeyType {
         Self::discriminant(self)
     }

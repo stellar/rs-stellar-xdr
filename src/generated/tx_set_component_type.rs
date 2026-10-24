@@ -64,7 +64,6 @@ impl TxSetComponentType {
 }
 
 impl Name for TxSetComponentType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -98,7 +97,6 @@ impl TryFrom<i32> for TxSetComponentType {
 }
 
 impl From<TxSetComponentType> for i32 {
-    #[must_use]
     fn from(e: TxSetComponentType) -> Self {
         e as Self
     }

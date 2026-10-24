@@ -81,7 +81,6 @@ impl TrustLineFlags {
 }
 
 impl Name for TrustLineFlags {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -117,7 +116,6 @@ impl TryFrom<i32> for TrustLineFlags {
 }
 
 impl From<TrustLineFlags> for i32 {
-    #[must_use]
     fn from(e: TrustLineFlags) -> Self {
         e as Self
     }

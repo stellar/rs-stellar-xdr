@@ -117,14 +117,12 @@ impl ScSpecEntry {
 }
 
 impl Name for ScSpecEntry {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ScSpecEntryKind> for ScSpecEntry {
-    #[must_use]
     fn discriminant(&self) -> ScSpecEntryKind {
         Self::discriminant(self)
     }

@@ -166,7 +166,6 @@ impl ConfigSettingId {
 }
 
 impl Name for ConfigSettingId {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -220,7 +219,6 @@ impl TryFrom<i32> for ConfigSettingId {
 }
 
 impl From<ConfigSettingId> for i32 {
-    #[must_use]
     fn from(e: ConfigSettingId) -> Self {
         e as Self
     }

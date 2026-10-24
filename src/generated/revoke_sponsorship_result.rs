@@ -113,14 +113,12 @@ impl RevokeSponsorshipResult {
 }
 
 impl Name for RevokeSponsorshipResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<RevokeSponsorshipResultCode> for RevokeSponsorshipResult {
-    #[must_use]
     fn discriminant(&self) -> RevokeSponsorshipResultCode {
         Self::discriminant(self)
     }

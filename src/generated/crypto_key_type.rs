@@ -88,7 +88,6 @@ impl CryptoKeyType {
 }
 
 impl Name for CryptoKeyType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -126,7 +125,6 @@ impl TryFrom<i32> for CryptoKeyType {
 }
 
 impl From<CryptoKeyType> for i32 {
-    #[must_use]
     fn from(e: CryptoKeyType) -> Self {
         e as Self
     }

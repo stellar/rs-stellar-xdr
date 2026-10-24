@@ -91,7 +91,6 @@ impl ScSpecEntryKind {
 }
 
 impl Name for ScSpecEntryKind {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -130,7 +129,6 @@ impl TryFrom<i32> for ScSpecEntryKind {
 }
 
 impl From<ScSpecEntryKind> for i32 {
-    #[must_use]
     fn from(e: ScSpecEntryKind) -> Self {
         e as Self
     }

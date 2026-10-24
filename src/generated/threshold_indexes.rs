@@ -76,7 +76,6 @@ impl ThresholdIndexes {
 }
 
 impl Name for ThresholdIndexes {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -113,7 +112,6 @@ impl TryFrom<i32> for ThresholdIndexes {
 }
 
 impl From<ThresholdIndexes> for i32 {
-    #[must_use]
     fn from(e: ThresholdIndexes) -> Self {
         e as Self
     }

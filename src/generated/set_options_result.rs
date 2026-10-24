@@ -143,14 +143,12 @@ impl SetOptionsResult {
 }
 
 impl Name for SetOptionsResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<SetOptionsResultCode> for SetOptionsResult {
-    #[must_use]
     fn discriminant(&self) -> SetOptionsResultCode {
         Self::discriminant(self)
     }

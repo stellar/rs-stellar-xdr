@@ -79,7 +79,6 @@ impl BeginSponsoringFutureReservesResultCode {
 }
 
 impl Name for BeginSponsoringFutureReservesResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -116,7 +115,6 @@ impl TryFrom<i32> for BeginSponsoringFutureReservesResultCode {
 }
 
 impl From<BeginSponsoringFutureReservesResultCode> for i32 {
-    #[must_use]
     fn from(e: BeginSponsoringFutureReservesResultCode) -> Self {
         e as Self
     }

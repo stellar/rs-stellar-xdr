@@ -264,14 +264,12 @@ impl OperationBody {
 }
 
 impl Name for OperationBody {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<OperationType> for OperationBody {
-    #[must_use]
     fn discriminant(&self) -> OperationType {
         Self::discriminant(self)
     }

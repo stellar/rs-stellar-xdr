@@ -72,7 +72,6 @@ impl ClaimAtomType {
 }
 
 impl Name for ClaimAtomType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -108,7 +107,6 @@ impl TryFrom<i32> for ClaimAtomType {
 }
 
 impl From<ClaimAtomType> for i32 {
-    #[must_use]
     fn from(e: ClaimAtomType) -> Self {
         e as Self
     }

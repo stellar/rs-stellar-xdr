@@ -2704,7 +2704,6 @@ impl TypeVariant {
 
 #[cfg(feature = "type_enum")]
 impl Name for TypeVariant {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -22273,7 +22272,6 @@ impl Type {
 
 #[cfg(feature = "type_enum")]
 impl Name for Type {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }

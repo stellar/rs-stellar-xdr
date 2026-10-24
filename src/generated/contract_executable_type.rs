@@ -72,7 +72,6 @@ impl ContractExecutableType {
 }
 
 impl Name for ContractExecutableType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -108,7 +107,6 @@ impl TryFrom<i32> for ContractExecutableType {
 }
 
 impl From<ContractExecutableType> for i32 {
-    #[must_use]
     fn from(e: ContractExecutableType) -> Self {
         e as Self
     }

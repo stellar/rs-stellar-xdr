@@ -113,14 +113,12 @@ impl SetTrustLineFlagsResult {
 }
 
 impl Name for SetTrustLineFlagsResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<SetTrustLineFlagsResultCode> for SetTrustLineFlagsResult {
-    #[must_use]
     fn discriminant(&self) -> SetTrustLineFlagsResultCode {
         Self::discriminant(self)
     }

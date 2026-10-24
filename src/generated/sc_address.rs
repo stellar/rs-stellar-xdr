@@ -114,14 +114,12 @@ impl ScAddress {
 }
 
 impl Name for ScAddress {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ScAddressType> for ScAddress {
-    #[must_use]
     fn discriminant(&self) -> ScAddressType {
         Self::discriminant(self)
     }

@@ -84,7 +84,6 @@ impl RestoreFootprintResultCode {
 }
 
 impl Name for RestoreFootprintResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -121,7 +120,6 @@ impl TryFrom<i32> for RestoreFootprintResultCode {
 }
 
 impl From<RestoreFootprintResultCode> for i32 {
-    #[must_use]
     fn from(e: RestoreFootprintResultCode) -> Self {
         e as Self
     }

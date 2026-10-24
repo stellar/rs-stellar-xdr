@@ -91,14 +91,12 @@ impl ManageOfferSuccessResultOffer {
 }
 
 impl Name for ManageOfferSuccessResultOffer {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ManageOfferEffect> for ManageOfferSuccessResultOffer {
-    #[must_use]
     fn discriminant(&self) -> ManageOfferEffect {
         Self::discriminant(self)
     }

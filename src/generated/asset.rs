@@ -96,14 +96,12 @@ impl Asset {
 }
 
 impl Name for Asset {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<AssetType> for Asset {
-    #[must_use]
     fn discriminant(&self) -> AssetType {
         Self::discriminant(self)
     }

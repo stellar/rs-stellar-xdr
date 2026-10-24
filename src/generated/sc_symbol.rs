@@ -21,21 +21,18 @@ use super::*;
 pub struct ScSymbol(pub StringM<SCSYMBOL_LIMIT>);
 
 impl From<ScSymbol> for StringM<SCSYMBOL_LIMIT> {
-    #[must_use]
     fn from(x: ScSymbol) -> Self {
         x.0
     }
 }
 
 impl From<StringM<SCSYMBOL_LIMIT>> for ScSymbol {
-    #[must_use]
     fn from(x: StringM<SCSYMBOL_LIMIT>) -> Self {
         ScSymbol(x)
     }
 }
 
 impl AsRef<StringM<SCSYMBOL_LIMIT>> for ScSymbol {
-    #[must_use]
     fn as_ref(&self) -> &StringM<SCSYMBOL_LIMIT> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for ScSymbol {
 }
 
 impl From<ScSymbol> for Vec<u8> {
-    #[must_use]
     fn from(x: ScSymbol) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<u8>> for ScSymbol {
 }
 
 impl AsRef<Vec<u8>> for ScSymbol {
-    #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<u8>> for ScSymbol {
 
 impl AsRef<[u8]> for ScSymbol {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         self.0 .0
     }

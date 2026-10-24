@@ -74,7 +74,6 @@ impl HotArchiveBucketEntryType {
 }
 
 impl Name for HotArchiveBucketEntryType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -110,7 +109,6 @@ impl TryFrom<i32> for HotArchiveBucketEntryType {
 }
 
 impl From<HotArchiveBucketEntryType> for i32 {
-    #[must_use]
     fn from(e: HotArchiveBucketEntryType) -> Self {
         e as Self
     }

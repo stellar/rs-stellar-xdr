@@ -68,7 +68,6 @@ impl RevokeSponsorshipType {
 }
 
 impl Name for RevokeSponsorshipType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -103,7 +102,6 @@ impl TryFrom<i32> for RevokeSponsorshipType {
 }
 
 impl From<RevokeSponsorshipType> for i32 {
-    #[must_use]
     fn from(e: RevokeSponsorshipType) -> Self {
         e as Self
     }

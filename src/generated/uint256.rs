@@ -79,21 +79,18 @@ impl schemars::JsonSchema for Uint256 {
     }
 }
 impl From<Uint256> for [u8; 32] {
-    #[must_use]
     fn from(x: Uint256) -> Self {
         x.0
     }
 }
 
 impl From<[u8; 32]> for Uint256 {
-    #[must_use]
     fn from(x: [u8; 32]) -> Self {
         Uint256(x)
     }
 }
 
 impl AsRef<[u8; 32]> for Uint256 {
-    #[must_use]
     fn as_ref(&self) -> &[u8; 32] {
         &self.0
     }
@@ -148,7 +145,6 @@ impl TryFrom<&[u8]> for Uint256 {
 }
 
 impl AsRef<[u8]> for Uint256 {
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }

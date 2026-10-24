@@ -94,7 +94,6 @@ impl RevokeSponsorshipResultCode {
 }
 
 impl Name for RevokeSponsorshipResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -133,7 +132,6 @@ impl TryFrom<i32> for RevokeSponsorshipResultCode {
 }
 
 impl From<RevokeSponsorshipResultCode> for i32 {
-    #[must_use]
     fn from(e: RevokeSponsorshipResultCode) -> Self {
         e as Self
     }

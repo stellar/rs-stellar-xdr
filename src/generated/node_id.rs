@@ -19,21 +19,18 @@ use super::*;
 pub struct NodeId(pub PublicKey);
 
 impl From<NodeId> for PublicKey {
-    #[must_use]
     fn from(x: NodeId) -> Self {
         x.0
     }
 }
 
 impl From<PublicKey> for NodeId {
-    #[must_use]
     fn from(x: PublicKey) -> Self {
         NodeId(x)
     }
 }
 
 impl AsRef<PublicKey> for NodeId {
-    #[must_use]
     fn as_ref(&self) -> &PublicKey {
         &self.0
     }

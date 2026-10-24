@@ -127,14 +127,12 @@ impl LedgerUpgrade {
 }
 
 impl Name for LedgerUpgrade {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<LedgerUpgradeType> for LedgerUpgrade {
-    #[must_use]
     fn discriminant(&self) -> LedgerUpgradeType {
         Self::discriminant(self)
     }

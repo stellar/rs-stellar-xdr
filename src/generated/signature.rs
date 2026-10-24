@@ -21,21 +21,18 @@ use super::*;
 pub struct Signature(pub BytesM<64>);
 
 impl From<Signature> for BytesM<64> {
-    #[must_use]
     fn from(x: Signature) -> Self {
         x.0
     }
 }
 
 impl From<BytesM<64>> for Signature {
-    #[must_use]
     fn from(x: BytesM<64>) -> Self {
         Signature(x)
     }
 }
 
 impl AsRef<BytesM<64>> for Signature {
-    #[must_use]
     fn as_ref(&self) -> &BytesM<64> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for Signature {
 }
 
 impl From<Signature> for Vec<u8> {
-    #[must_use]
     fn from(x: Signature) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<u8>> for Signature {
 }
 
 impl AsRef<Vec<u8>> for Signature {
-    #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<u8>> for Signature {
 
 impl AsRef<[u8]> for Signature {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         self.0 .0
     }

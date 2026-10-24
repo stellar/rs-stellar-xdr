@@ -84,14 +84,12 @@ impl InflationResult {
 }
 
 impl Name for InflationResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<InflationResultCode> for InflationResult {
-    #[must_use]
     fn discriminant(&self) -> InflationResultCode {
         Self::discriminant(self)
     }

@@ -78,14 +78,12 @@ impl DataEntryExt {
 }
 
 impl Name for DataEntryExt {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<i32> for DataEntryExt {
-    #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }

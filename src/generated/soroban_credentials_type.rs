@@ -81,7 +81,6 @@ impl SorobanCredentialsType {
 }
 
 impl Name for SorobanCredentialsType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -118,7 +117,6 @@ impl TryFrom<i32> for SorobanCredentialsType {
 }
 
 impl From<SorobanCredentialsType> for i32 {
-    #[must_use]
     fn from(e: SorobanCredentialsType) -> Self {
         e as Self
     }

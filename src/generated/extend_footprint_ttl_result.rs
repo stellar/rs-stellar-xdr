@@ -103,14 +103,12 @@ impl ExtendFootprintTtlResult {
 }
 
 impl Name for ExtendFootprintTtlResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ExtendFootprintTtlResultCode> for ExtendFootprintTtlResult {
-    #[must_use]
     fn discriminant(&self) -> ExtendFootprintTtlResultCode {
         Self::discriminant(self)
     }

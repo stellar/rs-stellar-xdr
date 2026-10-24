@@ -68,7 +68,6 @@ impl ContractIdPreimageType {
 }
 
 impl Name for ContractIdPreimageType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -103,7 +102,6 @@ impl TryFrom<i32> for ContractIdPreimageType {
 }
 
 impl From<ContractIdPreimageType> for i32 {
-    #[must_use]
     fn from(e: ContractIdPreimageType) -> Self {
         e as Self
     }

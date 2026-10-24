@@ -79,21 +79,18 @@ impl schemars::JsonSchema for SignatureHint {
     }
 }
 impl From<SignatureHint> for [u8; 4] {
-    #[must_use]
     fn from(x: SignatureHint) -> Self {
         x.0
     }
 }
 
 impl From<[u8; 4]> for SignatureHint {
-    #[must_use]
     fn from(x: [u8; 4]) -> Self {
         SignatureHint(x)
     }
 }
 
 impl AsRef<[u8; 4]> for SignatureHint {
-    #[must_use]
     fn as_ref(&self) -> &[u8; 4] {
         &self.0
     }
@@ -148,7 +145,6 @@ impl TryFrom<&[u8]> for SignatureHint {
 }
 
 impl AsRef<[u8]> for SignatureHint {
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }

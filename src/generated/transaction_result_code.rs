@@ -165,7 +165,6 @@ impl TransactionResultCode {
 }
 
 impl Name for TransactionResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -218,7 +217,6 @@ impl TryFrom<i32> for TransactionResultCode {
 }
 
 impl From<TransactionResultCode> for i32 {
-    #[must_use]
     fn from(e: TransactionResultCode) -> Self {
         e as Self
     }

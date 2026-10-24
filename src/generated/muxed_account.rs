@@ -84,14 +84,12 @@ impl MuxedAccount {
 }
 
 impl Name for MuxedAccount {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<CryptoKeyType> for MuxedAccount {
-    #[must_use]
     fn discriminant(&self) -> CryptoKeyType {
         Self::discriminant(self)
     }

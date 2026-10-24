@@ -138,7 +138,6 @@ impl PathPaymentStrictReceiveResultCode {
 }
 
 impl Name for PathPaymentStrictReceiveResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -184,7 +183,6 @@ impl TryFrom<i32> for PathPaymentStrictReceiveResultCode {
 }
 
 impl From<PathPaymentStrictReceiveResultCode> for i32 {
-    #[must_use]
     fn from(e: PathPaymentStrictReceiveResultCode) -> Self {
         e as Self
     }

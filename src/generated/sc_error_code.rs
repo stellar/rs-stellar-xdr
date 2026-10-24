@@ -111,7 +111,6 @@ impl ScErrorCode {
 }
 
 impl Name for ScErrorCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -154,7 +153,6 @@ impl TryFrom<i32> for ScErrorCode {
 }
 
 impl From<ScErrorCode> for i32 {
-    #[must_use]
     fn from(e: ScErrorCode) -> Self {
         e as Self
     }

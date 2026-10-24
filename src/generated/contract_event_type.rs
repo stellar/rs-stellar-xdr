@@ -72,7 +72,6 @@ impl ContractEventType {
 }
 
 impl Name for ContractEventType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -108,7 +107,6 @@ impl TryFrom<i32> for ContractEventType {
 }
 
 impl From<ContractEventType> for i32 {
-    #[must_use]
     fn from(e: ContractEventType) -> Self {
         e as Self
     }

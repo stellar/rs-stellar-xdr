@@ -103,14 +103,12 @@ impl TrustLineAsset {
 }
 
 impl Name for TrustLineAsset {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<AssetType> for TrustLineAsset {
-    #[must_use]
     fn discriminant(&self) -> AssetType {
         Self::discriminant(self)
     }

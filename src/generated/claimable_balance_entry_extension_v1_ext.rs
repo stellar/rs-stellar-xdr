@@ -78,14 +78,12 @@ impl ClaimableBalanceEntryExtensionV1Ext {
 }
 
 impl Name for ClaimableBalanceEntryExtensionV1Ext {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<i32> for ClaimableBalanceEntryExtensionV1Ext {
-    #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }

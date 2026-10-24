@@ -119,14 +119,12 @@ impl ClaimClaimableBalanceResult {
 }
 
 impl Name for ClaimClaimableBalanceResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ClaimClaimableBalanceResultCode> for ClaimClaimableBalanceResult {
-    #[must_use]
     fn discriminant(&self) -> ClaimClaimableBalanceResultCode {
         Self::discriminant(self)
     }

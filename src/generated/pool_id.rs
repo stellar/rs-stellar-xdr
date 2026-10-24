@@ -19,21 +19,18 @@ use super::*;
 pub struct PoolId(pub Hash);
 
 impl From<PoolId> for Hash {
-    #[must_use]
     fn from(x: PoolId) -> Self {
         x.0
     }
 }
 
 impl From<Hash> for PoolId {
-    #[must_use]
     fn from(x: Hash) -> Self {
         PoolId(x)
     }
 }
 
 impl AsRef<Hash> for PoolId {
-    #[must_use]
     fn as_ref(&self) -> &Hash {
         &self.0
     }

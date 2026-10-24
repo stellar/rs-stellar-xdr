@@ -62,7 +62,6 @@ impl ScMetaKind {
 }
 
 impl Name for ScMetaKind {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -96,7 +95,6 @@ impl TryFrom<i32> for ScMetaKind {
 }
 
 impl From<ScMetaKind> for i32 {
-    #[must_use]
     fn from(e: ScMetaKind) -> Self {
         e as Self
     }

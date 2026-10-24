@@ -107,14 +107,12 @@ impl ClawbackResult {
 }
 
 impl Name for ClawbackResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ClawbackResultCode> for ClawbackResult {
-    #[must_use]
     fn discriminant(&self) -> ClawbackResultCode {
         Self::discriminant(self)
     }

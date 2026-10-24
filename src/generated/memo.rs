@@ -110,14 +110,12 @@ impl Memo {
 }
 
 impl Name for Memo {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<MemoType> for Memo {
-    #[must_use]
     fn discriminant(&self) -> MemoType {
         Self::discriminant(self)
     }

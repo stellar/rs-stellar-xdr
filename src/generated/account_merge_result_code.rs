@@ -104,7 +104,6 @@ impl AccountMergeResultCode {
 }
 
 impl Name for AccountMergeResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -145,7 +144,6 @@ impl TryFrom<i32> for AccountMergeResultCode {
 }
 
 impl From<AccountMergeResultCode> for i32 {
-    #[must_use]
     fn from(e: AccountMergeResultCode) -> Self {
         e as Self
     }

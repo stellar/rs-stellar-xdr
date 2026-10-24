@@ -85,14 +85,12 @@ impl TransactionEnvelope {
 }
 
 impl Name for TransactionEnvelope {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<EnvelopeType> for TransactionEnvelope {
-    #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
     }

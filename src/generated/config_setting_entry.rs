@@ -232,14 +232,12 @@ impl ConfigSettingEntry {
 }
 
 impl Name for ConfigSettingEntry {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ConfigSettingId> for ConfigSettingEntry {
-    #[must_use]
     fn discriminant(&self) -> ConfigSettingId {
         Self::discriminant(self)
     }

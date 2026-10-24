@@ -62,7 +62,6 @@ impl LiquidityPoolType {
 }
 
 impl Name for LiquidityPoolType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -96,7 +95,6 @@ impl TryFrom<i32> for LiquidityPoolType {
 }
 
 impl From<LiquidityPoolType> for i32 {
-    #[must_use]
     fn from(e: LiquidityPoolType) -> Self {
         e as Self
     }

@@ -62,7 +62,6 @@ impl ScEnvMetaKind {
 }
 
 impl Name for ScEnvMetaKind {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -96,7 +95,6 @@ impl TryFrom<i32> for ScEnvMetaKind {
 }
 
 impl From<ScEnvMetaKind> for i32 {
-    #[must_use]
     fn from(e: ScEnvMetaKind) -> Self {
         e as Self
     }

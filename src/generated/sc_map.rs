@@ -21,21 +21,18 @@ use super::*;
 pub struct ScMap(pub VecM<ScMapEntry>);
 
 impl From<ScMap> for VecM<ScMapEntry> {
-    #[must_use]
     fn from(x: ScMap) -> Self {
         x.0
     }
 }
 
 impl From<VecM<ScMapEntry>> for ScMap {
-    #[must_use]
     fn from(x: VecM<ScMapEntry>) -> Self {
         ScMap(x)
     }
 }
 
 impl AsRef<VecM<ScMapEntry>> for ScMap {
-    #[must_use]
     fn as_ref(&self) -> &VecM<ScMapEntry> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for ScMap {
 }
 
 impl From<ScMap> for Vec<ScMapEntry> {
-    #[must_use]
     fn from(x: ScMap) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<ScMapEntry>> for ScMap {
 }
 
 impl AsRef<Vec<ScMapEntry>> for ScMap {
-    #[must_use]
     fn as_ref(&self) -> &Vec<ScMapEntry> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<ScMapEntry>> for ScMap {
 
 impl AsRef<[ScMapEntry]> for ScMap {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[ScMapEntry] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[ScMapEntry] {
         self.0 .0
     }

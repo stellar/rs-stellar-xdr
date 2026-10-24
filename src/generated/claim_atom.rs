@@ -92,14 +92,12 @@ impl ClaimAtom {
 }
 
 impl Name for ClaimAtom {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ClaimAtomType> for ClaimAtom {
-    #[must_use]
     fn discriminant(&self) -> ClaimAtomType {
         Self::discriminant(self)
     }

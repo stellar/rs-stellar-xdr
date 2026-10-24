@@ -90,7 +90,6 @@ impl CreateAccountResultCode {
 }
 
 impl Name for CreateAccountResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -128,7 +127,6 @@ impl TryFrom<i32> for CreateAccountResultCode {
 }
 
 impl From<CreateAccountResultCode> for i32 {
-    #[must_use]
     fn from(e: CreateAccountResultCode) -> Self {
         e as Self
     }

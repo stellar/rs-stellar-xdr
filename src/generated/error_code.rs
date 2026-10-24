@@ -80,7 +80,6 @@ impl ErrorCode {
 }
 
 impl Name for ErrorCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -118,7 +117,6 @@ impl TryFrom<i32> for ErrorCode {
 }
 
 impl From<ErrorCode> for i32 {
-    #[must_use]
     fn from(e: ErrorCode) -> Self {
         e as Self
     }

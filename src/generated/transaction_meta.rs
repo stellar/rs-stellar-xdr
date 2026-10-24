@@ -98,14 +98,12 @@ impl TransactionMeta {
 }
 
 impl Name for TransactionMeta {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<i32> for TransactionMeta {
-    #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }

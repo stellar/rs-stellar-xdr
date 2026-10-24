@@ -90,14 +90,12 @@ impl ContractIdPreimage {
 }
 
 impl Name for ContractIdPreimage {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ContractIdPreimageType> for ContractIdPreimage {
-    #[must_use]
     fn discriminant(&self) -> ContractIdPreimageType {
         Self::discriminant(self)
     }

@@ -78,14 +78,12 @@ impl LedgerHeaderHistoryEntryExt {
 }
 
 impl Name for LedgerHeaderHistoryEntryExt {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<i32> for LedgerHeaderHistoryEntryExt {
-    #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }

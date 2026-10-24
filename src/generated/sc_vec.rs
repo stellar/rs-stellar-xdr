@@ -21,21 +21,18 @@ use super::*;
 pub struct ScVec(pub VecM<ScVal>);
 
 impl From<ScVec> for VecM<ScVal> {
-    #[must_use]
     fn from(x: ScVec) -> Self {
         x.0
     }
 }
 
 impl From<VecM<ScVal>> for ScVec {
-    #[must_use]
     fn from(x: VecM<ScVal>) -> Self {
         ScVec(x)
     }
 }
 
 impl AsRef<VecM<ScVal>> for ScVec {
-    #[must_use]
     fn as_ref(&self) -> &VecM<ScVal> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for ScVec {
 }
 
 impl From<ScVec> for Vec<ScVal> {
-    #[must_use]
     fn from(x: ScVec) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<ScVal>> for ScVec {
 }
 
 impl AsRef<Vec<ScVal>> for ScVec {
-    #[must_use]
     fn as_ref(&self) -> &Vec<ScVal> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<ScVal>> for ScVec {
 
 impl AsRef<[ScVal]> for ScVec {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[ScVal] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[ScVal] {
         self.0 .0
     }

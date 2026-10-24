@@ -21,21 +21,18 @@ use super::*;
 pub struct String32(pub StringM<32>);
 
 impl From<String32> for StringM<32> {
-    #[must_use]
     fn from(x: String32) -> Self {
         x.0
     }
 }
 
 impl From<StringM<32>> for String32 {
-    #[must_use]
     fn from(x: StringM<32>) -> Self {
         String32(x)
     }
 }
 
 impl AsRef<StringM<32>> for String32 {
-    #[must_use]
     fn as_ref(&self) -> &StringM<32> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for String32 {
 }
 
 impl From<String32> for Vec<u8> {
-    #[must_use]
     fn from(x: String32) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<u8>> for String32 {
 }
 
 impl AsRef<Vec<u8>> for String32 {
-    #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<u8>> for String32 {
 
 impl AsRef<[u8]> for String32 {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         self.0 .0
     }

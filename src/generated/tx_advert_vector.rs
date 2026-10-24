@@ -21,21 +21,18 @@ use super::*;
 pub struct TxAdvertVector(pub VecM<Hash, TX_ADVERT_VECTOR_MAX_SIZE>);
 
 impl From<TxAdvertVector> for VecM<Hash, TX_ADVERT_VECTOR_MAX_SIZE> {
-    #[must_use]
     fn from(x: TxAdvertVector) -> Self {
         x.0
     }
 }
 
 impl From<VecM<Hash, TX_ADVERT_VECTOR_MAX_SIZE>> for TxAdvertVector {
-    #[must_use]
     fn from(x: VecM<Hash, TX_ADVERT_VECTOR_MAX_SIZE>) -> Self {
         TxAdvertVector(x)
     }
 }
 
 impl AsRef<VecM<Hash, TX_ADVERT_VECTOR_MAX_SIZE>> for TxAdvertVector {
-    #[must_use]
     fn as_ref(&self) -> &VecM<Hash, TX_ADVERT_VECTOR_MAX_SIZE> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for TxAdvertVector {
 }
 
 impl From<TxAdvertVector> for Vec<Hash> {
-    #[must_use]
     fn from(x: TxAdvertVector) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<Hash>> for TxAdvertVector {
 }
 
 impl AsRef<Vec<Hash>> for TxAdvertVector {
-    #[must_use]
     fn as_ref(&self) -> &Vec<Hash> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<Hash>> for TxAdvertVector {
 
 impl AsRef<[Hash]> for TxAdvertVector {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[Hash] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[Hash] {
         self.0 .0
     }

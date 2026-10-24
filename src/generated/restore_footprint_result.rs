@@ -103,14 +103,12 @@ impl RestoreFootprintResult {
 }
 
 impl Name for RestoreFootprintResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<RestoreFootprintResultCode> for RestoreFootprintResult {
-    #[must_use]
     fn discriminant(&self) -> RestoreFootprintResultCode {
         Self::discriminant(self)
     }

@@ -97,7 +97,6 @@ impl OperationResultCode {
 }
 
 impl Name for OperationResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -137,7 +136,6 @@ impl TryFrom<i32> for OperationResultCode {
 }
 
 impl From<OperationResultCode> for i32 {
-    #[must_use]
     fn from(e: OperationResultCode) -> Self {
         e as Self
     }

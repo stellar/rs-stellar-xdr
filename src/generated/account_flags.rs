@@ -91,7 +91,6 @@ impl AccountFlags {
 }
 
 impl Name for AccountFlags {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -128,7 +127,6 @@ impl TryFrom<i32> for AccountFlags {
 }
 
 impl From<AccountFlags> for i32 {
-    #[must_use]
     fn from(e: AccountFlags) -> Self {
         e as Self
     }

@@ -83,14 +83,12 @@ impl PersistedScpState {
 }
 
 impl Name for PersistedScpState {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<i32> for PersistedScpState {
-    #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }

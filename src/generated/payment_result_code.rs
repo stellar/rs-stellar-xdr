@@ -114,7 +114,6 @@ impl PaymentResultCode {
 }
 
 impl Name for PaymentResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -157,7 +156,6 @@ impl TryFrom<i32> for PaymentResultCode {
 }
 
 impl From<PaymentResultCode> for i32 {
-    #[must_use]
     fn from(e: PaymentResultCode) -> Self {
         e as Self
     }

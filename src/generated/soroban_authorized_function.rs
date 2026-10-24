@@ -106,14 +106,12 @@ impl SorobanAuthorizedFunction {
 }
 
 impl Name for SorobanAuthorizedFunction {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<SorobanAuthorizedFunctionType> for SorobanAuthorizedFunction {
-    #[must_use]
     fn discriminant(&self) -> SorobanAuthorizedFunctionType {
         Self::discriminant(self)
     }

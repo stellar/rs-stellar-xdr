@@ -19,21 +19,18 @@ use super::*;
 pub struct ContractId(pub Hash);
 
 impl From<ContractId> for Hash {
-    #[must_use]
     fn from(x: ContractId) -> Self {
         x.0
     }
 }
 
 impl From<Hash> for ContractId {
-    #[must_use]
     fn from(x: Hash) -> Self {
         ContractId(x)
     }
 }
 
 impl AsRef<Hash> for ContractId {
-    #[must_use]
     fn as_ref(&self) -> &Hash {
         &self.0
     }

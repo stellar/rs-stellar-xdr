@@ -235,14 +235,12 @@ impl StellarMessage {
 }
 
 impl Name for StellarMessage {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<MessageType> for StellarMessage {
-    #[must_use]
     fn discriminant(&self) -> MessageType {
         Self::discriminant(self)
     }

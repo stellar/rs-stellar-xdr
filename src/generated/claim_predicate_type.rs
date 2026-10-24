@@ -91,7 +91,6 @@ impl ClaimPredicateType {
 }
 
 impl Name for ClaimPredicateType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -130,7 +129,6 @@ impl TryFrom<i32> for ClaimPredicateType {
 }
 
 impl From<ClaimPredicateType> for i32 {
-    #[must_use]
     fn from(e: ClaimPredicateType) -> Self {
         e as Self
     }

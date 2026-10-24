@@ -72,7 +72,6 @@ impl ScSpecEventDataFormat {
 }
 
 impl Name for ScSpecEventDataFormat {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -108,7 +107,6 @@ impl TryFrom<i32> for ScSpecEventDataFormat {
 }
 
 impl From<ScSpecEventDataFormat> for i32 {
-    #[must_use]
     fn from(e: ScSpecEventDataFormat) -> Self {
         e as Self
     }

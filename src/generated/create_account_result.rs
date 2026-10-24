@@ -107,14 +107,12 @@ impl CreateAccountResult {
 }
 
 impl Name for CreateAccountResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<CreateAccountResultCode> for CreateAccountResult {
-    #[must_use]
     fn discriminant(&self) -> CreateAccountResultCode {
         Self::discriminant(self)
     }

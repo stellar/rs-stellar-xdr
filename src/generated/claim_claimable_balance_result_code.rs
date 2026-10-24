@@ -96,7 +96,6 @@ impl ClaimClaimableBalanceResultCode {
 }
 
 impl Name for ClaimClaimableBalanceResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -136,7 +135,6 @@ impl TryFrom<i32> for ClaimClaimableBalanceResultCode {
 }
 
 impl From<ClaimClaimableBalanceResultCode> for i32 {
-    #[must_use]
     fn from(e: ClaimClaimableBalanceResultCode) -> Self {
         e as Self
     }

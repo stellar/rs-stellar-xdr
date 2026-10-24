@@ -131,14 +131,12 @@ impl ChangeTrustResult {
 }
 
 impl Name for ChangeTrustResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ChangeTrustResultCode> for ChangeTrustResult {
-    #[must_use]
     fn discriminant(&self) -> ChangeTrustResultCode {
         Self::discriminant(self)
     }

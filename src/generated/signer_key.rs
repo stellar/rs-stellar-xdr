@@ -103,14 +103,12 @@ impl SignerKey {
 }
 
 impl Name for SignerKey {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<SignerKeyType> for SignerKey {
-    #[must_use]
     fn discriminant(&self) -> SignerKeyType {
         Self::discriminant(self)
     }

@@ -84,14 +84,12 @@ impl TxSetComponent {
 }
 
 impl Name for TxSetComponent {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<TxSetComponentType> for TxSetComponent {
-    #[must_use]
     fn discriminant(&self) -> TxSetComponentType {
         Self::discriminant(self)
     }

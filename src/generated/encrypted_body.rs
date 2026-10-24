@@ -21,21 +21,18 @@ use super::*;
 pub struct EncryptedBody(pub BytesM<64000>);
 
 impl From<EncryptedBody> for BytesM<64000> {
-    #[must_use]
     fn from(x: EncryptedBody) -> Self {
         x.0
     }
 }
 
 impl From<BytesM<64000>> for EncryptedBody {
-    #[must_use]
     fn from(x: BytesM<64000>) -> Self {
         EncryptedBody(x)
     }
 }
 
 impl AsRef<BytesM<64000>> for EncryptedBody {
-    #[must_use]
     fn as_ref(&self) -> &BytesM<64000> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for EncryptedBody {
 }
 
 impl From<EncryptedBody> for Vec<u8> {
-    #[must_use]
     fn from(x: EncryptedBody) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<u8>> for EncryptedBody {
 }
 
 impl AsRef<Vec<u8>> for EncryptedBody {
-    #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<u8>> for EncryptedBody {
 
 impl AsRef<[u8]> for EncryptedBody {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         self.0 .0
     }

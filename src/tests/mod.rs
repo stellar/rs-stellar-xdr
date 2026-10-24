@@ -3,6 +3,8 @@ mod arbitrary;
 mod const_types;
 mod const_writer;
 mod default;
+#[cfg(feature = "cli")]
+mod json_schema_ignore;
 mod ledgerkey_to_key;
 mod serde;
 mod serde_ints;

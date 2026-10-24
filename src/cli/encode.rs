@@ -79,6 +79,25 @@ pub enum OutputFormat {
     // TODO: StreamFramed,
 }
 
+fn strip_root_schema(value: &mut serde_json::Value) {
+    if let serde_json::Value::Object(map) = value {
+        map.remove("$schema");
+    }
+}
+
+pub(crate) fn from_json_ignoring_schema(
+    r#type: crate::TypeVariant,
+    r: impl std::io::Read,
+) -> Result<(crate::Type, Vec<String>), Error> {
+    let mut value: serde_json::Value = serde_json::from_reader(r).map_err(crate::Error::Json)?;
+    strip_root_schema(&mut value);
+    let bytes = serde_json::to_vec(&value).map_err(crate::Error::Json)?;
+    let mut de = serde_json::Deserializer::from_slice(&bytes);
+    let result = crate::Type::deserialize_json_collecting_ignored_fields(r#type, &mut de)?;
+    de.end().map_err(crate::Error::Json)?;
+    Ok(result)
+}
+
 // TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next
 // channels existed and each had their own run_curr/run_next invocation.
 macro_rules! run_x {
@@ -93,8 +112,7 @@ macro_rules! run_x {
                 match self.input_format {
                     InputFormat::Json => match self.output_format {
                         OutputFormat::Single => {
-                            let (t, ignored) =
-                                crate::Type::from_json_collecting_ignored_fields(r#type, f)?;
+                            let (t, ignored) = from_json_ignoring_schema(r#type, f)?;
                             check_ignored_fields(&ignored)?;
                             let l = crate::Limits::none();
                             stdout()
@@ -102,24 +120,26 @@ macro_rules! run_x {
                                 .map_err(Error::WriteOutput)?;
                         }
                         OutputFormat::SingleBase64 => {
-                            let (t, ignored) =
-                                crate::Type::from_json_collecting_ignored_fields(r#type, f)?;
+                            let (t, ignored) = from_json_ignoring_schema(r#type, f)?;
                             check_ignored_fields(&ignored)?;
                             let l = crate::Limits::none();
                             writeln!(stdout(), "{}", t.to_xdr_base64(l)?)
                                 .map_err(Error::WriteOutput)?
                         }
                         OutputFormat::Stream => {
-                            let mut de =
-                                serde_json::Deserializer::new(serde_json::de::IoRead::new(f));
-                            loop {
-                                let (t, ignored) = match crate::Type::deserialize_json_collecting_ignored_fields(r#type, &mut de) {
-                                    Ok(r) => r,
-                                    Err(crate::Error::Json(ref inner)) if inner.is_eof() => {
-                                        break;
-                                    }
-                                    Err(e) => Err(e)?,
-                                };
+                            let stream =
+                                serde_json::Deserializer::new(serde_json::de::IoRead::new(f))
+                                    .into_iter::<serde_json::Value>();
+                            for value_res in stream {
+                                let mut value = value_res.map_err(crate::Error::Json)?;
+                                strip_root_schema(&mut value);
+                                let bytes =
+                                    serde_json::to_vec(&value).map_err(crate::Error::Json)?;
+                                let mut de = serde_json::Deserializer::from_slice(&bytes);
+                                let (t, ignored) =
+                                    crate::Type::deserialize_json_collecting_ignored_fields(
+                                        r#type, &mut de,
+                                    )?;
                                 check_ignored_fields(&ignored)?;
                                 let l = crate::Limits::none();
                                 stdout()
@@ -153,9 +173,14 @@ impl Cmd {
     run_x!(run_inner);
 }
 
-fn check_ignored_fields(ignored: &[String]) -> Result<(), Error> {
-    if ignored.is_empty() {
+pub(crate) fn check_ignored_fields(ignored: &[String]) -> Result<(), Error> {
+    let unknown: Vec<String> = ignored
+        .iter()
+        .filter(|field| field.as_str() != "$schema")
+        .cloned()
+        .collect();
+    if unknown.is_empty() {
         return Ok(());
     }
-    Err(Error::UnknownFields(ignored.to_vec()))
+    Err(Error::UnknownFields(unknown))
 }

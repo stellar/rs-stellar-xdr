@@ -65,7 +65,6 @@ impl ClaimableBalanceFlags {
 }
 
 impl Name for ClaimableBalanceFlags {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -99,7 +98,6 @@ impl TryFrom<i32> for ClaimableBalanceFlags {
 }
 
 impl From<ClaimableBalanceFlags> for i32 {
-    #[must_use]
     fn from(e: ClaimableBalanceFlags) -> Self {
         e as Self
     }

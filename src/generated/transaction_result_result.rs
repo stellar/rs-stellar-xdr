@@ -199,14 +199,12 @@ impl TransactionResultResult {
 }
 
 impl Name for TransactionResultResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<TransactionResultCode> for TransactionResultResult {
-    #[must_use]
     fn discriminant(&self) -> TransactionResultCode {
         Self::discriminant(self)
     }

@@ -112,7 +112,6 @@ impl ChangeTrustResultCode {
 }
 
 impl Name for ChangeTrustResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -154,7 +153,6 @@ impl TryFrom<i32> for ChangeTrustResultCode {
 }
 
 impl From<ChangeTrustResultCode> for i32 {
-    #[must_use]
     fn from(e: ChangeTrustResultCode) -> Self {
         e as Self
     }

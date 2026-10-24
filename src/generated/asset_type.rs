@@ -76,7 +76,6 @@ impl AssetType {
 }
 
 impl Name for AssetType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -113,7 +112,6 @@ impl TryFrom<i32> for AssetType {
 }
 
 impl From<AssetType> for i32 {
-    #[must_use]
     fn from(e: AssetType) -> Self {
         e as Self
     }

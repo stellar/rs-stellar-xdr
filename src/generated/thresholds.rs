@@ -79,21 +79,18 @@ impl schemars::JsonSchema for Thresholds {
     }
 }
 impl From<Thresholds> for [u8; 4] {
-    #[must_use]
     fn from(x: Thresholds) -> Self {
         x.0
     }
 }
 
 impl From<[u8; 4]> for Thresholds {
-    #[must_use]
     fn from(x: [u8; 4]) -> Self {
         Thresholds(x)
     }
 }
 
 impl AsRef<[u8; 4]> for Thresholds {
-    #[must_use]
     fn as_ref(&self) -> &[u8; 4] {
         &self.0
     }
@@ -148,7 +145,6 @@ impl TryFrom<&[u8]> for Thresholds {
 }
 
 impl AsRef<[u8]> for Thresholds {
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }

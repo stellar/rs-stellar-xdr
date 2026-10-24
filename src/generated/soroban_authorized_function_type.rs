@@ -76,7 +76,6 @@ impl SorobanAuthorizedFunctionType {
 }
 
 impl Name for SorobanAuthorizedFunctionType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -112,7 +111,6 @@ impl TryFrom<i32> for SorobanAuthorizedFunctionType {
 }
 
 impl From<SorobanAuthorizedFunctionType> for i32 {
-    #[must_use]
     fn from(e: SorobanAuthorizedFunctionType) -> Self {
         e as Self
     }

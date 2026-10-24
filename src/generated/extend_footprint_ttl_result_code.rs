@@ -84,7 +84,6 @@ impl ExtendFootprintTtlResultCode {
 }
 
 impl Name for ExtendFootprintTtlResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -121,7 +120,6 @@ impl TryFrom<i32> for ExtendFootprintTtlResultCode {
 }
 
 impl From<ExtendFootprintTtlResultCode> for i32 {
-    #[must_use]
     fn from(e: ExtendFootprintTtlResultCode) -> Self {
         e as Self
     }

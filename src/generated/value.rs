@@ -21,21 +21,18 @@ use super::*;
 pub struct Value(pub BytesM);
 
 impl From<Value> for BytesM {
-    #[must_use]
     fn from(x: Value) -> Self {
         x.0
     }
 }
 
 impl From<BytesM> for Value {
-    #[must_use]
     fn from(x: BytesM) -> Self {
         Value(x)
     }
 }
 
 impl AsRef<BytesM> for Value {
-    #[must_use]
     fn as_ref(&self) -> &BytesM {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for Value {
 }
 
 impl From<Value> for Vec<u8> {
-    #[must_use]
     fn from(x: Value) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<u8>> for Value {
 }
 
 impl AsRef<Vec<u8>> for Value {
-    #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<u8>> for Value {
 
 impl AsRef<[u8]> for Value {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         self.0 .0
     }

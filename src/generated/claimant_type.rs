@@ -62,7 +62,6 @@ impl ClaimantType {
 }
 
 impl Name for ClaimantType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -96,7 +95,6 @@ impl TryFrom<i32> for ClaimantType {
 }
 
 impl From<ClaimantType> for i32 {
-    #[must_use]
     fn from(e: ClaimantType) -> Self {
         e as Self
     }

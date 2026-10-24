@@ -136,7 +136,6 @@ impl ManageSellOfferResultCode {
 }
 
 impl Name for ManageSellOfferResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -182,7 +181,6 @@ impl TryFrom<i32> for ManageSellOfferResultCode {
 }
 
 impl From<ManageSellOfferResultCode> for i32 {
-    #[must_use]
     fn from(e: ManageSellOfferResultCode) -> Self {
         e as Self
     }

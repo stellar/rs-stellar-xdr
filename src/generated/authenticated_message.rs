@@ -83,14 +83,12 @@ impl AuthenticatedMessage {
 }
 
 impl Name for AuthenticatedMessage {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<u32> for AuthenticatedMessage {
-    #[must_use]
     fn discriminant(&self) -> u32 {
         Self::discriminant(self)
     }

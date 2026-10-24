@@ -206,7 +206,6 @@ impl ScValType {
 }
 
 impl Name for ScValType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -262,7 +261,6 @@ impl TryFrom<i32> for ScValType {
 }
 
 impl From<ScValType> for i32 {
-    #[must_use]
     fn from(e: ScValType) -> Self {
         e as Self
     }

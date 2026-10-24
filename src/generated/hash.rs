@@ -79,21 +79,18 @@ impl schemars::JsonSchema for Hash {
     }
 }
 impl From<Hash> for [u8; 32] {
-    #[must_use]
     fn from(x: Hash) -> Self {
         x.0
     }
 }
 
 impl From<[u8; 32]> for Hash {
-    #[must_use]
     fn from(x: [u8; 32]) -> Self {
         Hash(x)
     }
 }
 
 impl AsRef<[u8; 32]> for Hash {
-    #[must_use]
     fn as_ref(&self) -> &[u8; 32] {
         &self.0
     }
@@ -148,7 +145,6 @@ impl TryFrom<&[u8]> for Hash {
 }
 
 impl AsRef<[u8]> for Hash {
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }

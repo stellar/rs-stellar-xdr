@@ -21,21 +21,18 @@ use super::*;
 pub struct String64(pub StringM<64>);
 
 impl From<String64> for StringM<64> {
-    #[must_use]
     fn from(x: String64) -> Self {
         x.0
     }
 }
 
 impl From<StringM<64>> for String64 {
-    #[must_use]
     fn from(x: StringM<64>) -> Self {
         String64(x)
     }
 }
 
 impl AsRef<StringM<64>> for String64 {
-    #[must_use]
     fn as_ref(&self) -> &StringM<64> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for String64 {
 }
 
 impl From<String64> for Vec<u8> {
-    #[must_use]
     fn from(x: String64) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<u8>> for String64 {
 }
 
 impl AsRef<Vec<u8>> for String64 {
-    #[must_use]
     fn as_ref(&self) -> &Vec<u8> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<u8>> for String64 {
 
 impl AsRef<[u8]> for String64 {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[u8] {
         self.0 .0
     }

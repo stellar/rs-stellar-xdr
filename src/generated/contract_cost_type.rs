@@ -641,7 +641,6 @@ impl ContractCostType {
 }
 
 impl Name for ContractCostType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -769,7 +768,6 @@ impl TryFrom<i32> for ContractCostType {
 }
 
 impl From<ContractCostType> for i32 {
-    #[must_use]
     fn from(e: ContractCostType) -> Self {
         e as Self
     }

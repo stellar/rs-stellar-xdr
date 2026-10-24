@@ -80,14 +80,12 @@ impl LiquidityPoolParameters {
 }
 
 impl Name for LiquidityPoolParameters {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<LiquidityPoolType> for LiquidityPoolParameters {
-    #[must_use]
     fn discriminant(&self) -> LiquidityPoolType {
         Self::discriminant(self)
     }

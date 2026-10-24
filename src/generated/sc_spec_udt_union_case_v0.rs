@@ -86,14 +86,12 @@ impl ScSpecUdtUnionCaseV0 {
 }
 
 impl Name for ScSpecUdtUnionCaseV0 {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ScSpecUdtUnionCaseV0Kind> for ScSpecUdtUnionCaseV0 {
-    #[must_use]
     fn discriminant(&self) -> ScSpecUdtUnionCaseV0Kind {
         Self::discriminant(self)
     }

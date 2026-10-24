@@ -176,14 +176,12 @@ impl OperationResult {
 }
 
 impl Name for OperationResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<OperationResultCode> for OperationResult {
-    #[must_use]
     fn discriminant(&self) -> OperationResultCode {
         Self::discriminant(self)
     }

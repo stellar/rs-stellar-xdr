@@ -239,14 +239,12 @@ impl ScSpecTypeDef {
 }
 
 impl Name for ScSpecTypeDef {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ScSpecType> for ScSpecTypeDef {
-    #[must_use]
     fn discriminant(&self) -> ScSpecType {
         Self::discriminant(self)
     }

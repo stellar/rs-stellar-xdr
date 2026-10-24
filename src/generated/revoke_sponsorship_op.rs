@@ -90,14 +90,12 @@ impl RevokeSponsorshipOp {
 }
 
 impl Name for RevokeSponsorshipOp {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<RevokeSponsorshipType> for RevokeSponsorshipOp {
-    #[must_use]
     fn discriminant(&self) -> RevokeSponsorshipType {
         Self::discriminant(self)
     }

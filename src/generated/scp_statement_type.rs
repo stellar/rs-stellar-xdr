@@ -76,7 +76,6 @@ impl ScpStatementType {
 }
 
 impl Name for ScpStatementType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -113,7 +112,6 @@ impl TryFrom<i32> for ScpStatementType {
 }
 
 impl From<ScpStatementType> for i32 {
-    #[must_use]
     fn from(e: ScpStatementType) -> Self {
         e as Self
     }

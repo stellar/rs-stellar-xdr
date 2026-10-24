@@ -28,21 +28,18 @@ pub struct TimePoint(
 );
 
 impl From<TimePoint> for u64 {
-    #[must_use]
     fn from(x: TimePoint) -> Self {
         x.0
     }
 }
 
 impl From<u64> for TimePoint {
-    #[must_use]
     fn from(x: u64) -> Self {
         TimePoint(x)
     }
 }
 
 impl AsRef<u64> for TimePoint {
-    #[must_use]
     fn as_ref(&self) -> &u64 {
         &self.0
     }

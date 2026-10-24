@@ -130,14 +130,12 @@ impl ClaimPredicate {
 }
 
 impl Name for ClaimPredicate {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ClaimPredicateType> for ClaimPredicate {
-    #[must_use]
     fn discriminant(&self) -> ClaimPredicateType {
         Self::discriminant(self)
     }

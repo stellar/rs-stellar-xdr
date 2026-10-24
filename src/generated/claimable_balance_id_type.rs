@@ -63,7 +63,6 @@ impl ClaimableBalanceIdType {
 }
 
 impl Name for ClaimableBalanceIdType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -97,7 +96,6 @@ impl TryFrom<i32> for ClaimableBalanceIdType {
 }
 
 impl From<ClaimableBalanceIdType> for i32 {
-    #[must_use]
     fn from(e: ClaimableBalanceIdType) -> Self {
         e as Self
     }

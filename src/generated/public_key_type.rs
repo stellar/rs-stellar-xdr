@@ -62,7 +62,6 @@ impl PublicKeyType {
 }
 
 impl Name for PublicKeyType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -96,7 +95,6 @@ impl TryFrom<i32> for PublicKeyType {
 }
 
 impl From<PublicKeyType> for i32 {
-    #[must_use]
     fn from(e: PublicKeyType) -> Self {
         e as Self
     }

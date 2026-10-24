@@ -94,7 +94,6 @@ impl InvokeHostFunctionResultCode {
 }
 
 impl Name for InvokeHostFunctionResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -133,7 +132,6 @@ impl TryFrom<i32> for InvokeHostFunctionResultCode {
 }
 
 impl From<InvokeHostFunctionResultCode> for i32 {
-    #[must_use]
     fn from(e: InvokeHostFunctionResultCode) -> Self {
         e as Self
     }

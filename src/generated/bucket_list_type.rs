@@ -65,7 +65,6 @@ impl BucketListType {
 }
 
 impl Name for BucketListType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -100,7 +99,6 @@ impl TryFrom<i32> for BucketListType {
 }
 
 impl From<BucketListType> for i32 {
-    #[must_use]
     fn from(e: BucketListType) -> Self {
         e as Self
     }

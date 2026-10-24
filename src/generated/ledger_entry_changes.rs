@@ -21,21 +21,18 @@ use super::*;
 pub struct LedgerEntryChanges(pub VecM<LedgerEntryChange>);
 
 impl From<LedgerEntryChanges> for VecM<LedgerEntryChange> {
-    #[must_use]
     fn from(x: LedgerEntryChanges) -> Self {
         x.0
     }
 }
 
 impl From<VecM<LedgerEntryChange>> for LedgerEntryChanges {
-    #[must_use]
     fn from(x: VecM<LedgerEntryChange>) -> Self {
         LedgerEntryChanges(x)
     }
 }
 
 impl AsRef<VecM<LedgerEntryChange>> for LedgerEntryChanges {
-    #[must_use]
     fn as_ref(&self) -> &VecM<LedgerEntryChange> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for LedgerEntryChanges {
 }
 
 impl From<LedgerEntryChanges> for Vec<LedgerEntryChange> {
-    #[must_use]
     fn from(x: LedgerEntryChanges) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<LedgerEntryChange>> for LedgerEntryChanges {
 }
 
 impl AsRef<Vec<LedgerEntryChange>> for LedgerEntryChanges {
-    #[must_use]
     fn as_ref(&self) -> &Vec<LedgerEntryChange> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<LedgerEntryChange>> for LedgerEntryChanges {
 
 impl AsRef<[LedgerEntryChange]> for LedgerEntryChanges {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[LedgerEntryChange] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[LedgerEntryChange] {
         self.0 .0
     }

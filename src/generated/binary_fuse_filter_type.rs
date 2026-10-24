@@ -72,7 +72,6 @@ impl BinaryFuseFilterType {
 }
 
 impl Name for BinaryFuseFilterType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -108,7 +107,6 @@ impl TryFrom<i32> for BinaryFuseFilterType {
 }
 
 impl From<BinaryFuseFilterType> for i32 {
-    #[must_use]
     fn from(e: BinaryFuseFilterType) -> Self {
         e as Self
     }

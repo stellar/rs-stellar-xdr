@@ -162,14 +162,12 @@ impl PathPaymentStrictReceiveResult {
 }
 
 impl Name for PathPaymentStrictReceiveResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<PathPaymentStrictReceiveResultCode> for PathPaymentStrictReceiveResult {
-    #[must_use]
     fn discriminant(&self) -> PathPaymentStrictReceiveResultCode {
         Self::discriminant(self)
     }

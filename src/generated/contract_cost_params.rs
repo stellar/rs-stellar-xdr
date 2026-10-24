@@ -21,21 +21,18 @@ use super::*;
 pub struct ContractCostParams(pub VecM<ContractCostParamEntry, CONTRACT_COST_COUNT_LIMIT>);
 
 impl From<ContractCostParams> for VecM<ContractCostParamEntry, CONTRACT_COST_COUNT_LIMIT> {
-    #[must_use]
     fn from(x: ContractCostParams) -> Self {
         x.0
     }
 }
 
 impl From<VecM<ContractCostParamEntry, CONTRACT_COST_COUNT_LIMIT>> for ContractCostParams {
-    #[must_use]
     fn from(x: VecM<ContractCostParamEntry, CONTRACT_COST_COUNT_LIMIT>) -> Self {
         ContractCostParams(x)
     }
 }
 
 impl AsRef<VecM<ContractCostParamEntry, CONTRACT_COST_COUNT_LIMIT>> for ContractCostParams {
-    #[must_use]
     fn as_ref(&self) -> &VecM<ContractCostParamEntry, CONTRACT_COST_COUNT_LIMIT> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for ContractCostParams {
 }
 
 impl From<ContractCostParams> for Vec<ContractCostParamEntry> {
-    #[must_use]
     fn from(x: ContractCostParams) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<ContractCostParamEntry>> for ContractCostParams {
 }
 
 impl AsRef<Vec<ContractCostParamEntry>> for ContractCostParams {
-    #[must_use]
     fn as_ref(&self) -> &Vec<ContractCostParamEntry> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<ContractCostParamEntry>> for ContractCostParams {
 
 impl AsRef<[ContractCostParamEntry]> for ContractCostParams {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[ContractCostParamEntry] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[ContractCostParamEntry] {
         self.0 .0
     }

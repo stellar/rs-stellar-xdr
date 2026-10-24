@@ -65,7 +65,6 @@ impl IpAddrType {
 }
 
 impl Name for IpAddrType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -100,7 +99,6 @@ impl TryFrom<i32> for IpAddrType {
 }
 
 impl From<IpAddrType> for i32 {
-    #[must_use]
     fn from(e: IpAddrType) -> Self {
         e as Self
     }

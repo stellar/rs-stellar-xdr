@@ -70,7 +70,6 @@ impl BumpSequenceResultCode {
 }
 
 impl Name for BumpSequenceResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -105,7 +104,6 @@ impl TryFrom<i32> for BumpSequenceResultCode {
 }
 
 impl From<BumpSequenceResultCode> for i32 {
-    #[must_use]
     fn from(e: BumpSequenceResultCode) -> Self {
         e as Self
     }

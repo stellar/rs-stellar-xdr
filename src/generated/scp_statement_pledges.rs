@@ -118,14 +118,12 @@ impl ScpStatementPledges {
 }
 
 impl Name for ScpStatementPledges {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ScpStatementType> for ScpStatementPledges {
-    #[must_use]
     fn discriminant(&self) -> ScpStatementType {
         Self::discriminant(self)
     }

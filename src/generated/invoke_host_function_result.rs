@@ -115,14 +115,12 @@ impl InvokeHostFunctionResult {
 }
 
 impl Name for InvokeHostFunctionResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<InvokeHostFunctionResultCode> for InvokeHostFunctionResult {
-    #[must_use]
     fn discriminant(&self) -> InvokeHostFunctionResultCode {
         Self::discriminant(self)
     }

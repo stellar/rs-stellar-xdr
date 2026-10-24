@@ -129,14 +129,12 @@ impl ScError {
 }
 
 impl Name for ScError {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ScErrorType> for ScError {
-    #[must_use]
     fn discriminant(&self) -> ScErrorType {
         Self::discriminant(self)
     }

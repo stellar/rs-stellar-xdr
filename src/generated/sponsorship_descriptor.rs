@@ -22,21 +22,18 @@ use super::*;
 pub struct SponsorshipDescriptor(pub Option<AccountId>);
 
 impl From<SponsorshipDescriptor> for Option<AccountId> {
-    #[must_use]
     fn from(x: SponsorshipDescriptor) -> Self {
         x.0
     }
 }
 
 impl From<Option<AccountId>> for SponsorshipDescriptor {
-    #[must_use]
     fn from(x: Option<AccountId>) -> Self {
         SponsorshipDescriptor(x)
     }
 }
 
 impl AsRef<Option<AccountId>> for SponsorshipDescriptor {
-    #[must_use]
     fn as_ref(&self) -> &Option<AccountId> {
         &self.0
     }

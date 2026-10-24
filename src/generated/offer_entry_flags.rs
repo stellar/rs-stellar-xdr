@@ -64,7 +64,6 @@ impl OfferEntryFlags {
 }
 
 impl Name for OfferEntryFlags {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -98,7 +97,6 @@ impl TryFrom<i32> for OfferEntryFlags {
 }
 
 impl From<OfferEntryFlags> for i32 {
-    #[must_use]
     fn from(e: OfferEntryFlags) -> Self {
         e as Self
     }

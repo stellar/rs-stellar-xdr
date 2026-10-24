@@ -21,21 +21,18 @@ use super::*;
 pub struct ParallelTxExecutionStage(pub VecM<DependentTxCluster>);
 
 impl From<ParallelTxExecutionStage> for VecM<DependentTxCluster> {
-    #[must_use]
     fn from(x: ParallelTxExecutionStage) -> Self {
         x.0
     }
 }
 
 impl From<VecM<DependentTxCluster>> for ParallelTxExecutionStage {
-    #[must_use]
     fn from(x: VecM<DependentTxCluster>) -> Self {
         ParallelTxExecutionStage(x)
     }
 }
 
 impl AsRef<VecM<DependentTxCluster>> for ParallelTxExecutionStage {
-    #[must_use]
     fn as_ref(&self) -> &VecM<DependentTxCluster> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for ParallelTxExecutionStage {
 }
 
 impl From<ParallelTxExecutionStage> for Vec<DependentTxCluster> {
-    #[must_use]
     fn from(x: ParallelTxExecutionStage) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<DependentTxCluster>> for ParallelTxExecutionStage {
 }
 
 impl AsRef<Vec<DependentTxCluster>> for ParallelTxExecutionStage {
-    #[must_use]
     fn as_ref(&self) -> &Vec<DependentTxCluster> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<DependentTxCluster>> for ParallelTxExecutionStage {
 
 impl AsRef<[DependentTxCluster]> for ParallelTxExecutionStage {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[DependentTxCluster] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[DependentTxCluster] {
         self.0 .0
     }

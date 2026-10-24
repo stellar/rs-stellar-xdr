@@ -78,14 +78,12 @@ impl FeeBumpTransactionInnerTx {
 }
 
 impl Name for FeeBumpTransactionInnerTx {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<EnvelopeType> for FeeBumpTransactionInnerTx {
-    #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
     }

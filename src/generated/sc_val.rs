@@ -262,14 +262,12 @@ impl ScVal {
 }
 
 impl Name for ScVal {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ScValType> for ScVal {
-    #[must_use]
     fn discriminant(&self) -> ScValType {
         Self::discriminant(self)
     }

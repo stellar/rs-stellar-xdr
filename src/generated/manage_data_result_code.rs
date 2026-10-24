@@ -90,7 +90,6 @@ impl ManageDataResultCode {
 }
 
 impl Name for ManageDataResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -128,7 +127,6 @@ impl TryFrom<i32> for ManageDataResultCode {
 }
 
 impl From<ManageDataResultCode> for i32 {
-    #[must_use]
     fn from(e: ManageDataResultCode) -> Self {
         e as Self
     }

@@ -89,14 +89,12 @@ impl LiquidityPoolEntryBody {
 }
 
 impl Name for LiquidityPoolEntryBody {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<LiquidityPoolType> for LiquidityPoolEntryBody {
-    #[must_use]
     fn discriminant(&self) -> LiquidityPoolType {
         Self::discriminant(self)
     }

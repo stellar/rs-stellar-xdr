@@ -119,7 +119,6 @@ impl SetOptionsResultCode {
 }
 
 impl Name for SetOptionsResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -163,7 +162,6 @@ impl TryFrom<i32> for SetOptionsResultCode {
 }
 
 impl From<SetOptionsResultCode> for i32 {
-    #[must_use]
     fn from(e: SetOptionsResultCode) -> Self {
         e as Self
     }

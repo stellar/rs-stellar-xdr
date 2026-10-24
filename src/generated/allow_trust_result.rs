@@ -119,14 +119,12 @@ impl AllowTrustResult {
 }
 
 impl Name for AllowTrustResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<AllowTrustResultCode> for AllowTrustResult {
-    #[must_use]
     fn discriminant(&self) -> AllowTrustResultCode {
         Self::discriminant(self)
     }

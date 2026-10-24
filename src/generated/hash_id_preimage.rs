@@ -141,14 +141,12 @@ impl HashIdPreimage {
 }
 
 impl Name for HashIdPreimage {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<EnvelopeType> for HashIdPreimage {
-    #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
     }

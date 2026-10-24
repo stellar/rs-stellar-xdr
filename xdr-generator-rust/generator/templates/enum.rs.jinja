@@ -95,7 +95,6 @@ impl {{ e.name }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 impl Name for {{ e.name }} {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -149,7 +148,6 @@ impl TryFrom<i32> for {{ e.name }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 impl From<{{ e.name }}> for i32 {
-    #[must_use]
     fn from(e: {{ e.name }}) -> Self {
         e as Self
     }

@@ -119,14 +119,12 @@ impl LiquidityPoolWithdrawResult {
 }
 
 impl Name for LiquidityPoolWithdrawResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<LiquidityPoolWithdrawResultCode> for LiquidityPoolWithdrawResult {
-    #[must_use]
     fn discriminant(&self) -> LiquidityPoolWithdrawResultCode {
         Self::discriminant(self)
     }

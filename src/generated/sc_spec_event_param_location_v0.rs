@@ -68,7 +68,6 @@ impl ScSpecEventParamLocationV0 {
 }
 
 impl Name for ScSpecEventParamLocationV0 {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -103,7 +102,6 @@ impl TryFrom<i32> for ScSpecEventParamLocationV0 {
 }
 
 impl From<ScSpecEventParamLocationV0> for i32 {
-    #[must_use]
     fn from(e: ScSpecEventParamLocationV0) -> Self {
         e as Self
     }

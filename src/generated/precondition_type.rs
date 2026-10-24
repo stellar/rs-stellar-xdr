@@ -72,7 +72,6 @@ impl PreconditionType {
 }
 
 impl Name for PreconditionType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -108,7 +107,6 @@ impl TryFrom<i32> for PreconditionType {
 }
 
 impl From<PreconditionType> for i32 {
-    #[must_use]
     fn from(e: PreconditionType) -> Self {
         e as Self
     }

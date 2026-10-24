@@ -68,7 +68,6 @@ impl ScSpecUdtUnionCaseV0Kind {
 }
 
 impl Name for ScSpecUdtUnionCaseV0Kind {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -103,7 +102,6 @@ impl TryFrom<i32> for ScSpecUdtUnionCaseV0Kind {
 }
 
 impl From<ScSpecUdtUnionCaseV0Kind> for i32 {
-    #[must_use]
     fn from(e: ScSpecUdtUnionCaseV0Kind) -> Self {
         e as Self
     }

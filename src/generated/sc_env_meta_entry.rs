@@ -81,14 +81,12 @@ impl ScEnvMetaEntry {
 }
 
 impl Name for ScEnvMetaEntry {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ScEnvMetaKind> for ScEnvMetaEntry {
-    #[must_use]
     fn discriminant(&self) -> ScEnvMetaKind {
         Self::discriminant(self)
     }

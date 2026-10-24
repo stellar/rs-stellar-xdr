@@ -121,14 +121,12 @@ impl StellarValueExt {
 }
 
 impl Name for StellarValueExt {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<StellarValueType> for StellarValueExt {
-    #[must_use]
     fn discriminant(&self) -> StellarValueType {
         Self::discriminant(self)
     }

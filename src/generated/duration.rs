@@ -28,21 +28,18 @@ pub struct Duration(
 );
 
 impl From<Duration> for u64 {
-    #[must_use]
     fn from(x: Duration) -> Self {
         x.0
     }
 }
 
 impl From<u64> for Duration {
-    #[must_use]
     fn from(x: u64) -> Self {
         Duration(x)
     }
 }
 
 impl AsRef<u64> for Duration {
-    #[must_use]
     fn as_ref(&self) -> &u64 {
         &self.0
     }

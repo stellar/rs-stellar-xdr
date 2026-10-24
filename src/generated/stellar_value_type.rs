@@ -80,7 +80,6 @@ impl StellarValueType {
 }
 
 impl Name for StellarValueType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -118,7 +117,6 @@ impl TryFrom<i32> for StellarValueType {
 }
 
 impl From<StellarValueType> for i32 {
-    #[must_use]
     fn from(e: StellarValueType) -> Self {
         e as Self
     }

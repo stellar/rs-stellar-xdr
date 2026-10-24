@@ -84,14 +84,12 @@ impl TransactionSignaturePayloadTaggedTransaction {
 }
 
 impl Name for TransactionSignaturePayloadTaggedTransaction {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<EnvelopeType> for TransactionSignaturePayloadTaggedTransaction {
-    #[must_use]
     fn discriminant(&self) -> EnvelopeType {
         Self::discriminant(self)
     }

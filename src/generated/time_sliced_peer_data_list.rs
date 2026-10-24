@@ -21,21 +21,18 @@ use super::*;
 pub struct TimeSlicedPeerDataList(pub VecM<TimeSlicedPeerData, 25>);
 
 impl From<TimeSlicedPeerDataList> for VecM<TimeSlicedPeerData, 25> {
-    #[must_use]
     fn from(x: TimeSlicedPeerDataList) -> Self {
         x.0
     }
 }
 
 impl From<VecM<TimeSlicedPeerData, 25>> for TimeSlicedPeerDataList {
-    #[must_use]
     fn from(x: VecM<TimeSlicedPeerData, 25>) -> Self {
         TimeSlicedPeerDataList(x)
     }
 }
 
 impl AsRef<VecM<TimeSlicedPeerData, 25>> for TimeSlicedPeerDataList {
-    #[must_use]
     fn as_ref(&self) -> &VecM<TimeSlicedPeerData, 25> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for TimeSlicedPeerDataList {
 }
 
 impl From<TimeSlicedPeerDataList> for Vec<TimeSlicedPeerData> {
-    #[must_use]
     fn from(x: TimeSlicedPeerDataList) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
 }
 
 impl AsRef<Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
-    #[must_use]
     fn as_ref(&self) -> &Vec<TimeSlicedPeerData> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<TimeSlicedPeerData>> for TimeSlicedPeerDataList {
 
 impl AsRef<[TimeSlicedPeerData]> for TimeSlicedPeerDataList {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[TimeSlicedPeerData] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[TimeSlicedPeerData] {
         self.0 .0
     }

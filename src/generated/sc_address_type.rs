@@ -91,7 +91,6 @@ impl ScAddressType {
 }
 
 impl Name for ScAddressType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -130,7 +129,6 @@ impl TryFrom<i32> for ScAddressType {
 }
 
 impl From<ScAddressType> for i32 {
-    #[must_use]
     fn from(e: ScAddressType) -> Self {
         e as Self
     }

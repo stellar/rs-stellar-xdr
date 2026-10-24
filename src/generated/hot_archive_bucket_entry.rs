@@ -93,14 +93,12 @@ impl HotArchiveBucketEntry {
 }
 
 impl Name for HotArchiveBucketEntry {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<HotArchiveBucketEntryType> for HotArchiveBucketEntry {
-    #[must_use]
     fn discriminant(&self) -> HotArchiveBucketEntryType {
         Self::discriminant(self)
     }

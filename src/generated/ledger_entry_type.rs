@@ -111,7 +111,6 @@ impl LedgerEntryType {
 }
 
 impl Name for LedgerEntryType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -154,7 +153,6 @@ impl TryFrom<i32> for LedgerEntryType {
 }
 
 impl From<LedgerEntryType> for i32 {
-    #[must_use]
     fn from(e: LedgerEntryType) -> Self {
         e as Self
     }

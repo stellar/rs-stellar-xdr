@@ -103,14 +103,12 @@ impl HostFunction {
 }
 
 impl Name for HostFunction {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<HostFunctionType> for HostFunction {
-    #[must_use]
     fn discriminant(&self) -> HostFunctionType {
         Self::discriminant(self)
     }

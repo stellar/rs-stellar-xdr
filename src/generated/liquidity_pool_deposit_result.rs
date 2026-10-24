@@ -131,14 +131,12 @@ impl LiquidityPoolDepositResult {
 }
 
 impl Name for LiquidityPoolDepositResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<LiquidityPoolDepositResultCode> for LiquidityPoolDepositResult {
-    #[must_use]
     fn discriminant(&self) -> LiquidityPoolDepositResultCode {
         Self::discriminant(self)
     }

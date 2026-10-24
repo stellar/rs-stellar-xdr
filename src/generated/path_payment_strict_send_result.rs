@@ -161,14 +161,12 @@ impl PathPaymentStrictSendResult {
 }
 
 impl Name for PathPaymentStrictSendResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<PathPaymentStrictSendResultCode> for PathPaymentStrictSendResult {
-    #[must_use]
     fn discriminant(&self) -> PathPaymentStrictSendResultCode {
         Self::discriminant(self)
     }

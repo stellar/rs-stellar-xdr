@@ -187,14 +187,12 @@ impl InnerTransactionResultResult {
 }
 
 impl Name for InnerTransactionResultResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<TransactionResultCode> for InnerTransactionResultResult {
-    #[must_use]
     fn discriminant(&self) -> TransactionResultCode {
         Self::discriminant(self)
     }

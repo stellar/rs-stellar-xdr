@@ -80,7 +80,6 @@ impl MemoType {
 }
 
 impl Name for MemoType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -118,7 +117,6 @@ impl TryFrom<i32> for MemoType {
 }
 
 impl From<MemoType> for i32 {
-    #[must_use]
     fn from(e: MemoType) -> Self {
         e as Self
     }

@@ -78,7 +78,6 @@ impl BucketEntryType {
 }
 
 impl Name for BucketEntryType {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -115,7 +114,6 @@ impl TryFrom<i32> for BucketEntryType {
 }
 
 impl From<BucketEntryType> for i32 {
-    #[must_use]
     fn from(e: BucketEntryType) -> Self {
         e as Self
     }

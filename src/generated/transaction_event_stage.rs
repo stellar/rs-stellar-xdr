@@ -77,7 +77,6 @@ impl TransactionEventStage {
 }
 
 impl Name for TransactionEventStage {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -113,7 +112,6 @@ impl TryFrom<i32> for TransactionEventStage {
 }
 
 impl From<TransactionEventStage> for i32 {
-    #[must_use]
     fn from(e: TransactionEventStage) -> Self {
         e as Self
     }

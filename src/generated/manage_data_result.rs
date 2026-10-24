@@ -107,14 +107,12 @@ impl ManageDataResult {
 }
 
 impl Name for ManageDataResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ManageDataResultCode> for ManageDataResult {
-    #[must_use]
     fn discriminant(&self) -> ManageDataResultCode {
         Self::discriminant(self)
     }

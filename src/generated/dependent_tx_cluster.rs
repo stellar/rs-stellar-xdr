@@ -21,21 +21,18 @@ use super::*;
 pub struct DependentTxCluster(pub VecM<TransactionEnvelope>);
 
 impl From<DependentTxCluster> for VecM<TransactionEnvelope> {
-    #[must_use]
     fn from(x: DependentTxCluster) -> Self {
         x.0
     }
 }
 
 impl From<VecM<TransactionEnvelope>> for DependentTxCluster {
-    #[must_use]
     fn from(x: VecM<TransactionEnvelope>) -> Self {
         DependentTxCluster(x)
     }
 }
 
 impl AsRef<VecM<TransactionEnvelope>> for DependentTxCluster {
-    #[must_use]
     fn as_ref(&self) -> &VecM<TransactionEnvelope> {
         &self.0
     }
@@ -67,7 +64,6 @@ impl Deref for DependentTxCluster {
 }
 
 impl From<DependentTxCluster> for Vec<TransactionEnvelope> {
-    #[must_use]
     fn from(x: DependentTxCluster) -> Self {
         x.0 .0
     }
@@ -89,7 +85,6 @@ impl TryFrom<&Vec<TransactionEnvelope>> for DependentTxCluster {
 }
 
 impl AsRef<Vec<TransactionEnvelope>> for DependentTxCluster {
-    #[must_use]
     fn as_ref(&self) -> &Vec<TransactionEnvelope> {
         &self.0 .0
     }
@@ -97,12 +92,10 @@ impl AsRef<Vec<TransactionEnvelope>> for DependentTxCluster {
 
 impl AsRef<[TransactionEnvelope]> for DependentTxCluster {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[TransactionEnvelope] {
         &self.0 .0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[TransactionEnvelope] {
         self.0 .0
     }

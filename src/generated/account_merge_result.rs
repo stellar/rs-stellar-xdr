@@ -131,14 +131,12 @@ impl AccountMergeResult {
 }
 
 impl Name for AccountMergeResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<AccountMergeResultCode> for AccountMergeResult {
-    #[must_use]
     fn discriminant(&self) -> AccountMergeResultCode {
         Self::discriminant(self)
     }

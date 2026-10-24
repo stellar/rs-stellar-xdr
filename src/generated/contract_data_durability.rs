@@ -67,7 +67,6 @@ impl ContractDataDurability {
 }
 
 impl Name for ContractDataDurability {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -102,7 +101,6 @@ impl TryFrom<i32> for ContractDataDurability {
 }
 
 impl From<ContractDataDurability> for i32 {
-    #[must_use]
     fn from(e: ContractDataDurability) -> Self {
         e as Self
     }

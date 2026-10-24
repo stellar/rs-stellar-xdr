@@ -86,14 +86,12 @@ impl BumpSequenceResult {
 }
 
 impl Name for BumpSequenceResult {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<BumpSequenceResultCode> for BumpSequenceResult {
-    #[must_use]
     fn discriminant(&self) -> BumpSequenceResultCode {
         Self::discriminant(self)
     }

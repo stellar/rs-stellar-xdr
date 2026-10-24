@@ -186,14 +186,12 @@ impl LedgerKey {
 }
 
 impl Name for LedgerKey {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<LedgerEntryType> for LedgerKey {
-    #[must_use]
     fn discriminant(&self) -> LedgerEntryType {
         Self::discriminant(self)
     }

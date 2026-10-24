@@ -89,7 +89,6 @@ impl ClawbackResultCode {
 }
 
 impl Name for ClawbackResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -127,7 +126,6 @@ impl TryFrom<i32> for ClawbackResultCode {
 }
 
 impl From<ClawbackResultCode> for i32 {
-    #[must_use]
     fn from(e: ClawbackResultCode) -> Self {
         e as Self
     }

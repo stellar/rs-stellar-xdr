@@ -124,7 +124,6 @@ impl schemars::JsonSchema for {{ t.name }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 impl From<{{ t.name }}> for {{ t.type_ref }} {
-    #[must_use]
     fn from(x: {{ t.name }}) -> Self {
         x.0
     }
@@ -134,7 +133,6 @@ impl From<{{ t.name }}> for {{ t.type_ref }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 impl From<{{ t.type_ref }}> for {{ t.name }} {
-    #[must_use]
     fn from(x: {{ t.type_ref }}) -> Self {
         {{ t.name }}(x)
     }
@@ -144,7 +142,6 @@ impl From<{{ t.type_ref }}> for {{ t.name }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 impl AsRef<{{ t.type_ref }}> for {{ t.name }} {
-    #[must_use]
     fn as_ref(&self) -> &{{ t.type_ref }} {
         &self.0
     }
@@ -221,7 +218,6 @@ impl TryFrom<&[{{ t.element_type }}]> for {{ t.name }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
-    #[must_use]
     fn as_ref(&self) -> &[{{ t.element_type }}] {
         &self.0
     }
@@ -243,7 +239,6 @@ impl Deref for {{ t.name }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 impl From<{{ t.name }}> for Vec<{{ t.element_type }}> {
-    #[must_use]
     fn from(x: {{ t.name }}) -> Self {
         x.0.0
     }
@@ -274,7 +269,6 @@ impl TryFrom<&Vec<{{ t.element_type }}>> for {{ t.name }} {
 #[cfg({{ cfg }})]
 {% endif -%}
 impl AsRef<Vec<{{ t.element_type }}>> for {{ t.name }} {
-    #[must_use]
     fn as_ref(&self) -> &Vec<{{ t.element_type }}> {
         &self.0.0
     }
@@ -285,12 +279,10 @@ impl AsRef<Vec<{{ t.element_type }}>> for {{ t.name }} {
 {% endif -%}
 impl AsRef<[{{ t.element_type }}]> for {{ t.name }} {
     #[cfg(feature = "alloc")]
-    #[must_use]
     fn as_ref(&self) -> &[{{ t.element_type }}] {
         &self.0.0
     }
     #[cfg(not(feature = "alloc"))]
-    #[must_use]
     fn as_ref(&self) -> &[{{ t.element_type }}] {
         self.0.0
     }

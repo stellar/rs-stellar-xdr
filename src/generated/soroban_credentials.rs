@@ -103,14 +103,12 @@ impl SorobanCredentials {
 }
 
 impl Name for SorobanCredentials {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<SorobanCredentialsType> for SorobanCredentials {
-    #[must_use]
     fn discriminant(&self) -> SorobanCredentialsType {
         Self::discriminant(self)
     }

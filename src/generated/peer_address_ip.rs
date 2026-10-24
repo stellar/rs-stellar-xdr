@@ -83,14 +83,12 @@ impl PeerAddressIp {
 }
 
 impl Name for PeerAddressIp {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<IpAddrType> for PeerAddressIp {
-    #[must_use]
     fn discriminant(&self) -> IpAddrType {
         Self::discriminant(self)
     }

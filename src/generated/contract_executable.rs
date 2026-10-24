@@ -92,14 +92,12 @@ impl ContractExecutable {
 }
 
 impl Name for ContractExecutable {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ContractExecutableType> for ContractExecutable {
-    #[must_use]
     fn discriminant(&self) -> ContractExecutableType {
         Self::discriminant(self)
     }

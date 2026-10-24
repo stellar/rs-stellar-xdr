@@ -114,7 +114,6 @@ impl LiquidityPoolDepositResultCode {
 }
 
 impl Name for LiquidityPoolDepositResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -156,7 +155,6 @@ impl TryFrom<i32> for LiquidityPoolDepositResultCode {
 }
 
 impl From<LiquidityPoolDepositResultCode> for i32 {
-    #[must_use]
     fn from(e: LiquidityPoolDepositResultCode) -> Self {
         e as Self
     }

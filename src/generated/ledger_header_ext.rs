@@ -83,14 +83,12 @@ impl LedgerHeaderExt {
 }
 
 impl Name for LedgerHeaderExt {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<i32> for LedgerHeaderExt {
-    #[must_use]
     fn discriminant(&self) -> i32 {
         Self::discriminant(self)
     }

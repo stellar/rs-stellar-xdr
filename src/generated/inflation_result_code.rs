@@ -68,7 +68,6 @@ impl InflationResultCode {
 }
 
 impl Name for InflationResultCode {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
@@ -103,7 +102,6 @@ impl TryFrom<i32> for InflationResultCode {
 }
 
 impl From<InflationResultCode> for i32 {
-    #[must_use]
     fn from(e: InflationResultCode) -> Self {
         e as Self
     }

@@ -76,14 +76,12 @@ impl ClaimableBalanceId {
 }
 
 impl Name for ClaimableBalanceId {
-    #[must_use]
     fn name(&self) -> &'static str {
         Self::name(self)
     }
 }
 
 impl Discriminant<ClaimableBalanceIdType> for ClaimableBalanceId {
-    #[must_use]
     fn discriminant(&self) -> ClaimableBalanceIdType {
         Self::discriminant(self)
     }

@@ -9,6 +9,8 @@ use crate::{
     WriteXdr as _,
 };
 
+const NETWORK_PASSPHRASE: &str = "Test SDF Network ; September 2015";
+
 const NETWORK_ID: [u8; 32] =
     // SHA256("Test SDF Network ; September 2015")
     bytes!(0xcee0302d59844d32bdca915c8203dd44b33fbb7edc19051ea37abedf28ecd472);
@@ -27,7 +29,7 @@ fn test_transaction_v0_hash() -> Result<(), crate::Error> {
     };
 
     let v0_env = TransactionEnvelope::TxV0(TransactionV0Envelope {
-        tx: v0_tx,
+        tx: v0_tx.clone(),
         signatures: [].try_into()?,
     });
 
@@ -39,6 +41,26 @@ fn test_transaction_v0_hash() -> Result<(), crate::Error> {
         v0_hash,
         "037d99f3d0ded34afbf25ae9bf33d84d0a7b6cb2f37a8751301490660c4fc9c7"
     );
+
+    // Verify hash_passphrase on TransactionEnvelope::TxV0
+    assert_eq!(
+        v0_env.hash_passphrase(NETWORK_PASSPHRASE)?,
+        v0_env.hash(NETWORK_ID)?
+    );
+
+    // Verify hash_passphrase on TransactionV0
+    assert_eq!(
+        v0_tx.hash_passphrase(NETWORK_PASSPHRASE)?,
+        v0_tx.hash(NETWORK_ID)?
+    );
+
+    if let TransactionEnvelope::TxV0(ref inner_env) = v0_env {
+        // Verify hash_passphrase on TransactionV0Envelope
+        assert_eq!(
+            inner_env.hash_passphrase(NETWORK_PASSPHRASE)?,
+            inner_env.hash(NETWORK_ID)?
+        );
+    }
 
     Ok(())
 }
@@ -68,6 +90,26 @@ fn test_transaction_v1_hash() -> Result<(), crate::Error> {
         v1_hash,
         "cbe35083a4f43334c6314ef6f8c950200c91a336d7373efd34cfb71d2d009a63"
     );
+
+    // Verify hash_passphrase on TransactionEnvelope::Tx
+    assert_eq!(
+        v1_env.hash_passphrase(NETWORK_PASSPHRASE)?,
+        v1_env.hash(NETWORK_ID)?
+    );
+
+    // Verify hash_passphrase on Transaction
+    assert_eq!(
+        v1_tx.hash_passphrase(NETWORK_PASSPHRASE)?,
+        v1_tx.hash(NETWORK_ID)?
+    );
+
+    if let TransactionEnvelope::Tx(ref inner_env) = v1_env {
+        // Verify hash_passphrase on TransactionV1Envelope
+        assert_eq!(
+            inner_env.hash_passphrase(NETWORK_PASSPHRASE)?,
+            inner_env.hash(NETWORK_ID)?
+        );
+    }
 
     Ok(())
 }
@@ -101,8 +143,14 @@ fn test_fee_bump_transaction_hash() -> Result<(), crate::Error> {
         "9f8bd4d2b3bb1ad9b4aac192fd4ee430a12862115d4464b904b4836ab2a60a35"
     );
 
+    // Verify hash_passphrase on FeeBumpTransactionInnerTx
+    assert_eq!(
+        fee_bump_tx.inner_tx.hash_passphrase(NETWORK_PASSPHRASE)?,
+        fee_bump_tx.inner_tx.hash(NETWORK_ID)?
+    );
+
     let fee_bump_env = TransactionEnvelope::TxFeeBump(FeeBumpTransactionEnvelope {
-        tx: fee_bump_tx,
+        tx: fee_bump_tx.clone(),
         signatures: [].try_into()?,
     });
 
@@ -113,6 +161,59 @@ fn test_fee_bump_transaction_hash() -> Result<(), crate::Error> {
     assert_eq!(
         fee_bump_hash,
         "93136bdb126dfda1154143c5e16894fc9ccad41c1a54ed1f8dc8ed0964d53330"
+    );
+
+    // Verify hash_passphrase on TransactionEnvelope::TxFeeBump
+    assert_eq!(
+        fee_bump_env.hash_passphrase(NETWORK_PASSPHRASE)?,
+        fee_bump_env.hash(NETWORK_ID)?
+    );
+
+    // Verify hash_passphrase on FeeBumpTransaction
+    assert_eq!(
+        fee_bump_tx.hash_passphrase(NETWORK_PASSPHRASE)?,
+        fee_bump_tx.hash(NETWORK_ID)?
+    );
+
+    if let TransactionEnvelope::TxFeeBump(ref inner_env) = fee_bump_env {
+        // Verify hash_passphrase on FeeBumpTransactionEnvelope
+        assert_eq!(
+            inner_env.hash_passphrase(NETWORK_PASSPHRASE)?,
+            inner_env.hash(NETWORK_ID)?
+        );
+    }
+
+    Ok(())
+}
+
+#[test]
+fn test_hash_passphrase_input_types() -> Result<(), crate::Error> {
+    let tx = Transaction {
+        source_account: MuxedAccount::Ed25519(Uint256([0; 32])),
+        fee: 100,
+        seq_num: SequenceNumber(1),
+        cond: Preconditions::None,
+        operations: [].try_into()?,
+        memo: Memo::Text("types".as_bytes().try_into()?),
+        ext: TransactionExt::V0,
+    };
+
+    let expected = tx.hash(NETWORK_ID)?;
+
+    // &str
+    assert_eq!(
+        tx.hash_passphrase("Test SDF Network ; September 2015")?,
+        expected
+    );
+    // String
+    assert_eq!(
+        tx.hash_passphrase(String::from("Test SDF Network ; September 2015"))?,
+        expected
+    );
+    // &[u8]
+    assert_eq!(
+        tx.hash_passphrase(b"Test SDF Network ; September 2015")?,
+        expected
     );
 
     Ok(())

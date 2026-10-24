@@ -29,6 +29,27 @@ impl TransactionEnvelope {
             TransactionEnvelope::TxFeeBump(e) => e.hash(network_id),
         }
     }
+
+    /// Computes the hash of the transaction envelope using a network passphrase.
+    ///
+    /// # Arguments
+    ///
+    /// * `network_passphrase` - The network passphrase to include in the hash computation.
+    ///
+    /// # Returns
+    ///
+    /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
+    pub fn hash_passphrase(
+        &self,
+        network_passphrase: impl AsRef<[u8]>,
+    ) -> Result<[u8; 32], super::Error> {
+        let network_id: [u8; 32] = Sha256::digest(network_passphrase.as_ref()).into();
+        self.hash(network_id)
+    }
 }
 
 impl TransactionV0Envelope {
@@ -47,6 +68,27 @@ impl TransactionV0Envelope {
     /// If there is any issue serializing to XDR.
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         self.tx.hash(network_id)
+    }
+
+    /// Computes the hash of the V0 transaction envelope using a network passphrase.
+    ///
+    /// # Arguments
+    ///
+    /// * `network_passphrase` - The network passphrase to include in the hash computation.
+    ///
+    /// # Returns
+    ///
+    /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
+    pub fn hash_passphrase(
+        &self,
+        network_passphrase: impl AsRef<[u8]>,
+    ) -> Result<[u8; 32], super::Error> {
+        let network_id: [u8; 32] = Sha256::digest(network_passphrase.as_ref()).into();
+        self.hash(network_id)
     }
 }
 
@@ -67,6 +109,27 @@ impl TransactionV1Envelope {
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         self.tx.hash(network_id)
     }
+
+    /// Computes the hash of the V1 transaction envelope using a network passphrase.
+    ///
+    /// # Arguments
+    ///
+    /// * `network_passphrase` - The network passphrase to include in the hash computation.
+    ///
+    /// # Returns
+    ///
+    /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
+    pub fn hash_passphrase(
+        &self,
+        network_passphrase: impl AsRef<[u8]>,
+    ) -> Result<[u8; 32], super::Error> {
+        let network_id: [u8; 32] = Sha256::digest(network_passphrase.as_ref()).into();
+        self.hash(network_id)
+    }
 }
 
 impl TransactionV0 {
@@ -86,6 +149,27 @@ impl TransactionV0 {
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         <_ as Into<Transaction>>::into(self).hash(network_id)
     }
+
+    /// Computes the hash of the V0 transaction using a network passphrase.
+    ///
+    /// # Arguments
+    ///
+    /// * `network_passphrase` - The network passphrase to include in the hash computation.
+    ///
+    /// # Returns
+    ///
+    /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
+    pub fn hash_passphrase(
+        &self,
+        network_passphrase: impl AsRef<[u8]>,
+    ) -> Result<[u8; 32], super::Error> {
+        let network_id: [u8; 32] = Sha256::digest(network_passphrase.as_ref()).into();
+        self.hash(network_id)
+    }
 }
 
 impl FeeBumpTransactionEnvelope {
@@ -104,6 +188,27 @@ impl FeeBumpTransactionEnvelope {
     /// If there is any issue serializing to XDR.
     pub fn hash(&self, network_id: [u8; 32]) -> Result<[u8; 32], super::Error> {
         self.tx.hash(network_id)
+    }
+
+    /// Computes the hash of the fee bump transaction envelope using a network passphrase.
+    ///
+    /// # Arguments
+    ///
+    /// * `network_passphrase` - The network passphrase to include in the hash computation.
+    ///
+    /// # Returns
+    ///
+    /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
+    pub fn hash_passphrase(
+        &self,
+        network_passphrase: impl AsRef<[u8]>,
+    ) -> Result<[u8; 32], super::Error> {
+        let network_id: [u8; 32] = Sha256::digest(network_passphrase.as_ref()).into();
+        self.hash(network_id)
     }
 }
 
@@ -125,6 +230,27 @@ impl FeeBumpTransactionInnerTx {
         match self {
             Self::Tx(inner_tx) => inner_tx.hash(network_id),
         }
+    }
+
+    /// Computes the hash of the fee bump transaction inner tx using a network passphrase.
+    ///
+    /// # Arguments
+    ///
+    /// * `network_passphrase` - The network passphrase to include in the hash computation.
+    ///
+    /// # Returns
+    ///
+    /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
+    pub fn hash_passphrase(
+        &self,
+        network_passphrase: impl AsRef<[u8]>,
+    ) -> Result<[u8; 32], super::Error> {
+        let network_id: [u8; 32] = Sha256::digest(network_passphrase.as_ref()).into();
+        self.hash(network_id)
     }
 }
 
@@ -152,6 +278,27 @@ impl Transaction {
         let hash = Sha256::digest(payload);
         Ok(hash.into())
     }
+
+    /// Computes the hash of the transaction using a network passphrase.
+    ///
+    /// # Arguments
+    ///
+    /// * `network_passphrase` - The network passphrase to include in the hash computation.
+    ///
+    /// # Returns
+    ///
+    /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
+    pub fn hash_passphrase(
+        &self,
+        network_passphrase: impl AsRef<[u8]>,
+    ) -> Result<[u8; 32], super::Error> {
+        let network_id: [u8; 32] = Sha256::digest(network_passphrase.as_ref()).into();
+        self.hash(network_id)
+    }
 }
 
 impl FeeBumpTransaction {
@@ -178,5 +325,26 @@ impl FeeBumpTransaction {
         let payload = payload.to_xdr(Limits::none())?;
         let hash = Sha256::digest(payload);
         Ok(hash.into())
+    }
+
+    /// Computes the hash of the fee bump transaction using a network passphrase.
+    ///
+    /// # Arguments
+    ///
+    /// * `network_passphrase` - The network passphrase to include in the hash computation.
+    ///
+    /// # Returns
+    ///
+    /// The transaction hash.
+    ///
+    /// # Errors
+    ///
+    /// If there is any issue serializing to XDR.
+    pub fn hash_passphrase(
+        &self,
+        network_passphrase: impl AsRef<[u8]>,
+    ) -> Result<[u8; 32], super::Error> {
+        let network_id: [u8; 32] = Sha256::digest(network_passphrase.as_ref()).into();
+        self.hash(network_id)
     }
 }

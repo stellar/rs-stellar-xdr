@@ -75,8 +75,8 @@ pub enum OutputFormat {
     #[default]
     SingleBase64,
     Stream,
-    // TODO: StreamBase64,
-    // TODO: StreamFramed,
+    StreamBase64,
+    StreamFramed,
 }
 
 // TODO: Remove run_x macro, it exists only to reduce the diff from when curr/next
@@ -109,22 +109,52 @@ macro_rules! run_x {
                             writeln!(stdout(), "{}", t.to_xdr_base64(l)?)
                                 .map_err(Error::WriteOutput)?
                         }
-                        OutputFormat::Stream => {
+                        OutputFormat::Stream
+                        | OutputFormat::StreamBase64
+                        | OutputFormat::StreamFramed => {
                             let mut de =
                                 serde_json::Deserializer::new(serde_json::de::IoRead::new(f));
                             loop {
-                                let (t, ignored) = match crate::Type::deserialize_json_collecting_ignored_fields(r#type, &mut de) {
-                                    Ok(r) => r,
-                                    Err(crate::Error::Json(ref inner)) if inner.is_eof() => {
-                                        break;
-                                    }
-                                    Err(e) => Err(e)?,
-                                };
+                                let (t, ignored) =
+                                    match crate::Type::deserialize_json_collecting_ignored_fields(
+                                        r#type, &mut de,
+                                    ) {
+                                        Ok(r) => r,
+                                        Err(crate::Error::Json(ref inner)) if inner.is_eof() => {
+                                            break;
+                                        }
+                                        Err(e) => Err(e)?,
+                                    };
                                 check_ignored_fields(&ignored)?;
                                 let l = crate::Limits::none();
-                                stdout()
-                                    .write_all(&t.to_xdr(l)?)
-                                    .map_err(Error::WriteOutput)?;
+                                match self.output_format {
+                                    OutputFormat::Stream => {
+                                        stdout()
+                                            .write_all(&t.to_xdr(l)?)
+                                            .map_err(Error::WriteOutput)?;
+                                    }
+                                    OutputFormat::StreamBase64 => {
+                                        writeln!(stdout(), "{}", t.to_xdr_base64(l)?)
+                                            .map_err(Error::WriteOutput)?;
+                                    }
+                                    OutputFormat::StreamFramed => {
+                                        let bytes = t.to_xdr(l)?;
+                                        let len: u32 = bytes.len().try_into().map_err(|_| {
+                                            Error::WriteXdr(crate::Error::LengthExceedsMax)
+                                        })?;
+                                        if len > 0x7fff_ffff {
+                                            return Err(Error::WriteXdr(
+                                                crate::Error::LengthExceedsMax,
+                                            ));
+                                        }
+                                        let header = (0x8000_0000u32 | len).to_be_bytes();
+                                        stdout().write_all(&header).map_err(Error::WriteOutput)?;
+                                        stdout().write_all(&bytes).map_err(Error::WriteOutput)?;
+                                    }
+                                    OutputFormat::Single | OutputFormat::SingleBase64 => {
+                                        unreachable!()
+                                    }
+                                }
                             }
                         }
                     },

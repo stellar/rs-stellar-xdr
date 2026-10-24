@@ -2583,6 +2583,29 @@ where
     }
 }
 
+impl<T> WriteXdr for Frame<T>
+where
+    T: WriteXdr + ReadXdr,
+{
+    #[cfg(feature = "std")]
+    fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
+        let bytes = self.0.to_xdr(w.limits.clone())?;
+        let len: u32 = bytes
+            .len()
+            .try_into()
+            .map_err(|_| Error::LengthExceedsMax)?;
+        if len > 0x7fff_ffff {
+            return Err(Error::LengthExceedsMax);
+        }
+        let header = 0x8000_0000u32 | len;
+        header.write_xdr(w)?;
+        w.with_limited_depth(|w| {
+            w.consume_len(bytes.len())?;
+            Ok(w.write_all(&bytes)?)
+        })
+    }
+}
+
 /// Forwards read operations to the wrapped object, skipping over any
 /// whitespace.
 #[cfg(feature = "std")]

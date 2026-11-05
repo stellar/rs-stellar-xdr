@@ -10,6 +10,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref_protected == 'true' && github.sha || github.ref }}-{{ github.event_name }}
   cancel-in-progress: true
 
+env:
+  # Keep only line tables in dev and test builds. Backtraces still show line
+  # numbers, while build output roughly halves, making builds faster and the
+  # CI caches smaller and quicker to save and restore. Set via env rather than
+  # Cargo.toml so local builds keep full debug info.
+  CARGO_PROFILE_DEV_DEBUG: line-tables-only
+
 jobs:
 
   complete:

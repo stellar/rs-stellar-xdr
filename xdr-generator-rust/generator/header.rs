@@ -2486,11 +2486,28 @@ where
         //  - Bits 0-30 contain the byte length of the fragment data that
         //    follows the header.
         let header = u32::read_xdr(r)?;
-        // TODO: Use the length and cap the length we'll read from `r`.
         let last_record = header >> 31 == 1;
         if last_record {
-            // Read the record in the frame.
-            Ok(Self(T::read_xdr(r)?))
+            let len = header & 0x7fff_ffff;
+
+            if len % 4 != 0 {
+                return Err(Error::Invalid);
+            }
+            let frame_reader = (&mut r.inner).take(u64::from(len));
+            let limits = r.limits.clone();
+            let mut frame = Limited::new(frame_reader, limits);
+            let t = T::read_xdr(&mut frame)?;
+            r.limits = frame.limits;
+            let mut rest = frame.inner;
+            let remaining = rest.limit();
+            r.limits.len = usize::try_from(remaining)
+                .ok()
+                .and_then(|remaining| r.limits.len.checked_sub(remaining))
+                .ok_or(Error::LengthLimitExceeded)?;
+            if io::copy(&mut rest, &mut io::sink())? != remaining {
+                return Err(Error::Io(io::ErrorKind::UnexpectedEof.into()));
+            }
+            Ok(Self(t))
         } else {
             // TODO: Support reading those additional frames for the same
             // record.
@@ -2676,6 +2693,71 @@ mod tests {
     use std::io::Cursor;
 
     use super::*;
+
+    fn read_frames(bytes: &[u8]) -> Vec<Result<u32, Error>> {
+        let mut r = Limited::new(Cursor::new(bytes), Limits::none());
+        let mut out = vec![];
+        while r.inner.position() < bytes.len() as u64 {
+            let res = Frame::<u32>::read_xdr(&mut r).map(|f| f.0);
+            let err = res.is_err();
+            out.push(res);
+            if err {
+                break;
+            }
+        }
+        out
+    }
+
+    #[test]
+    pub fn frame_read() {
+        let res = read_frames(&[0x80, 0, 0, 4, 0, 0, 0, 1, 0x80, 0, 0, 4, 0, 0, 0, 2]);
+        assert_eq!(res, vec![Ok(1), Ok(2)]);
+    }
+
+    #[test]
+    pub fn frame_read_skips_unconsumed_bytes_in_frame() {
+        // The first frame declares 12 bytes, the record uses 4, and the
+        // remaining 8 look like another frame but are skipped.
+        let res = read_frames(&[
+            0x80, 0, 0, 12, 0, 0, 0, 1, 0x80, 0, 0, 4, 0, 0, 0, 2, 0x80, 0, 0, 4, 0, 0, 0, 3,
+        ]);
+        assert_eq!(res, vec![Ok(1), Ok(3)]);
+    }
+
+    #[test]
+    pub fn frame_read_record_longer_than_frame() {
+        let res = read_frames(&[0x80, 0, 0, 0, 0, 0, 0, 1]);
+        assert!(matches!(res[..], [Err(Error::Io(_))]), "{res:?}");
+    }
+
+    #[test]
+    pub fn frame_read_length_not_multiple_of_4() {
+        let res = read_frames(&[0x80, 0, 0, 5, 0, 0, 0, 1, 0]);
+        assert_eq!(res, vec![Err(Error::Invalid)]);
+    }
+
+    #[test]
+    pub fn frame_read_frame_longer_than_input() {
+        let res = read_frames(&[0x80, 0, 0, 8, 0, 0, 0, 1]);
+        assert!(matches!(res[..], [Err(Error::Io(_))]), "{res:?}");
+    }
+
+    #[test]
+    pub fn frame_read_not_last_fragment() {
+        let res = read_frames(&[0, 0, 0, 4, 0, 0, 0, 1]);
+        assert_eq!(res, vec![Err(Error::Unsupported)]);
+    }
+
+    #[test]
+    pub fn frame_read_skipped_bytes_count_towards_len_limit() {
+        let bytes = [0x80, 0, 0, 8, 0, 0, 0, 1, 0, 0, 0, 0];
+        let mut r = Limited::new(Cursor::new(&bytes[..]), Limits::len(11));
+        let res = Frame::<u32>::read_xdr(&mut r);
+        assert_eq!(res, Err(Error::LengthLimitExceeded));
+        let mut r = Limited::new(Cursor::new(&bytes[..]), Limits::len(12));
+        let res = Frame::<u32>::read_xdr(&mut r);
+        assert_eq!(res, Ok(Frame(1)));
+    }
 
     #[test]
     pub fn vec_u8_read_without_padding() {

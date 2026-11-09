@@ -11,7 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Reduce the debug artifacts to reduce disk usage.
+  # Reduce the debug artifacts to reduce disk usage. Note that the test job
+  # further limits the debug artifacts for the msrv matrix rust type.
   CARGO_PROFILE_DEV_DEBUG: line-tables-only
 
 jobs:

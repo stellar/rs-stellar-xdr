@@ -22,6 +22,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct Curve25519Secret {
+    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde_as(as = "ArrayOrHex"))]
     pub key: [u8; 32],
 }
 

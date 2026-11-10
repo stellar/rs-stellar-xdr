@@ -2669,6 +2669,113 @@ impl<T> serde_with::schemars_0_8::JsonSchemaAs<T> for NumberOrString {
     }
 }
 
+// ArrayOrHex -------------------------------------------------------------------
+
+/// ArrayOrHex is a serde_as serializer/deserializer.
+///
+/// It deserializes a fixed length byte array from either a JSON String of hex or a JSON Array of
+/// Numbers.
+///
+/// It serializes always to a lowercase hex string, the same as fixed length opaque typedefs such
+/// as `Hash`.
+///
+/// It has a JsonSchema implementation that only advertises that the allowed format is a hex
+/// String. This is because the type is intended to soften the changing of fields from JSON Array
+/// to JSON String by permitting deserialization, but discourage new uses of JSON Array.
+#[cfg(feature = "serde")]
+struct ArrayOrHex;
+
+#[cfg(feature = "serde")]
+impl<'de, const N: usize> serde_with::DeserializeAs<'de, [u8; N]> for ArrayOrHex {
+    fn deserialize_as<D>(deserializer: D) -> Result<[u8; N], D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct Visitor<const N: usize>;
+
+        impl<'de, const N: usize> serde::de::Visitor<'de> for Visitor<N> {
+            type Value = [u8; N];
+
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(
+                    f,
+                    "a hex string encoding {N} bytes or an array of {N} integers"
+                )
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                let mut bytes = [0u8; N];
+                hex::decode_to_slice(v, &mut bytes)
+                    .map_err(|_| E::invalid_value(serde::de::Unexpected::Str(v), &self))?;
+                Ok(bytes)
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::SeqAccess<'de>,
+            {
+                let mut bytes = [0u8; N];
+                for (i, b) in bytes.iter_mut().enumerate() {
+                    *b = seq
+                        .next_element()?
+                        .ok_or_else(|| serde::de::Error::invalid_length(i, &self))?;
+                }
+                Ok(bytes)
+            }
+        }
+
+        deserializer.deserialize_any(Visitor::<N>)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<const N: usize> serde_with::SerializeAs<[u8; N]> for ArrayOrHex {
+    fn serialize_as<S>(source: &[u8; N], serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&hex::encode(source))
+    }
+}
+
+#[cfg(feature = "schemars")]
+impl<const N: usize> serde_with::schemars_0_8::JsonSchemaAs<[u8; N]> for ArrayOrHex {
+    fn schema_name() -> String {
+        <String as schemars::JsonSchema>::schema_name()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let schema = <String as schemars::JsonSchema>::json_schema(gen);
+        if let schemars::schema::Schema::Object(mut schema) = schema {
+            schema.extensions.insert(
+                "contentEncoding".to_owned(),
+                serde_json::Value::String("hex".to_string()),
+            );
+            schema.extensions.insert(
+                "contentMediaType".to_owned(),
+                serde_json::Value::String("application/binary".to_string()),
+            );
+            let string = *schema.string.unwrap_or_default().clone();
+            let length = u32::try_from(N).ok().and_then(|n| n.checked_mul(2));
+            schema.string = Some(Box::new(schemars::schema::StringValidation {
+                max_length: length,
+                min_length: length,
+                ..string
+            }));
+            schema.into()
+        } else {
+            schema
+        }
+    }
+}
+
 // Tests ------------------------------------------------------------------------
 
 #[cfg(all(test, feature = "std"))]

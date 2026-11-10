@@ -647,14 +647,11 @@
       ],
       "properties": {
         "key": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8",
-            "minimum": 0.0
-          },
-          "maxItems": 32,
-          "minItems": 32
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
         }
       }
     },
@@ -934,14 +931,11 @@
       ],
       "properties": {
         "mac": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "uint8",
-            "minimum": 0.0
-          },
-          "maxItems": 32,
-          "minItems": 32
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
         }
       }
     },
@@ -2082,14 +2076,11 @@
           ],
           "properties": {
             "i_pv4": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "format": "uint8",
-                "minimum": 0.0
-              },
-              "maxItems": 4,
-              "minItems": 4
+              "type": "string",
+              "maxLength": 8,
+              "minLength": 8,
+              "contentEncoding": "hex",
+              "contentMediaType": "application/binary"
             }
           }
         },
@@ -2100,14 +2091,11 @@
           ],
           "properties": {
             "i_pv6": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "format": "uint8",
-                "minimum": 0.0
-              },
-              "maxItems": 16,
-              "minItems": 16
+              "type": "string",
+              "maxLength": 32,
+              "minLength": 32,
+              "contentEncoding": "hex",
+              "contentMediaType": "application/binary"
             }
           }
         }

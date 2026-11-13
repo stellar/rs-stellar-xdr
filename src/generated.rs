@@ -2157,11 +2157,11 @@ impl<const MAX: u32> schemars::JsonSchema for StringM<MAX> {
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
         let schema = String::json_schema(gen);
         if let schemars::schema::Schema::Object(mut schema) = schema {
-            let string = *schema.string.unwrap_or_default().clone();
-            schema.string = Some(Box::new(schemars::schema::StringValidation {
-                max_length: Some(MAX),
-                ..string
-            }));
+            // The max length is not set as maxLength because the JSON string
+            // escapes bytes, so its length in characters is not bounded by MAX.
+            schema.metadata().description = Some(format!(
+                "XDR string of at most {MAX} bytes. Backslashes and bytes outside printable ASCII are escaped (for example as \\xNN), so the JSON string can be longer than {MAX} characters."
+            ));
             schema.into()
         } else {
             schema

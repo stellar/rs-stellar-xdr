@@ -265,16 +265,16 @@
       "$ref": "#/definitions/StringM<32>"
     },
     "StringM<1024>": {
-      "type": "string",
-      "maxLength": 1024
+      "description": "XDR string of at most 1024 bytes. Backslashes and bytes outside printable ASCII are escaped (for example as \\xNN), so the JSON string can be longer than 1024 characters.",
+      "type": "string"
     },
     "StringM<30>": {
-      "type": "string",
-      "maxLength": 30
+      "description": "XDR string of at most 30 bytes. Backslashes and bytes outside printable ASCII are escaped (for example as \\xNN), so the JSON string can be longer than 30 characters.",
+      "type": "string"
     },
     "StringM<32>": {
-      "type": "string",
-      "maxLength": 32
+      "description": "XDR string of at most 32 bytes. Backslashes and bytes outside printable ASCII are escaped (for example as \\xNN), so the JSON string can be longer than 32 characters.",
+      "type": "string"
     }
   }
 }

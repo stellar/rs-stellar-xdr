@@ -70,8 +70,8 @@
   "unevaluatedProperties": false,
   "definitions": {
     "StringM<28>": {
-      "type": "string",
-      "maxLength": 28
+      "description": "String of at most 28 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     }
   }
 }

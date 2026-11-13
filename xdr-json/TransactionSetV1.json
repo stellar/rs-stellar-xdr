@@ -2886,20 +2886,20 @@
       "$ref": "#/definitions/StringM<64>"
     },
     "StringM<28>": {
-      "type": "string",
-      "maxLength": 28
+      "description": "String of at most 28 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     },
     "StringM<32>": {
-      "type": "string",
-      "maxLength": 32
+      "description": "String of at most 32 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     },
     "StringM<4294967295>": {
-      "type": "string",
-      "maxLength": 4294967295
+      "description": "String of at most 4294967295 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     },
     "StringM<64>": {
-      "type": "string",
-      "maxLength": 64
+      "description": "String of at most 64 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     },
     "TimeBounds": {
       "description": "TimeBounds is an XDR Struct defined as:\n\n```text struct TimeBounds { TimePoint minTime; TimePoint maxTime; // 0 here means no maxTime }; ```",

@@ -257,16 +257,16 @@
       }
     },
     "StringM<1024>": {
-      "type": "string",
-      "maxLength": 1024
+      "description": "String of at most 1024 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     },
     "StringM<30>": {
-      "type": "string",
-      "maxLength": 30
+      "description": "String of at most 30 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     },
     "StringM<80>": {
-      "type": "string",
-      "maxLength": 80
+      "description": "String of at most 80 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     }
   }
 }

@@ -94,8 +94,8 @@
       }
     },
     "StringM<100>": {
-      "type": "string",
-      "maxLength": 100
+      "description": "String of at most 100 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     }
   }
 }

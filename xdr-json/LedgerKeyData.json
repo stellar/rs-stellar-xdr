@@ -28,8 +28,8 @@
       "$ref": "#/definitions/StringM<64>"
     },
     "StringM<64>": {
-      "type": "string",
-      "maxLength": 64
+      "description": "String of at most 64 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     }
   }
 }

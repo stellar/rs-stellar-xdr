@@ -28,8 +28,8 @@
       "$ref": "#/definitions/StringM<4294967295>"
     },
     "StringM<4294967295>": {
-      "type": "string",
-      "maxLength": 4294967295
+      "description": "String of at most 4294967295 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     }
   }
 }

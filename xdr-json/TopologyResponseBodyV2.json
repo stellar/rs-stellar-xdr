@@ -96,8 +96,8 @@
       }
     },
     "StringM<100>": {
-      "type": "string",
-      "maxLength": 100
+      "description": "String of at most 100 bytes. Bytes outside printable ASCII are escaped as \\xNN, so the JSON string may be longer.",
+      "type": "string"
     },
     "TimeSlicedNodeData": {
       "description": "TimeSlicedNodeData is an XDR Struct defined as:\n\n```text struct TimeSlicedNodeData { uint32 addedAuthenticatedPeers; uint32 droppedAuthenticatedPeers; uint32 totalInboundPeerCount; uint32 totalOutboundPeerCount;\n\n// SCP stats uint32 p75SCPFirstToSelfLatencyMs; uint32 p75SCPSelfToOtherLatencyMs;\n\n// How many times the node lost sync in the time slice uint32 lostSyncCount;\n\n// Config data bool isValidator; uint32 maxInboundPeerCount; uint32 maxOutboundPeerCount; }; ```",

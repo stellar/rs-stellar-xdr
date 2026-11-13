@@ -273,8 +273,8 @@
       "$ref": "#/definitions/StringM<32>"
     },
     "StringM<32>": {
-      "type": "string",
-      "maxLength": 32
+      "description": "XDR string of at most 32 bytes. Backslashes and bytes outside printable ASCII are escaped (for example as \\xNN), so the JSON string can be longer than 32 characters.",
+      "type": "string"
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defined as:\n\n```text typedef uint64 TimePoint; ```",

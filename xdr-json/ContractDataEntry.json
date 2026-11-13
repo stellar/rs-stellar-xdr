@@ -587,12 +587,12 @@
       "maxItems": 4294967295
     },
     "StringM<32>": {
-      "type": "string",
-      "maxLength": 32
+      "description": "XDR string of at most 32 bytes. Backslashes and bytes outside printable ASCII are escaped (for example as \\xNN), so the JSON string can be longer than 32 characters.",
+      "type": "string"
     },
     "StringM<4294967295>": {
-      "type": "string",
-      "maxLength": 4294967295
+      "description": "XDR string of at most 4294967295 bytes. Backslashes and bytes outside printable ASCII are escaped (for example as \\xNN), so the JSON string can be longer than 4294967295 characters.",
+      "type": "string"
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defined as:\n\n```text typedef uint64 TimePoint; ```",

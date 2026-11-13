@@ -225,8 +225,8 @@
       }
     },
     "StringM<1024>": {
-      "type": "string",
-      "maxLength": 1024
+      "description": "XDR string of at most 1024 bytes. Backslashes and bytes outside printable ASCII are escaped (for example as \\xNN), so the JSON string can be longer than 1024 characters.",
+      "type": "string"
     }
   }
 }

@@ -13,18 +13,19 @@ pub struct ResolvedType {
 
 /// Resolve all Rust type information for an XDR type in one call.
 ///
-/// When `custom_str` is true, `serde_as_type` is forced to `None`.
+/// When `no_serde_as` is true, `serde_as_type` is forced to `None`, for types
+/// that serialize through their own `Display`/`FromStr`.
 pub(crate) fn resolve_type(
     type_: &Type,
     parent: Option<&str>,
     type_info: &TypeInfo,
-    custom_str: bool,
+    no_serde_as: bool,
 ) -> ResolvedType {
     let m = TypeMapping::new(type_, Some(type_info), parent);
     ResolvedType {
         type_ref: m.type_ref(),
         turbofish_type: m.turbofish_type(),
-        serde_as_type: if custom_str { None } else { m.serde_as_type() },
+        serde_as_type: if no_serde_as { None } else { m.serde_as_type() },
         element_type: m.element_type(),
     }
 }
@@ -334,6 +335,10 @@ impl<'a> TypeMapping<'a> {
     }
 
     fn serde_as_type(&self) -> Option<String> {
+        // Only inline opaque: typedefs of it have their own hex Display/FromStr.
+        if let Type::OpaqueFixed(_) = self.type_ {
+            return Some("ArrayOrHex".to_string());
+        }
         let base = self.base_numeric_type();
         match base.as_deref() {
             Some("i64" | "u64") => Some(self.serde_type_ref("NumberOrString")),

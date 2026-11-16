@@ -450,6 +450,29 @@ impl<L> Limited<L> {
             Err(Error::DepthLimitExceeded)
         }
     }
+
+    /// Calls the given function with a `Limited` whose reader is capped to
+    /// reading at most `len` bytes from this one's reader, sharing all other
+    /// state such as limits. Any changes the function makes to that state are
+    /// kept, whether the function succeeds or fails.
+    pub(crate) fn with_len_cap<T, F>(&mut self, len: u64, f: F) -> Result<T, Error>
+    where
+        L: Read,
+        F: FnOnce(&mut Limited<std::io::Take<&mut L>>) -> Result<T, Error>,
+    {
+        let Limited { inner, limits } = self;
+        let mut capped = Limited {
+            inner: inner.take(len),
+            limits: limits.clone(),
+        };
+        let res = f(&mut capped);
+        let Limited {
+            inner: _,
+            limits: capped_limits,
+        } = capped;
+        *limits = capped_limits;
+        res
+    }
 }
 
 #[cfg(feature = "std")]
@@ -2570,11 +2593,25 @@ where
         //  - Bits 0-30 contain the byte length of the fragment data that
         //    follows the header.
         let header = u32::read_xdr(r)?;
-        // TODO: Use the length and cap the length we'll read from `r`.
         let last_record = header >> 31 == 1;
+        let len = u64::from(header & 0x7fff_ffff);
         if last_record {
-            // Read the record in the frame.
-            Ok(Self(T::read_xdr(r)?))
+            // Read the record in the frame, capping the read at the length in
+            // the header so that the record cannot read into the next frame.
+            r.with_len_cap(len, |r| {
+                let t = T::read_xdr(r)?;
+                // Discard any bytes remaining in the frame that the record
+                // didn't consume so that the reader is positioned at the next
+                // frame. This matches the behaviour of the xdrpp parser used by
+                // stellar-core.
+                let remaining = r.inner.limit();
+                let discarded = std::io::copy(&mut r.inner, &mut std::io::sink())?;
+                if discarded != remaining {
+                    return Err(Error::Io(std::io::ErrorKind::UnexpectedEof.into()));
+                }
+                r.consume_len(usize::try_from(remaining).map_err(|_| Error::LengthLimitExceeded)?)?;
+                Ok(Self(t))
+            })
         } else {
             // TODO: Support reading those additional frames for the same
             // record.

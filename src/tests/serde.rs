@@ -2,7 +2,9 @@
 
 use crate::{BytesM, Hash, StringM, VecM};
 
-use crate::{AccountId, ContractEvent, ContractEventType, Int128Parts};
+use crate::{
+    AccountId, ContractEvent, ContractEventType, Curve25519Public, Int128Parts, PeerAddressIp,
+};
 
 use std::str::FromStr;
 
@@ -110,4 +112,55 @@ fn test_serde_der_vecm_enforces_max() {
         VecM::<u32, 2>::try_from(vec![1, 2]).unwrap()
     );
     assert!(serde_json::from_str::<VecM<u32, 2>>("[1,2,3]").is_err());
+}
+
+#[test]
+fn test_serde_inline_opaque_uses_sep51_hex() -> Result<(), Box<dyn std::error::Error>> {
+    let ip = PeerAddressIp::IPv4([0xab, 0xcd, 0xef, 0x01]);
+
+    let json = r#"{"i_pv4":"abcdef01"}"#;
+    let legacy_json = r#"{"i_pv4":[171,205,239,1]}"#;
+
+    assert_eq!(serde_json::to_string(&ip)?, json);
+
+    assert_eq!(serde_json::from_str::<PeerAddressIp>(json)?, ip);
+    assert_eq!(
+        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":"ABCDEF01"}"#)?,
+        ip
+    );
+
+    assert_eq!(serde_json::from_str::<PeerAddressIp>(legacy_json)?, ip);
+
+    let key = Curve25519Public { key: [0xab; 32] };
+    let key_json = format!(r#"{{"key":"{}"}}"#, "ab".repeat(32));
+    assert_eq!(serde_json::to_string(&key)?, key_json);
+    assert_eq!(serde_json::from_str::<Curve25519Public>(&key_json)?, key);
+
+    Ok(())
+}
+
+#[test]
+fn test_serde_der_inline_opaque_rejects_invalid() {
+    for json in [
+        r#"{"i_pv4":"010203"}"#,
+        r#"{"i_pv4":"0102030405"}"#,
+        r#"{"i_pv4":"0102030"}"#,
+        r#"{"i_pv4":"0102030g"}"#,
+        r#"{"i_pv4":[1,2,3]}"#,
+        r#"{"i_pv4":[1,2,3,4,5]}"#,
+        r#"{"i_pv4":[1,2,3,256]}"#,
+        r#"{"i_pv4":1}"#,
+    ] {
+        let result = serde_json::from_str::<PeerAddressIp>(json);
+        assert!(result.is_err(), "{json} decoded to {result:?}");
+    }
+
+    for json in [r#"{"i_pv4":"010203"}"#, r#"{"i_pv4":[1,2,3]}"#] {
+        let err = serde_json::from_str::<PeerAddressIp>(json).unwrap_err();
+        assert!(
+            err.to_string()
+                .contains("expected a hex string encoding 4 bytes or an array of 4 integers"),
+            "{json}: {err}"
+        );
+    }
 }

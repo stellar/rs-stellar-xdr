@@ -428,3 +428,49 @@ fn test_no_const_form_for_heap_free_types() {
     assert_not_contains(&output, "pub struct Flat {");
     assert_contains(&output, "pub use super::Flat;");
 }
+
+#[test]
+fn test_inline_fixed_opaque_serializes_as_hex() {
+    // Fixed length opaque declared inline is a plain byte array, so its
+    // field or arm gets the adapter that writes it as hex.
+    let output = generate_from_xdr(
+        r"
+        struct Foo { opaque b[4]; };
+        union Bar switch (int v) { case 0: opaque c[16]; };
+    ",
+    );
+    assert_contains(
+        &output,
+        r#"    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "ArrayOrHex")
+    )]
+    pub b: [u8; 4],"#,
+    );
+    assert_contains(
+        &output,
+        r#"    V0(
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "ArrayOrHex")
+        )]
+        [u8; 16],
+    ),"#,
+    );
+}
+
+#[test]
+fn test_typedef_fixed_opaque_serializes_through_display() {
+    // A typedef of fixed length opaque is a newtype with its own hex
+    // Display/FromStr, so it gets no serde_as adapter, and neither do fields
+    // of that type.
+    let output = generate_from_xdr(
+        r"
+        typedef opaque Foo[4];
+        struct Bar { Foo f; };
+    ",
+    );
+    assert_contains(&output, "pub struct Foo(pub [u8; 4]);");
+    // The output includes the header, which defines the adapter itself.
+    assert_not_contains(&output, r#"serde_as(as = "ArrayOrHex")"#);
+}

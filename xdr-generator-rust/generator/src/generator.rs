@@ -579,7 +579,13 @@ impl RustGenerator {
         let is_fixed_array_type = is_fixed_array(&t.type_);
         let is_var_array_type = is_var_array(&t.type_);
 
-        let resolved = resolve_type(&t.type_, None, &self.type_info, custom_str);
+        let custom_display_fromstr = is_fixed_opaque_type && !custom_str && !no_display_fromstr;
+        let resolved = resolve_type(
+            &t.type_,
+            None,
+            &self.type_info,
+            custom_str || custom_display_fromstr,
+        );
 
         let size = match &t.type_ {
             xdr_parser::ast::Type::OpaqueFixed(s)
@@ -613,8 +619,8 @@ impl RustGenerator {
                 element_type: resolved.element_type,
                 size,
                 custom_debug: is_fixed_opaque_type,
-                custom_display_fromstr: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
-                custom_schemars: is_fixed_opaque_type && !custom_str && !no_display_fromstr,
+                custom_display_fromstr,
+                custom_schemars: custom_display_fromstr,
                 cfg,
             }),
             const_output,

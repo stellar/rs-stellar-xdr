@@ -114,9 +114,6 @@
     },
     "String32": {
       "description": "String32 is an XDR Typedef defined as:\n\n```text typedef string string32<32>; ```",
-      "$ref": "#/definitions/StringM<32>"
-    },
-    "StringM<32>": {
       "type": "string",
       "maxLength": 32
     }

@@ -16,7 +16,8 @@
       ],
       "properties": {
         "text": {
-          "$ref": "#/definitions/StringM<28>"
+          "type": "string",
+          "maxLength": 28
         }
       }
     },
@@ -67,11 +68,5 @@
       "type": "string"
     }
   },
-  "unevaluatedProperties": false,
-  "definitions": {
-    "StringM<28>": {
-      "type": "string",
-      "maxLength": 28
-    }
-  }
+  "unevaluatedProperties": false
 }

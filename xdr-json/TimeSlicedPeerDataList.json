@@ -75,13 +75,10 @@
           "type": "string"
         },
         "version_str": {
-          "$ref": "#/definitions/StringM<100>"
+          "type": "string",
+          "maxLength": 100
         }
       }
-    },
-    "StringM<100>": {
-      "type": "string",
-      "maxLength": 100
     },
     "TimeSlicedPeerData": {
       "description": "TimeSlicedPeerData is an XDR Struct defined as:\n\n```text struct TimeSlicedPeerData { PeerStats peerStats; uint32 averageLatencyMs; }; ```",

@@ -67,17 +67,14 @@
       "type": "string"
     },
     "version_str": {
-      "$ref": "#/definitions/StringM<100>"
+      "type": "string",
+      "maxLength": 100
     }
   },
   "unevaluatedProperties": false,
   "definitions": {
     "NodeId": {
       "type": "string"
-    },
-    "StringM<100>": {
-      "type": "string",
-      "maxLength": 100
     }
   }
 }

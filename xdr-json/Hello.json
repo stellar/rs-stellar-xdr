@@ -58,7 +58,8 @@
       "$ref": "#/definitions/NodeId"
     },
     "version_str": {
-      "$ref": "#/definitions/StringM<100>"
+      "type": "string",
+      "maxLength": 100
     }
   },
   "unevaluatedProperties": false,
@@ -111,10 +112,6 @@
       "maxLength": 128,
       "contentEncoding": "hex",
       "contentMediaType": "application/binary"
-    },
-    "StringM<100>": {
-      "type": "string",
-      "maxLength": 100
     }
   }
 }

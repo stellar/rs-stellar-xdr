@@ -15,7 +15,8 @@
       "$ref": "#/definitions/ErrorCode"
     },
     "msg": {
-      "$ref": "#/definitions/StringM<100>"
+      "type": "string",
+      "maxLength": 100
     }
   },
   "unevaluatedProperties": false,
@@ -30,10 +31,6 @@
         "auth",
         "load"
       ]
-    },
-    "StringM<100>": {
-      "type": "string",
-      "maxLength": 100
     }
   }
 }

@@ -4,6 +4,7 @@ mod const_types;
 mod const_writer;
 mod default;
 mod frame;
+mod json_schema_files;
 mod ledgerkey_to_key;
 mod serde;
 mod serde_ints;

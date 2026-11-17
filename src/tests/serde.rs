@@ -111,3 +111,18 @@ fn test_serde_der_vecm_enforces_max() {
     );
     assert!(serde_json::from_str::<VecM<u32, 2>>("[1,2,3]").is_err());
 }
+
+#[test]
+fn test_serde_enum_member_starting_with_digit() -> Result<(), Box<dyn std::error::Error>> {
+    use crate::BinaryFuseFilterType;
+    for (v, s) in [
+        (BinaryFuseFilterType::B8Bit, "\"8_bit\""),
+        (BinaryFuseFilterType::B16Bit, "\"16_bit\""),
+        (BinaryFuseFilterType::B32Bit, "\"32_bit\""),
+    ] {
+        assert_eq!(serde_json::to_string(&v)?, s);
+        assert_eq!(serde_json::from_str::<BinaryFuseFilterType>(s)?, v);
+    }
+    assert!(serde_json::from_str::<BinaryFuseFilterType>("\"b8_bit\"").is_err());
+    Ok(())
+}

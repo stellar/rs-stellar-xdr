@@ -447,11 +447,20 @@ impl RustGenerator {
             .members
             .iter()
             .enumerate()
-            .map(|(i, m)| EnumStructMemberOutput {
-                name: type_name(&m.stripped_name),
-                value: m.value,
-                is_default: i == first_uncfg_index,
-                cfg: m.cfg.as_ref().map(xdr_parser::ast::CfgExpr::render),
+            .map(|(i, m)| {
+                // When the name with the prefix removed starts with a digit, the
+                // parser keeps a letter of the prefix to make a valid Rust
+                // identifier. That letter is not part of the JSON name.
+                let unprefixed = m.name.strip_prefix(&e.member_prefix).unwrap_or(&m.name);
+                let serde_rename = (!custom_str && unprefixed != m.stripped_name)
+                    .then(|| unprefixed.to_lowercase());
+                EnumStructMemberOutput {
+                    name: type_name(&m.stripped_name),
+                    value: m.value,
+                    is_default: i == first_uncfg_index,
+                    cfg: m.cfg.as_ref().map(xdr_parser::ast::CfgExpr::render),
+                    serde_rename,
+                }
             })
             .collect();
 

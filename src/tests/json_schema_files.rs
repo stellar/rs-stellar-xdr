@@ -47,5 +47,5 @@ fn stringm_json_validates_against_xdr_json_schema() {
         .iter_errors(&json)
         .map(|e| e.to_string())
         .collect();
-    assert!(errors.is_empty(), "{errors:?}");
+    assert_eq!(errors, Vec::<String>::new());
 }

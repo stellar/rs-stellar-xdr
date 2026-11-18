@@ -25,8 +25,20 @@ use super::*;
 #[repr(i32)]
 pub enum BinaryFuseFilterType {
     #[cfg_attr(feature = "alloc", default)]
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(rename = "8_bit", alias = "b8_bit")
+    )]
     B8Bit = 0,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(rename = "16_bit", alias = "b16_bit")
+    )]
     B16Bit = 1,
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(rename = "32_bit", alias = "b32_bit")
+    )]
     B32Bit = 2,
 }
 

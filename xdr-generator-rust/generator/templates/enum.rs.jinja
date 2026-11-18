@@ -30,6 +30,10 @@ pub enum {{ e.name }} {
 {%- if m.is_default %}
     #[cfg_attr(feature = "alloc", default)]
 {%- endif %}
+{%- if let Some(rename) = m.serde_rename %}
+    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(rename = "{{ rename }}"
+    {%- if let Some(alias) = m.serde_alias %}, alias = "{{ alias }}"{% endif %}))]
+{%- endif %}
     {{ m.name }} = {{ m.value }},
 {%- endfor %}
 }

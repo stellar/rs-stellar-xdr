@@ -272,6 +272,10 @@ pub struct EnumStructMemberOutput {
     pub value: i32,
     pub is_default: bool,
     pub cfg: Option<String>,
+    /// JSON name to use when it is different or not derived from `name`.
+    pub serde_rename: Option<String>,
+    /// Additional JSON name accepted when reading.
+    pub serde_alias: Option<String>,
 }
 
 pub struct UnionOutput {

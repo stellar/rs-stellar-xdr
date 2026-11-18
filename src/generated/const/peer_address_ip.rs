@@ -45,10 +45,10 @@ impl ConstWriter<'_> {
         self.write_type_ip_addr_type(&d);
         #[allow(clippy::match_same_arms)]
         match v {
-            PeerAddressIp::IPv4(value) => {
+            PeerAddressIp::Ipv4(value) => {
                 self.write_fixed_opaque(value);
             }
-            PeerAddressIp::IPv6(value) => {
+            PeerAddressIp::Ipv6(value) => {
                 self.write_fixed_opaque(value);
             }
         }

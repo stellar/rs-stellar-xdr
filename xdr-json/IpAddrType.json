@@ -4,7 +4,7 @@
   "description": "IpAddrType is an XDR Enum defined as:\n\n```text enum IPAddrType { IPv4 = 0, IPv6 = 1 }; ```",
   "type": "string",
   "enum": [
-    "i_pv4",
-    "i_pv6"
+    "ipv4",
+    "ipv6"
   ]
 }

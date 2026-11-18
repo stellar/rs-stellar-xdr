@@ -1,4 +1,4 @@
-use crate::naming::{field_json_rename, field_name, type_name};
+use crate::naming::{field_json_rename, field_name, mod_name, type_name};
 
 #[test]
 fn test_type_name_snake_case() {
@@ -118,11 +118,11 @@ fn test_field_name_trailing_id() {
 }
 
 // https://github.com/stellar/rs-stellar-xdr/issues/471
-// heck splits "IPv4" into ["I", "Pv4"] producing surprising results
+// heck alone splits "IPv4" into ["I", "Pv4"]
 #[test]
 fn test_type_name_ip_address_variants() {
-    assert_eq!(type_name("IPv4"), "IPv4");
-    assert_eq!(type_name("IPv6"), "IPv6");
+    assert_eq!(type_name("IPv4"), "Ipv4");
+    assert_eq!(type_name("IPv6"), "Ipv6");
     assert_eq!(type_name("IPAddrType"), "IpAddrType");
 }
 
@@ -131,6 +131,42 @@ fn test_type_name_ip_address_variants() {
 fn test_field_name_ip_address_variants() {
     assert_eq!(field_name("ipv4"), "ipv4");
     assert_eq!(field_name("ipv6"), "ipv6");
-    assert_eq!(field_name("IPv4"), "i_pv4");
-    assert_eq!(field_name("IPv6"), "i_pv6");
+    assert_eq!(field_name("IPv4"), "ipv4");
+    assert_eq!(field_name("IPv6"), "ipv6");
+}
+
+#[test]
+fn test_mod_name_ip_address_variants() {
+    assert_eq!(mod_name("IPv4"), "ipv4");
+}
+
+// heck alone splits "IDs" into ["I", "Ds"]
+#[test]
+fn test_field_name_plural_acronym() {
+    assert_eq!(field_name("signerSponsoringIDs"), "signer_sponsoring_ids");
+    assert_eq!(field_name("IDs"), "ids");
+    assert_eq!(field_name("nodeIDsList"), "node_ids_list");
+    assert_eq!(field_name("nodeIDs2"), "node_ids2");
+}
+
+#[test]
+fn test_type_name_plural_acronym() {
+    assert_eq!(type_name("signerSponsoringIDs"), "SignerSponsoringIds");
+}
+
+#[test]
+fn test_field_json_rename_plural_acronym() {
+    assert_eq!(field_json_rename("signerSponsoringIDs"), None);
+}
+
+// Acronyms followed by a capitalised word, or a lowercase word that doesn't
+// start with "s", are unaffected.
+#[test]
+fn test_acronym_fixes_do_not_affect_other_names() {
+    assert_eq!(type_name("SCPStatement"), "ScpStatement");
+    assert_eq!(type_name("SCPStatements"), "ScpStatements");
+    assert_eq!(type_name("IPAddrType"), "IpAddrType");
+    assert_eq!(type_name("PUBLIC_KEY_TYPE_ED25519"), "PublicKeyTypeEd25519");
+    assert_eq!(field_name("SIGNERS"), "signers");
+    assert_eq!(field_name("hashIDPreimage"), "hash_id_preimage");
 }

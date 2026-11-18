@@ -34,10 +34,10 @@
         {
           "type": "object",
           "required": [
-            "i_pv4"
+            "ipv4"
           ],
           "properties": {
-            "i_pv4": {
+            "ipv4": {
               "type": "array",
               "items": {
                 "type": "integer",
@@ -52,10 +52,10 @@
         {
           "type": "object",
           "required": [
-            "i_pv6"
+            "ipv6"
           ],
           "properties": {
-            "i_pv6": {
+            "ipv6": {
               "type": "array",
               "items": {
                 "type": "integer",

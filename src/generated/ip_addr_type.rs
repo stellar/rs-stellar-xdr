@@ -24,12 +24,12 @@ use super::*;
 #[repr(i32)]
 pub enum IpAddrType {
     #[cfg_attr(feature = "alloc", default)]
-    IPv4 = 0,
-    IPv6 = 1,
+    Ipv4 = 0,
+    Ipv6 = 1,
 }
 
 impl IpAddrType {
-    const _VARIANTS: &[IpAddrType] = &[IpAddrType::IPv4, IpAddrType::IPv6];
+    const _VARIANTS: &[IpAddrType] = &[IpAddrType::Ipv4, IpAddrType::Ipv6];
     pub const VARIANTS: [IpAddrType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -39,7 +39,7 @@ impl IpAddrType {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["IPv4", "IPv6"];
+    const _VARIANTS_STR: &[&str] = &["Ipv4", "Ipv6"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -53,8 +53,8 @@ impl IpAddrType {
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::IPv4 => "IPv4",
-            Self::IPv6 => "IPv6",
+            Self::Ipv4 => "Ipv4",
+            Self::Ipv6 => "Ipv6",
         }
     }
 
@@ -90,8 +90,8 @@ impl TryFrom<i32> for IpAddrType {
 
     fn try_from(i: i32) -> Result<Self, Error> {
         let e = match i {
-            0 => IpAddrType::IPv4,
-            1 => IpAddrType::IPv6,
+            0 => IpAddrType::Ipv4,
+            1 => IpAddrType::Ipv6,
             #[allow(unreachable_patterns)]
             _ => return Err(Error::Invalid),
         };

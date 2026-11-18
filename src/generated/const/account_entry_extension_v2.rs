@@ -8,7 +8,7 @@ use super::*;
 pub struct AccountEntryExtensionV2 {
     pub num_sponsored: u32,
     pub num_sponsoring: u32,
-    pub signer_sponsoring_i_ds: VecM<SponsorshipDescriptor, MAX_SIGNERS>,
+    pub signer_sponsoring_ids: VecM<SponsorshipDescriptor, MAX_SIGNERS>,
     pub ext: AccountEntryExtensionV2Ext,
 }
 
@@ -54,7 +54,7 @@ impl ConstWriter<'_> {
     pub const fn write_type_account_entry_extension_v2(&mut self, v: &AccountEntryExtensionV2) {
         self.write_u32(v.num_sponsored);
         self.write_u32(v.num_sponsoring);
-        self.write_type_vec_sponsorship_descriptor(&v.signer_sponsoring_i_ds);
+        self.write_type_vec_sponsorship_descriptor(&v.signer_sponsoring_ids);
         self.write_type_account_entry_extension_v2_ext(&v.ext);
     }
 }

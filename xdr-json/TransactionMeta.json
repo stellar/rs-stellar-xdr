@@ -203,7 +203,7 @@
         "ext",
         "num_sponsored",
         "num_sponsoring",
-        "signer_sponsoring_i_ds"
+        "signer_sponsoring_ids"
       ],
       "properties": {
         "ext": {
@@ -219,7 +219,7 @@
           "format": "uint32",
           "minimum": 0.0
         },
-        "signer_sponsoring_i_ds": {
+        "signer_sponsoring_ids": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/SponsorshipDescriptor"

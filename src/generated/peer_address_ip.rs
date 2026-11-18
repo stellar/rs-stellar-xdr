@@ -26,19 +26,19 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum PeerAddressIp {
-    IPv4([u8; 4]),
-    IPv6([u8; 16]),
+    Ipv4([u8; 4]),
+    Ipv6([u8; 16]),
 }
 
 #[cfg(feature = "alloc")]
 impl Default for PeerAddressIp {
     fn default() -> Self {
-        Self::IPv4(<[u8; 4]>::default())
+        Self::Ipv4(<[u8; 4]>::default())
     }
 }
 
 impl PeerAddressIp {
-    const _VARIANTS: &[IpAddrType] = &[IpAddrType::IPv4, IpAddrType::IPv6];
+    const _VARIANTS: &[IpAddrType] = &[IpAddrType::Ipv4, IpAddrType::Ipv6];
     pub const VARIANTS: [IpAddrType; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
         let mut i = 1;
@@ -48,7 +48,7 @@ impl PeerAddressIp {
         }
         arr
     };
-    const _VARIANTS_STR: &[&str] = &["IPv4", "IPv6"];
+    const _VARIANTS_STR: &[&str] = &["Ipv4", "Ipv6"];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
         let mut i = 1;
@@ -62,8 +62,8 @@ impl PeerAddressIp {
     #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Self::IPv4(_) => "IPv4",
-            Self::IPv6(_) => "IPv6",
+            Self::Ipv4(_) => "Ipv4",
+            Self::Ipv6(_) => "Ipv6",
         }
     }
 
@@ -71,8 +71,8 @@ impl PeerAddressIp {
     pub const fn discriminant(&self) -> IpAddrType {
         #[allow(clippy::match_same_arms)]
         match self {
-            Self::IPv4(_) => IpAddrType::IPv4,
-            Self::IPv6(_) => IpAddrType::IPv6,
+            Self::Ipv4(_) => IpAddrType::Ipv4,
+            Self::Ipv6(_) => IpAddrType::Ipv6,
         }
     }
 
@@ -111,8 +111,8 @@ impl ReadXdr for PeerAddressIp {
             let dv: IpAddrType = <IpAddrType as ReadXdr>::read_xdr(r)?;
             #[allow(clippy::match_same_arms, clippy::match_wildcard_for_single_variants)]
             let v = match dv {
-                IpAddrType::IPv4 => Self::IPv4(<[u8; 4]>::read_xdr(r)?),
-                IpAddrType::IPv6 => Self::IPv6(<[u8; 16]>::read_xdr(r)?),
+                IpAddrType::Ipv4 => Self::Ipv4(<[u8; 4]>::read_xdr(r)?),
+                IpAddrType::Ipv6 => Self::Ipv6(<[u8; 16]>::read_xdr(r)?),
                 #[allow(unreachable_patterns)]
                 _ => return Err(Error::Invalid),
             };
@@ -128,8 +128,8 @@ impl WriteXdr for PeerAddressIp {
             self.discriminant().write_xdr(w)?;
             #[allow(clippy::match_same_arms)]
             match self {
-                Self::IPv4(v) => v.write_xdr(w)?,
-                Self::IPv6(v) => v.write_xdr(w)?,
+                Self::Ipv4(v) => v.write_xdr(w)?,
+                Self::Ipv6(v) => v.write_xdr(w)?,
             };
             Ok(())
         })

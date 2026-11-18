@@ -454,14 +454,16 @@ impl RustGenerator {
                 // name with it is still accepted when reading because earlier
                 // versions wrote it.
                 let unprefixed = m.name.strip_prefix(&e.member_prefix).unwrap_or(&m.name);
-                let serde_rename = (!custom_str && unprefixed != m.stripped_name)
-                    .then(|| (unprefixed.to_lowercase(), m.stripped_name.to_lowercase()));
+                let renamed = !custom_str && unprefixed != m.stripped_name;
+                let serde_rename = renamed.then(|| unprefixed.to_lowercase());
+                let serde_alias = renamed.then(|| m.stripped_name.to_lowercase());
                 EnumStructMemberOutput {
                     name: type_name(&m.stripped_name),
                     value: m.value,
                     is_default: i == first_uncfg_index,
                     cfg: m.cfg.as_ref().map(xdr_parser::ast::CfgExpr::render),
                     serde_rename,
+                    serde_alias,
                 }
             })
             .collect();

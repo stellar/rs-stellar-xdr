@@ -430,7 +430,7 @@ fn test_no_const_form_for_heap_free_types() {
 }
 
 #[test]
-fn test_enum_member_starting_with_digit_keeps_json_name() {
+fn test_enum_member_starting_with_digit_has_json_name_and_alias() {
     let output = generate_from_xdr(
         r"
         enum Width {
@@ -443,9 +443,9 @@ fn test_enum_member_starting_with_digit_keeps_json_name() {
         &output,
         r#"pub enum Width {
     #[cfg_attr(feature = "alloc", default)]
-    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(rename = "8_bit"))]
+    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(rename = "8_bit", alias = "w8_bit"))]
     W8Bit = 0,
-    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(rename = "16_bit"))]
+    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(rename = "16_bit", alias = "w16_bit"))]
     W16Bit = 1,
 }"#,
     );

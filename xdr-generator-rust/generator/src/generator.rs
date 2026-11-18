@@ -450,10 +450,12 @@ impl RustGenerator {
             .map(|(i, m)| {
                 // When the name with the prefix removed starts with a digit, the
                 // parser keeps a letter of the prefix to make a valid Rust
-                // identifier. That letter is not part of the JSON name.
+                // identifier. That letter is not part of the JSON name, but the
+                // name with it is still accepted when reading because earlier
+                // versions wrote it.
                 let unprefixed = m.name.strip_prefix(&e.member_prefix).unwrap_or(&m.name);
                 let serde_rename = (!custom_str && unprefixed != m.stripped_name)
-                    .then(|| unprefixed.to_lowercase());
+                    .then(|| (unprefixed.to_lowercase(), m.stripped_name.to_lowercase()));
                 EnumStructMemberOutput {
                     name: type_name(&m.stripped_name),
                     value: m.value,

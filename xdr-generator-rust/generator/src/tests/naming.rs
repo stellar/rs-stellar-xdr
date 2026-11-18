@@ -1,4 +1,10 @@
-use crate::naming::{field_json_rename, field_name, mod_name, type_name};
+use crate::naming::{field_json_rename, field_name, mod_name, set_single_words, type_name};
+
+/// The single words configured by the Makefile. Every test that depends on them
+/// calls this; the list can only be set once per test process.
+fn single_words() {
+    set_single_words(vec!["IPv".to_string()]);
+}
 
 #[test]
 fn test_type_name_snake_case() {
@@ -121,6 +127,7 @@ fn test_field_name_trailing_id() {
 // heck alone splits "IPv4" into ["I", "Pv4"]
 #[test]
 fn test_type_name_ip_address_variants() {
+    single_words();
     assert_eq!(type_name("IPv4"), "Ipv4");
     assert_eq!(type_name("IPv6"), "Ipv6");
     assert_eq!(type_name("IPAddrType"), "IpAddrType");
@@ -129,6 +136,7 @@ fn test_type_name_ip_address_variants() {
 // https://github.com/stellar/rs-stellar-xdr/issues/471
 #[test]
 fn test_field_name_ip_address_variants() {
+    single_words();
     assert_eq!(field_name("ipv4"), "ipv4");
     assert_eq!(field_name("ipv6"), "ipv6");
     assert_eq!(field_name("IPv4"), "ipv4");
@@ -137,6 +145,7 @@ fn test_field_name_ip_address_variants() {
 
 #[test]
 fn test_mod_name_ip_address_variants() {
+    single_words();
     assert_eq!(mod_name("IPv4"), "ipv4");
 }
 

@@ -1,4 +1,5 @@
 use heck::{ToSnakeCase, ToUpperCamelCase};
+use std::sync::OnceLock;
 use xdr_parser::ast::UnionCaseValue;
 
 /// Convert an XDR name to a Rust type name (`UpperCamelCase`).
@@ -34,15 +35,22 @@ pub(crate) fn field_json_rename(name: &str) -> Option<String> {
     }
 }
 
-/// Acronyms that are written with a lowercase letter directly after them, and
-/// the spelling to use instead. heck would otherwise treat the last capital as
-/// the start of the next word, e.g. `IPv4` -> `i_pv4`.
-const ACRONYM_SPELLINGS: &[(&str, &str)] = &[("IPv", "Ipv")];
+/// Character sequences that should be treated as a single word, e.g. `IPv`.
+/// Set once from the `--single-word` CLI option.
+static SINGLE_WORDS: OnceLock<Vec<String>> = OnceLock::new();
+
+/// Set the character sequences that should be treated as a single word. Only
+/// the first call has any effect.
+pub(crate) fn set_single_words(words: Vec<String>) {
+    let _ = SINGLE_WORDS.set(words);
+}
 
 /// Rewrite acronyms that heck splits in the wrong place, so that heck sees
 /// them as a single word:
 ///
-/// - Known spellings in [`ACRONYM_SPELLINGS`], e.g. `IPv4` -> `Ipv4`.
+/// - Sequences set with [`set_single_words`], e.g. `IPv` makes `IPv4` ->
+///   `Ipv4`. heck alone would treat the last capital as the start of the next
+///   word, e.g. `IPv4` -> `i_pv4`.
 /// - Plural acronyms, e.g. `IDs` -> `Ids`, where heck would otherwise produce
 ///   `i_ds`.
 ///
@@ -55,11 +63,12 @@ fn fix_acronyms(name: &str) -> String {
     'outer: while i < chars.len() {
         let at_word_start = i == 0 || !chars[i - 1].is_uppercase();
         if at_word_start && chars[i].is_uppercase() {
-            for (from, to) in ACRONYM_SPELLINGS {
-                let from: Vec<char> = from.chars().collect();
-                if chars[i..].starts_with(&from) {
-                    out.push_str(to);
-                    i += from.len();
+            for word in SINGLE_WORDS.get().into_iter().flatten() {
+                let word: Vec<char> = word.chars().collect();
+                if !word.is_empty() && chars[i..].starts_with(&word) {
+                    out.push(word[0]);
+                    out.extend(word[1..].iter().flat_map(|c| c.to_lowercase()));
+                    i += word.len();
                     continue 'outer;
                 }
             }

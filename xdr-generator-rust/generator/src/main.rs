@@ -44,10 +44,16 @@ struct Args {
     /// Types that should NOT have Display/FromStr/schemars generated
     #[arg(long, value_delimiter = ',')]
     no_display_fromstr: Vec<String>,
+
+    /// Character sequences to treat as a single word when converting names,
+    /// e.g. IPv so that IPv4 becomes Ipv4 rather than IPv4 / i_pv4
+    #[arg(long, value_delimiter = ',')]
+    single_word: Vec<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
+    naming::set_single_words(args.single_word);
 
     // Read all input files and sort by filename
     let mut files: Vec<(PathBuf, String)> = Vec::new();

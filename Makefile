@@ -54,6 +54,7 @@ watch:
 generate: generate-files xdr-version xdr-json xdr-definitions-json
 
 CUSTOM_DEFAULT_IMPL=TransactionEnvelope
+SINGLE_WORDS=IPv
 CUSTOM_STR_IMPL=PublicKey,AccountId,ContractId,MuxedAccount,MuxedAccountMed25519,SignerKey,SignerKeyEd25519SignedPayload,NodeId,ScAddress,AssetCode,AssetCode4,AssetCode12,ClaimableBalanceId,PoolId,MuxedEd25519Account,MuxedContract,Int128Parts,UInt128Parts,Int256Parts,UInt256Parts
 
 generate-files: src/generated.rs
@@ -63,7 +64,8 @@ src/generated.rs: $(sort $(wildcard xdr/*.x))
 		$(addprefix --input ,$(sort $(wildcard xdr/*.x))) \
 		--output $@ \
 		--custom-default $(CUSTOM_DEFAULT_IMPL) \
-		--custom-str $(CUSTOM_STR_IMPL)
+		--custom-str $(CUSTOM_STR_IMPL) \
+		--single-word $(SINGLE_WORDS)
 	rustfmt $@ && find src/generated -name '*.rs' | xargs rustfmt
 
 xdr-version: $(wildcard .git/modules/xdr/**/*) $(wildcard xdr/*.x)

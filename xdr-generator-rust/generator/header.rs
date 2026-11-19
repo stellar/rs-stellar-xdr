@@ -486,6 +486,48 @@ impl<R: Read, S: ReadXdr> Iterator for ReadXdrIter<R, S> {
     }
 }
 
+/// `ReadXdrIterWith` is like [`ReadXdrIter`], but reads each value with a
+/// function instead of a type's [`ReadXdr`] implementation, for values whose
+/// type is only known at runtime, such as an `opaque[n]`.
+#[cfg(all(feature = "std", feature = "type_enum"))]
+struct ReadXdrIterWith<R: Read, F> {
+    reader: Limited<BufReader<R>>,
+    f: F,
+}
+
+#[cfg(all(feature = "std", feature = "type_enum"))]
+impl<R: Read, F> ReadXdrIterWith<R, F> {
+    fn new<S>(r: R, limits: Limits, f: F) -> Self
+    where
+        F: FnMut(&mut Limited<BufReader<R>>) -> Result<S, Error>,
+    {
+        Self {
+            reader: Limited {
+                inner: BufReader::new(r),
+                limits,
+            },
+            f,
+        }
+    }
+}
+
+#[cfg(all(feature = "std", feature = "type_enum"))]
+impl<R: Read, S, F> Iterator for ReadXdrIterWith<R, F>
+where
+    F: FnMut(&mut Limited<BufReader<R>>) -> Result<S, Error>,
+{
+    type Item = Result<S, Error>;
+
+    // See `ReadXdrIter::next`, which this mirrors.
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.reader.fill_buf() {
+            Ok([]) => None,
+            Err(e) => Some(Err(Error::Io(e))),
+            Ok([..]) => Some((self.f)(&mut self.reader)),
+        }
+    }
+}
+
 pub trait ReadXdr
 where
     Self: Sized,
@@ -2103,14 +2145,20 @@ impl<const MAX: u32> schemars::JsonSchema for StringM<MAX> {
             // maxLength is omitted because bytes are escaped (SEP-51), so the
             // JSON length doesn't map to the XDR length. The XDR byte limit is
             // stated in the description instead.
-            schema.metadata().description = Some(format!(
-                "Byte string, not UTF-8, of at most {MAX} bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than {MAX} characters."
-            ));
+            schema.metadata().description = Some(stringm_json_schema_description(MAX));
             schema.into()
         } else {
             schema
         }
     }
+}
+
+/// The description of the JSON schema of a string of at most `max` bytes.
+#[cfg(feature = "schemars")]
+fn stringm_json_schema_description(max: u32) -> String {
+    format!(
+        "Byte string, not UTF-8, of at most {max} bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than {max} characters."
+    )
 }
 
 impl<const MAX: u32> StringM<MAX> {
@@ -2506,40 +2554,48 @@ where
 {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
-        // Read the 4-byte fragment header defined by the Record Marking
-        // Standard in RFC 5531 Section 11
-        // (https://www.rfc-editor.org/rfc/rfc5531#section-11).
-        //  - Bit 31 (high bit) is the last-fragment flag: 1 if this is the
-        //    last fragment of the record, 0 if more fragments follow.
-        //  - Bits 0-30 contain the byte length of the fragment data that
-        //    follows the header.
-        let header = u32::read_xdr(r)?;
-        let last_record = header >> 31 == 1;
-        let len = u64::from(header & 0x7fff_ffff);
-        if last_record {
-            // Read the record in the frame, capping the read at the length in
-            // the header so that the record cannot read into the next frame.
-            r.with_len_cap(len, |r| {
-                let t = T::read_xdr(r)?;
-                // Discard any bytes remaining in the frame that the record
-                // didn't consume so that the reader is positioned at the next
-                // frame. This matches the behaviour of the xdrpp parser used by
-                // stellar-core.
-                let remaining = r.inner.limit();
-                let discarded = std::io::copy(&mut r.inner, &mut std::io::sink())?;
-                if discarded != remaining {
-                    return Err(Error::Io(std::io::ErrorKind::UnexpectedEof.into()));
-                }
-                r.consume_len(
-                    usize::try_from(remaining).map_err(|_| Error::LengthLimitExceeded)?,
-                )?;
-                Ok(Self(t))
-            })
-        } else {
-            // TODO: Support reading those additional frames for the same
-            // record.
-            Err(Error::Unsupported)
-        }
+        read_frame(r, |r| T::read_xdr(r)).map(Self)
+    }
+}
+
+/// Reads a frame, using the given function to read the record in it. See
+/// [`Frame`].
+#[cfg(feature = "std")]
+fn read_frame<R: Read, T>(
+    r: &mut Limited<R>,
+    f: impl FnOnce(&mut Limited<std::io::Take<&mut R>>) -> Result<T, Error>,
+) -> Result<T, Error> {
+    // Read the 4-byte fragment header defined by the Record Marking
+    // Standard in RFC 5531 Section 11
+    // (https://www.rfc-editor.org/rfc/rfc5531#section-11).
+    //  - Bit 31 (high bit) is the last-fragment flag: 1 if this is the
+    //    last fragment of the record, 0 if more fragments follow.
+    //  - Bits 0-30 contain the byte length of the fragment data that
+    //    follows the header.
+    let header = u32::read_xdr(r)?;
+    let last_record = header >> 31 == 1;
+    let len = u64::from(header & 0x7fff_ffff);
+    if last_record {
+        // Read the record in the frame, capping the read at the length in
+        // the header so that the record cannot read into the next frame.
+        r.with_len_cap(len, |r| {
+            let t = f(r)?;
+            // Discard any bytes remaining in the frame that the record
+            // didn't consume so that the reader is positioned at the next
+            // frame. This matches the behaviour of the xdrpp parser used by
+            // stellar-core.
+            let remaining = r.inner.limit();
+            let discarded = std::io::copy(&mut r.inner, &mut std::io::sink())?;
+            if discarded != remaining {
+                return Err(Error::Io(std::io::ErrorKind::UnexpectedEof.into()));
+            }
+            r.consume_len(usize::try_from(remaining).map_err(|_| Error::LengthLimitExceeded)?)?;
+            Ok(t)
+        })
+    } else {
+        // TODO: Support reading those additional frames for the same
+        // record.
+        Err(Error::Unsupported)
     }
 }
 

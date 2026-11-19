@@ -36,6 +36,20 @@ macro_rules! run_x {
     ($f:ident) => {
         fn $f(&self) -> Result<(), Error> {
             for t in crate::TypeVariant::VARIANTS {
+                // Files are only written for the types defined in the XDR.
+                if matches!(
+                    t,
+                    crate::TypeVariant::Int
+                        | crate::TypeVariant::UnsignedInt
+                        | crate::TypeVariant::Hyper
+                        | crate::TypeVariant::UnsignedHyper
+                        | crate::TypeVariant::Bool
+                        | crate::TypeVariant::OpaqueFixed(_)
+                        | crate::TypeVariant::OpaqueVar(_)
+                        | crate::TypeVariant::StringVar(_)
+                ) {
+                    continue;
+                }
                 let settings = match self.output {
                     OutputFormat::JsonSchemaDraft201909 => schemars::settings_draft201909(),
                 };

@@ -489,6 +489,24 @@ pub enum TypeVariant {
     ClaimableBalanceId,
     #[cfg(feature = "test_feature")]
     TestNextType,
+    /// XDR `int`.
+    Int,
+    /// XDR `unsigned int`.
+    UnsignedInt,
+    /// XDR `hyper`.
+    Hyper,
+    /// XDR `unsigned hyper`.
+    UnsignedHyper,
+    /// XDR `bool`.
+    Bool,
+    /// XDR `opaque[n]`, fixed-length opaque data of `n` bytes.
+    OpaqueFixed(u32),
+    /// XDR `opaque<max>`, variable-length opaque data of at most `max` bytes.
+    /// `opaque<>` has a `max` of `u32::MAX`.
+    OpaqueVar(u32),
+    /// XDR `string<max>`, a string of at most `max` bytes. `string<>` has a
+    /// `max` of `u32::MAX`.
+    StringVar(u32),
 }
 
 #[cfg(feature = "type_enum")]
@@ -973,6 +991,13 @@ impl TypeVariant {
         TypeVariant::ClaimableBalanceId,
         #[cfg(feature = "test_feature")]
         TypeVariant::TestNextType,
+        TypeVariant::Int,
+        TypeVariant::UnsignedInt,
+        TypeVariant::Hyper,
+        TypeVariant::UnsignedHyper,
+        TypeVariant::Bool,
+        TypeVariant::OpaqueVar(u32::MAX),
+        TypeVariant::StringVar(u32::MAX),
     ];
     pub const VARIANTS: [TypeVariant; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -1463,6 +1488,13 @@ impl TypeVariant {
         "ClaimableBalanceId",
         #[cfg(feature = "test_feature")]
         "TestNextType",
+        "int",
+        "unsigned int",
+        "hyper",
+        "unsigned hyper",
+        "bool",
+        "opaque<>",
+        "string<>",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
@@ -1474,6 +1506,10 @@ impl TypeVariant {
         arr
     };
 
+    /// The name of the type. The names of the sized primitives, other than
+    /// `opaque<>` and `string<>`, have `n` in place of their size, such as
+    /// `opaque[n]`. Use the [`Display`](core::fmt::Display) implementation
+    /// for a name with the size.
     #[must_use]
     #[allow(clippy::too_many_lines)]
     pub const fn name(&self) -> &'static str {
@@ -1975,6 +2011,16 @@ impl TypeVariant {
             Self::ClaimableBalanceId => "ClaimableBalanceId",
             #[cfg(feature = "test_feature")]
             Self::TestNextType => "TestNextType",
+            Self::Int => "int",
+            Self::UnsignedInt => "unsigned int",
+            Self::Hyper => "hyper",
+            Self::UnsignedHyper => "unsigned hyper",
+            Self::Bool => "bool",
+            Self::OpaqueFixed(_) => "opaque[n]",
+            Self::OpaqueVar(u32::MAX) => "opaque<>",
+            Self::OpaqueVar(_) => "opaque<n>",
+            Self::StringVar(u32::MAX) => "string<>",
+            Self::StringVar(_) => "string<n>",
         }
     }
 
@@ -2698,6 +2744,50 @@ impl TypeVariant {
             Self::ClaimableBalanceId => gen.into_root_schema_for::<ClaimableBalanceId>(),
             #[cfg(feature = "test_feature")]
             Self::TestNextType => gen.into_root_schema_for::<TestNextType>(),
+            Self::Int => self.titled(gen.into_root_schema_for::<i32>()),
+            Self::UnsignedInt => self.titled(gen.into_root_schema_for::<u32>()),
+            Self::Hyper => {
+                self.titled(gen.into_root_schema_for::<serde_with::Schema<i64, NumberOrString>>())
+            }
+            Self::UnsignedHyper => {
+                self.titled(gen.into_root_schema_for::<serde_with::Schema<u64, NumberOrString>>())
+            }
+            Self::Bool => self.titled(gen.into_root_schema_for::<bool>()),
+            Self::OpaqueFixed(n) => {
+                let mut root = self.titled(gen.into_root_schema_for::<BytesM>());
+                let string = root.schema.string();
+                string.min_length = n.checked_mul(2);
+                string.max_length = n.checked_mul(2);
+                root
+            }
+            Self::OpaqueVar(max) => {
+                let mut root = self.titled(gen.into_root_schema_for::<BytesM>());
+                root.schema.string().max_length = max.checked_mul(2);
+                root
+            }
+            Self::StringVar(max) => {
+                let mut root = self.titled(gen.into_root_schema_for::<StringM>());
+                root.schema.metadata().description = Some(stringm_json_schema_description(*max));
+                root
+            }
+        }
+    }
+
+    #[cfg(feature = "schemars")]
+    fn titled(self, mut root: schemars::schema::RootSchema) -> schemars::schema::RootSchema {
+        root.schema.metadata().title = Some(self.to_string());
+        root
+    }
+}
+
+#[cfg(feature = "type_enum")]
+impl core::fmt::Display for TypeVariant {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::OpaqueFixed(n) => write!(f, "opaque[{n}]"),
+            Self::OpaqueVar(max) if *max != u32::MAX => write!(f, "opaque<{max}>"),
+            Self::StringVar(max) if *max != u32::MAX => write!(f, "string<{max}>"),
+            _ => f.write_str(self.name()),
         }
     }
 }
@@ -3236,15 +3326,40 @@ impl core::str::FromStr for TypeVariant {
             "ClaimableBalanceId" => Ok(Self::ClaimableBalanceId),
             #[cfg(feature = "test_feature")]
             "TestNextType" => Ok(Self::TestNextType),
-            _ => Err(Error::Invalid),
+            "int" => Ok(Self::Int),
+            "unsigned int" => Ok(Self::UnsignedInt),
+            "hyper" => Ok(Self::Hyper),
+            "unsigned hyper" => Ok(Self::UnsignedHyper),
+            "bool" => Ok(Self::Bool),
+            "opaque<>" => Ok(Self::OpaqueVar(u32::MAX)),
+            "string<>" => Ok(Self::StringVar(u32::MAX)),
+            _ => {
+                let size = |prefix: &str, suffix: &str| {
+                    s.strip_prefix(prefix)?
+                        .strip_suffix(suffix)?
+                        .parse::<u32>()
+                        .ok()
+                };
+                if let Some(n) = size("opaque[", "]") {
+                    Ok(Self::OpaqueFixed(n))
+                } else if let Some(max) = size("opaque<", ">") {
+                    Ok(Self::OpaqueVar(max))
+                } else if let Some(max) = size("string<", ">") {
+                    Ok(Self::StringVar(max))
+                } else {
+                    Err(Error::Invalid)
+                }
+            }
         }
     }
 }
 
 #[cfg(feature = "type_enum")]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", cfg_eval::cfg_eval)]
 #[cfg_attr(
     all(feature = "serde", feature = "alloc"),
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
     serde(untagged)
@@ -3732,6 +3847,53 @@ pub enum Type {
     ClaimableBalanceId(Box<ClaimableBalanceId>),
     #[cfg(feature = "test_feature")]
     TestNextType(Box<TestNextType>),
+    Int(Box<i32>),
+    UnsignedInt(Box<u32>),
+    Hyper(
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "Box<NumberOrString>")
+        )]
+        Box<i64>,
+    ),
+    UnsignedHyper(
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "Box<NumberOrString>")
+        )]
+        Box<u64>,
+    ),
+    Bool(Box<bool>),
+    /// The size, and the value, which is exactly that many bytes.
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(
+            serialize_with = "serialize_sized",
+            deserialize_with = "deserialize_sized"
+        )
+    )]
+    #[cfg_attr(feature = "schemars", schemars(with = "BytesM"))]
+    OpaqueFixed(u32, Box<BytesM>),
+    /// The maximum length, and the value.
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(
+            serialize_with = "serialize_sized",
+            deserialize_with = "deserialize_sized"
+        )
+    )]
+    #[cfg_attr(feature = "schemars", schemars(with = "BytesM"))]
+    OpaqueVar(u32, Box<BytesM>),
+    /// The maximum length, and the value.
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde(
+            serialize_with = "serialize_sized",
+            deserialize_with = "deserialize_sized"
+        )
+    )]
+    #[cfg_attr(feature = "schemars", schemars(with = "StringM"))]
+    StringVar(u32, Box<StringM>),
 }
 
 #[cfg(feature = "type_enum")]
@@ -4216,6 +4378,13 @@ impl Type {
         TypeVariant::ClaimableBalanceId,
         #[cfg(feature = "test_feature")]
         TypeVariant::TestNextType,
+        TypeVariant::Int,
+        TypeVariant::UnsignedInt,
+        TypeVariant::Hyper,
+        TypeVariant::UnsignedHyper,
+        TypeVariant::Bool,
+        TypeVariant::OpaqueVar(u32::MAX),
+        TypeVariant::StringVar(u32::MAX),
     ];
     pub const VARIANTS: [TypeVariant; Self::_VARIANTS.len()] = {
         let mut arr = [Self::_VARIANTS[0]; Self::_VARIANTS.len()];
@@ -4706,6 +4875,13 @@ impl Type {
         "ClaimableBalanceId",
         #[cfg(feature = "test_feature")]
         "TestNextType",
+        "int",
+        "unsigned int",
+        "hyper",
+        "unsigned hyper",
+        "bool",
+        "opaque<>",
+        "string<>",
     ];
     pub const VARIANTS_STR: [&'static str; Self::_VARIANTS_STR.len()] = {
         let mut arr = [Self::_VARIANTS_STR[0]; Self::_VARIANTS_STR.len()];
@@ -6811,6 +6987,39 @@ impl Type {
             #[cfg(feature = "test_feature")]
             TypeVariant::TestNextType => r.with_limited_depth(|r| {
                 Ok(Self::TestNextType(Box::new(TestNextType::read_xdr(r)?)))
+            }),
+            TypeVariant::Int => {
+                r.with_limited_depth(|r| Ok(Self::Int(Box::new(i32::read_xdr(r)?))))
+            }
+            TypeVariant::UnsignedInt => {
+                r.with_limited_depth(|r| Ok(Self::UnsignedInt(Box::new(u32::read_xdr(r)?))))
+            }
+            TypeVariant::Hyper => {
+                r.with_limited_depth(|r| Ok(Self::Hyper(Box::new(i64::read_xdr(r)?))))
+            }
+            TypeVariant::UnsignedHyper => {
+                r.with_limited_depth(|r| Ok(Self::UnsignedHyper(Box::new(u64::read_xdr(r)?))))
+            }
+            TypeVariant::Bool => {
+                r.with_limited_depth(|r| Ok(Self::Bool(Box::new(bool::read_xdr(r)?))))
+            }
+            TypeVariant::OpaqueFixed(n) => r.with_limited_depth(|r| {
+                Ok(Self::OpaqueFixed(
+                    n,
+                    Box::new(BytesM(read_opaque_fixed(r, n)?)),
+                ))
+            }),
+            TypeVariant::OpaqueVar(max) => r.with_limited_depth(|r| {
+                Ok(Self::OpaqueVar(
+                    max,
+                    Box::new(BytesM(read_opaque_var(r, max)?)),
+                ))
+            }),
+            TypeVariant::StringVar(max) => r.with_limited_depth(|r| {
+                Ok(Self::StringVar(
+                    max,
+                    Box::new(StringM(read_opaque_var(r, max)?)),
+                ))
             }),
         }
     }
@@ -8932,6 +9141,18 @@ impl Type {
                 ReadXdrIter::<_, TestNextType>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TestNextType(Box::new(t)))),
             ),
+            TypeVariant::Int
+            | TypeVariant::UnsignedInt
+            | TypeVariant::Hyper
+            | TypeVariant::UnsignedHyper
+            | TypeVariant::Bool
+            | TypeVariant::OpaqueFixed(_)
+            | TypeVariant::OpaqueVar(_)
+            | TypeVariant::StringVar(_) => Box::new(ReadXdrIterWith::new(
+                &mut r.inner,
+                r.limits.clone(),
+                move |r| Self::read_xdr(v, r),
+            )),
         }
     }
 
@@ -11325,6 +11546,18 @@ impl Type {
                 ReadXdrIter::<_, Frame<TestNextType>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TestNextType(Box::new(t.0)))),
             ),
+            TypeVariant::Int
+            | TypeVariant::UnsignedInt
+            | TypeVariant::Hyper
+            | TypeVariant::UnsignedHyper
+            | TypeVariant::Bool
+            | TypeVariant::OpaqueFixed(_)
+            | TypeVariant::OpaqueVar(_)
+            | TypeVariant::StringVar(_) => Box::new(ReadXdrIterWith::new(
+                &mut r.inner,
+                r.limits.clone(),
+                move |r| read_frame(r, |r| Self::read_xdr(v, r)),
+            )),
         }
     }
 
@@ -13285,6 +13518,18 @@ impl Type {
                 ReadXdrIter::<_, TestNextType>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TestNextType(Box::new(t)))),
             ),
+            TypeVariant::Int
+            | TypeVariant::UnsignedInt
+            | TypeVariant::Hyper
+            | TypeVariant::UnsignedHyper
+            | TypeVariant::Bool
+            | TypeVariant::OpaqueFixed(_)
+            | TypeVariant::OpaqueVar(_)
+            | TypeVariant::StringVar(_) => {
+                Box::new(ReadXdrIterWith::new(dec, r.limits.clone(), move |r| {
+                    Self::read_xdr(v, r)
+                }))
+            }
         }
     }
 
@@ -14640,6 +14885,19 @@ impl Type {
             #[cfg(feature = "test_feature")]
             TypeVariant::TestNextType => {
                 Ok(Self::TestNextType(Box::new(serde_json::from_reader(r)?)))
+            }
+            TypeVariant::Int
+            | TypeVariant::UnsignedInt
+            | TypeVariant::Hyper
+            | TypeVariant::UnsignedHyper
+            | TypeVariant::Bool
+            | TypeVariant::OpaqueFixed(_)
+            | TypeVariant::OpaqueVar(_)
+            | TypeVariant::StringVar(_) => {
+                let mut de = serde_json::Deserializer::from_reader(r);
+                let t = Self::deserialize_json(v, &mut de)?;
+                de.end()?;
+                Ok(t)
             }
         }
     }
@@ -16172,6 +16430,40 @@ impl Type {
             TypeVariant::TestNextType => Ok(Self::TestNextType(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
+            TypeVariant::Int => Ok(Self::Int(Box::new(serde::de::Deserialize::deserialize(r)?))),
+            TypeVariant::UnsignedInt => Ok(Self::UnsignedInt(Box::new(
+                serde::de::Deserialize::deserialize(r)?,
+            ))),
+            TypeVariant::Hyper => Ok(Self::Hyper(Box::new(
+                <NumberOrString as serde_with::DeserializeAs<i64>>::deserialize_as(r)?,
+            ))),
+            TypeVariant::UnsignedHyper => Ok(Self::UnsignedHyper(Box::new(
+                <NumberOrString as serde_with::DeserializeAs<u64>>::deserialize_as(r)?,
+            ))),
+            TypeVariant::Bool => Ok(Self::Bool(Box::new(serde::de::Deserialize::deserialize(
+                r,
+            )?))),
+            TypeVariant::OpaqueFixed(n) => {
+                let t: BytesM = serde::de::Deserialize::deserialize(r)?;
+                if t.len() != n as usize {
+                    return Err(Error::LengthMismatch);
+                }
+                Ok(Self::OpaqueFixed(n, Box::new(t)))
+            }
+            TypeVariant::OpaqueVar(max) => {
+                let t: BytesM = serde::de::Deserialize::deserialize(r)?;
+                if t.len() > max as usize {
+                    return Err(Error::LengthExceedsMax);
+                }
+                Ok(Self::OpaqueVar(max, Box::new(t)))
+            }
+            TypeVariant::StringVar(max) => {
+                let t: StringM = serde::de::Deserialize::deserialize(r)?;
+                if t.len() > max as usize {
+                    return Err(Error::LengthExceedsMax);
+                }
+                Ok(Self::StringVar(max, Box::new(t)))
+            }
         }
     }
 
@@ -18649,6 +18941,15 @@ impl Type {
             })
             .map(|t| Self::TestNextType(Box::new(t)))
             .map_err(Error::Json),
+            // Primitives have no fields to ignore.
+            TypeVariant::Int
+            | TypeVariant::UnsignedInt
+            | TypeVariant::Hyper
+            | TypeVariant::UnsignedHyper
+            | TypeVariant::Bool
+            | TypeVariant::OpaqueFixed(_)
+            | TypeVariant::OpaqueVar(_)
+            | TypeVariant::StringVar(_) => Self::deserialize_json(v, r),
         }?;
         Ok((t, ignored.into_inner()))
     }
@@ -20012,6 +20313,29 @@ impl Type {
             TypeVariant::TestNextType => {
                 Ok(Self::TestNextType(Box::new(TestNextType::arbitrary(u)?)))
             }
+            TypeVariant::Int => Ok(Self::Int(Box::new(i32::arbitrary(u)?))),
+            TypeVariant::UnsignedInt => Ok(Self::UnsignedInt(Box::new(u32::arbitrary(u)?))),
+            TypeVariant::Hyper => Ok(Self::Hyper(Box::new(i64::arbitrary(u)?))),
+            TypeVariant::UnsignedHyper => Ok(Self::UnsignedHyper(Box::new(u64::arbitrary(u)?))),
+            TypeVariant::Bool => Ok(Self::Bool(Box::new(bool::arbitrary(u)?))),
+            TypeVariant::OpaqueFixed(n) => Ok(Self::OpaqueFixed(
+                n,
+                Box::new(BytesM(u.bytes(n as usize)?.to_vec())),
+            )),
+            TypeVariant::OpaqueVar(max) => {
+                let len = u.arbitrary_len::<u8>()?.min(max as usize);
+                Ok(Self::OpaqueVar(
+                    max,
+                    Box::new(BytesM(u.bytes(len)?.to_vec())),
+                ))
+            }
+            TypeVariant::StringVar(max) => {
+                let len = u.arbitrary_len::<u8>()?.min(max as usize);
+                Ok(Self::StringVar(
+                    max,
+                    Box::new(StringM(u.bytes(len)?.to_vec())),
+                ))
+            }
         }
     }
 
@@ -20697,6 +21021,17 @@ impl Type {
             TypeVariant::ClaimableBalanceId => Self::ClaimableBalanceId(Box::default()),
             #[cfg(feature = "test_feature")]
             TypeVariant::TestNextType => Self::TestNextType(Box::default()),
+            TypeVariant::Int => Self::Int(Box::default()),
+            TypeVariant::UnsignedInt => Self::UnsignedInt(Box::default()),
+            TypeVariant::Hyper => Self::Hyper(Box::default()),
+            TypeVariant::UnsignedHyper => Self::UnsignedHyper(Box::default()),
+            TypeVariant::Bool => Self::Bool(Box::default()),
+            TypeVariant::OpaqueFixed(n) => Self::OpaqueFixed(
+                n,
+                Box::new(BytesM(core::iter::repeat_n(0, n as usize).collect())),
+            ),
+            TypeVariant::OpaqueVar(max) => Self::OpaqueVar(max, Box::default()),
+            TypeVariant::StringVar(max) => Self::StringVar(max, Box::default()),
         }
     }
 
@@ -21185,6 +21520,13 @@ impl Type {
             Self::ClaimableBalanceId(ref v) => v.as_ref(),
             #[cfg(feature = "test_feature")]
             Self::TestNextType(ref v) => v.as_ref(),
+            Self::Int(ref v) => v.as_ref(),
+            Self::UnsignedInt(ref v) => v.as_ref(),
+            Self::Hyper(ref v) => v.as_ref(),
+            Self::UnsignedHyper(ref v) => v.as_ref(),
+            Self::Bool(ref v) => v.as_ref(),
+            Self::OpaqueFixed(_, ref v) | Self::OpaqueVar(_, ref v) => v.as_ref(),
+            Self::StringVar(_, ref v) => v.as_ref(),
         }
     }
 
@@ -21701,6 +22043,14 @@ impl Type {
             Self::ClaimableBalanceId(_) => "ClaimableBalanceId",
             #[cfg(feature = "test_feature")]
             Self::TestNextType(_) => "TestNextType",
+            Self::Int(_)
+            | Self::UnsignedInt(_)
+            | Self::Hyper(_)
+            | Self::UnsignedHyper(_)
+            | Self::Bool(_)
+            | Self::OpaqueFixed(..)
+            | Self::OpaqueVar(..)
+            | Self::StringVar(..) => self.variant().name(),
         }
     }
 
@@ -22267,6 +22617,14 @@ impl Type {
             Self::ClaimableBalanceId(_) => TypeVariant::ClaimableBalanceId,
             #[cfg(feature = "test_feature")]
             Self::TestNextType(_) => TypeVariant::TestNextType,
+            Self::Int(_) => TypeVariant::Int,
+            Self::UnsignedInt(_) => TypeVariant::UnsignedInt,
+            Self::Hyper(_) => TypeVariant::Hyper,
+            Self::UnsignedHyper(_) => TypeVariant::UnsignedHyper,
+            Self::Bool(_) => TypeVariant::Bool,
+            Self::OpaqueFixed(n, _) => TypeVariant::OpaqueFixed(*n),
+            Self::OpaqueVar(max, _) => TypeVariant::OpaqueVar(*max),
+            Self::StringVar(max, _) => TypeVariant::StringVar(*max),
         }
     }
 }
@@ -22771,6 +23129,87 @@ impl WriteXdr for Type {
             Self::ClaimableBalanceId(v) => v.write_xdr(w),
             #[cfg(feature = "test_feature")]
             Self::TestNextType(v) => v.write_xdr(w),
+            Self::Int(v) => v.write_xdr(w),
+            Self::UnsignedInt(v) => v.write_xdr(w),
+            Self::Hyper(v) => v.write_xdr(w),
+            Self::UnsignedHyper(v) => v.write_xdr(w),
+            Self::Bool(v) => v.write_xdr(w),
+            Self::OpaqueFixed(n, v) => {
+                if v.len() != *n as usize {
+                    return Err(Error::LengthMismatch);
+                }
+                w.with_limited_depth(|w| {
+                    w.consume_len(v.len())?;
+                    let padding = pad_len(v.len());
+                    w.consume_len(padding)?;
+                    w.write_all(v)?;
+                    w.write_all(&[0u8; 3][..padding])?;
+                    Ok(())
+                })
+            }
+            Self::OpaqueVar(max, v) => {
+                if v.len() > *max as usize {
+                    return Err(Error::LengthExceedsMax);
+                }
+                v.write_xdr(w)
+            }
+            Self::StringVar(max, v) => {
+                if v.len() > *max as usize {
+                    return Err(Error::LengthExceedsMax);
+                }
+                v.write_xdr(w)
+            }
         }
     }
+}
+
+/// Reads XDR `opaque[len]`.
+#[cfg(all(feature = "type_enum", feature = "std"))]
+fn read_opaque_fixed<R: Read>(r: &mut Limited<R>, len: u32) -> Result<Vec<u8>, Error> {
+    let len = len as usize;
+    r.consume_len(len)?;
+    let padding = pad_len(len);
+    r.consume_len(padding)?;
+    let mut vec = vec![0u8; len];
+    r.read_exact(&mut vec)?;
+    let pad = &mut [0u8; 3][..padding];
+    r.read_exact(pad)?;
+    if pad.iter().any(|b| *b != 0) {
+        return Err(Error::NonZeroPadding);
+    }
+    Ok(vec)
+}
+
+/// Reads XDR `opaque<max>` or `string<max>`.
+#[cfg(all(feature = "type_enum", feature = "std"))]
+fn read_opaque_var<R: Read>(r: &mut Limited<R>, max: u32) -> Result<Vec<u8>, Error> {
+    let len = u32::read_xdr(r)?;
+    if len > max {
+        return Err(Error::LengthExceedsMax);
+    }
+    read_opaque_fixed(r, len)
+}
+
+/// Serializes a sized primitive variant of [`Type`] as its value.
+#[cfg(all(feature = "type_enum", feature = "serde", feature = "alloc"))]
+#[allow(clippy::trivially_copy_pass_by_ref, clippy::borrowed_box)]
+fn serialize_sized<S: serde::Serializer, T: serde::Serialize>(
+    _size: &u32,
+    value: &Box<T>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    value.serialize(serializer)
+}
+
+/// Deserializes a sized primitive variant of [`Type`], taking the size from
+/// the length of the value.
+#[cfg(all(feature = "type_enum", feature = "serde", feature = "alloc"))]
+fn deserialize_sized<'de, D, T>(deserializer: D) -> Result<(u32, Box<T>), D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: serde::Deserialize<'de> + Deref<Target = Vec<u8>>,
+{
+    let value = T::deserialize(deserializer)?;
+    let len = u32::try_from(value.len()).map_err(serde::de::Error::custom)?;
+    Ok((len, Box::new(value)))
 }

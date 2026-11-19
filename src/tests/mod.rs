@@ -19,5 +19,6 @@ mod tx_hash;
 mod tx_prot18;
 mod tx_read_edge_cases;
 mod tx_small;
+mod type_primitives;
 mod vecm;
 mod version;

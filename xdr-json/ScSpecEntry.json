@@ -105,15 +105,15 @@
       ],
       "properties": {
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "location": {
           "$ref": "#/definitions/ScSpecEventParamLocationV0"
         },
         "name": {
-          "type": "string",
-          "maxLength": 30
+          "description": "Byte string, not UTF-8, of at most 30 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 30 characters.",
+          "type": "string"
         },
         "type": {
           "$ref": "#/definitions/ScSpecTypeDef"
@@ -136,16 +136,16 @@
           "$ref": "#/definitions/ScSpecEventDataFormat"
         },
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "lib": {
-          "type": "string",
-          "maxLength": 80
+          "description": "Byte string, not UTF-8, of at most 80 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 80 characters.",
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "params": {
           "type": "array",
@@ -173,12 +173,12 @@
       ],
       "properties": {
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "maxLength": 30
+          "description": "Byte string, not UTF-8, of at most 30 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 30 characters.",
+          "type": "string"
         },
         "type": {
           "$ref": "#/definitions/ScSpecTypeDef"
@@ -196,8 +196,8 @@
       ],
       "properties": {
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "inputs": {
           "type": "array",
@@ -406,8 +406,8 @@
       ],
       "properties": {
         "name": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         }
       }
     },
@@ -433,12 +433,12 @@
       ],
       "properties": {
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "maxLength": 60
+          "description": "Byte string, not UTF-8, of at most 60 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 60 characters.",
+          "type": "string"
         },
         "value": {
           "type": "integer",
@@ -465,16 +465,16 @@
           "maxItems": 4294967295
         },
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "lib": {
-          "type": "string",
-          "maxLength": 80
+          "description": "Byte string, not UTF-8, of at most 80 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 80 characters.",
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         }
       }
     },
@@ -488,12 +488,12 @@
       ],
       "properties": {
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "maxLength": 60
+          "description": "Byte string, not UTF-8, of at most 60 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 60 characters.",
+          "type": "string"
         },
         "value": {
           "type": "integer",
@@ -520,16 +520,16 @@
           "maxItems": 4294967295
         },
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "lib": {
-          "type": "string",
-          "maxLength": 80
+          "description": "Byte string, not UTF-8, of at most 80 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 80 characters.",
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         }
       }
     },
@@ -543,12 +543,12 @@
       ],
       "properties": {
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "maxLength": 30
+          "description": "Byte string, not UTF-8, of at most 30 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 30 characters.",
+          "type": "string"
         },
         "type": {
           "$ref": "#/definitions/ScSpecTypeDef"
@@ -566,8 +566,8 @@
       ],
       "properties": {
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "fields": {
           "type": "array",
@@ -577,12 +577,12 @@
           "maxItems": 4294967295
         },
         "lib": {
-          "type": "string",
-          "maxLength": 80
+          "description": "Byte string, not UTF-8, of at most 80 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 80 characters.",
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         }
       }
     },
@@ -596,12 +596,12 @@
       ],
       "properties": {
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "maxLength": 60
+          "description": "Byte string, not UTF-8, of at most 60 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 60 characters.",
+          "type": "string"
         },
         "type": {
           "type": "array",
@@ -648,12 +648,12 @@
       ],
       "properties": {
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "maxLength": 60
+          "description": "Byte string, not UTF-8, of at most 60 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 60 characters.",
+          "type": "string"
         }
       }
     },
@@ -675,23 +675,22 @@
           "maxItems": 4294967295
         },
         "doc": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         },
         "lib": {
-          "type": "string",
-          "maxLength": 80
+          "description": "Byte string, not UTF-8, of at most 80 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 80 characters.",
+          "type": "string"
         },
         "name": {
-          "type": "string",
-          "maxLength": 1024
+          "description": "Byte string, not UTF-8, of at most 1024 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 1024 characters.",
+          "type": "string"
         }
       }
     },
     "ScSymbol": {
       "description": "ScSymbol is an XDR Typedef defined as:\n\n```text typedef string SCSymbol<SCSYMBOL_LIMIT>; ```",
-      "type": "string",
-      "maxLength": 32
+      "type": "string"
     }
   }
 }

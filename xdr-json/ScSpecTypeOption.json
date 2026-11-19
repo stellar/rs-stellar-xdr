@@ -204,7 +204,8 @@
       ],
       "properties": {
         "name": {
-          "$ref": "#/definitions/StringM<1024>"
+          "type": "string",
+          "maxLength": 1024
         }
       }
     },
@@ -219,10 +220,6 @@
           "$ref": "#/definitions/ScSpecTypeDef"
         }
       }
-    },
-    "StringM<1024>": {
-      "type": "string",
-      "maxLength": 1024
     }
   }
 }

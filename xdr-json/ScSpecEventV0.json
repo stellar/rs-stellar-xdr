@@ -19,13 +19,16 @@
       "$ref": "#/definitions/ScSpecEventDataFormat"
     },
     "doc": {
-      "$ref": "#/definitions/StringM<1024>"
+      "type": "string",
+      "maxLength": 1024
     },
     "lib": {
-      "$ref": "#/definitions/StringM<80>"
+      "type": "string",
+      "maxLength": 80
     },
     "name": {
-      "$ref": "#/definitions/StringM<1024>"
+      "type": "string",
+      "maxLength": 1024
     },
     "params": {
       "type": "array",
@@ -72,13 +75,15 @@
       ],
       "properties": {
         "doc": {
-          "$ref": "#/definitions/StringM<1024>"
+          "type": "string",
+          "maxLength": 1024
         },
         "location": {
           "$ref": "#/definitions/ScSpecEventParamLocationV0"
         },
         "name": {
-          "$ref": "#/definitions/StringM<30>"
+          "type": "string",
+          "maxLength": 30
         },
         "type": {
           "$ref": "#/definitions/ScSpecTypeDef"
@@ -273,7 +278,8 @@
       ],
       "properties": {
         "name": {
-          "$ref": "#/definitions/StringM<1024>"
+          "type": "string",
+          "maxLength": 1024
         }
       }
     },
@@ -291,23 +297,8 @@
     },
     "ScSymbol": {
       "description": "ScSymbol is an XDR Typedef defined as:\n\n```text typedef string SCSymbol<SCSYMBOL_LIMIT>; ```",
-      "$ref": "#/definitions/StringM<32>"
-    },
-    "StringM<1024>": {
-      "type": "string",
-      "maxLength": 1024
-    },
-    "StringM<30>": {
-      "type": "string",
-      "maxLength": 30
-    },
-    "StringM<32>": {
       "type": "string",
       "maxLength": 32
-    },
-    "StringM<80>": {
-      "type": "string",
-      "maxLength": 80
     }
   }
 }

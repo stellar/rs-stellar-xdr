@@ -21,13 +21,16 @@
       "maxItems": 4294967295
     },
     "doc": {
-      "$ref": "#/definitions/StringM<1024>"
+      "type": "string",
+      "maxLength": 1024
     },
     "lib": {
-      "$ref": "#/definitions/StringM<80>"
+      "type": "string",
+      "maxLength": 80
     },
     "name": {
-      "$ref": "#/definitions/StringM<1024>"
+      "type": "string",
+      "maxLength": 1024
     }
   },
   "unevaluatedProperties": false,
@@ -42,10 +45,12 @@
       ],
       "properties": {
         "doc": {
-          "$ref": "#/definitions/StringM<1024>"
+          "type": "string",
+          "maxLength": 1024
         },
         "name": {
-          "$ref": "#/definitions/StringM<60>"
+          "type": "string",
+          "maxLength": 60
         },
         "value": {
           "type": "integer",
@@ -53,18 +58,6 @@
           "minimum": 0.0
         }
       }
-    },
-    "StringM<1024>": {
-      "type": "string",
-      "maxLength": 1024
-    },
-    "StringM<60>": {
-      "type": "string",
-      "maxLength": 60
-    },
-    "StringM<80>": {
-      "type": "string",
-      "maxLength": 80
     }
   }
 }

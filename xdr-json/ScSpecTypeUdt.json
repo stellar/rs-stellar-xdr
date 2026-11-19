@@ -11,14 +11,9 @@
       "type": "string"
     },
     "name": {
-      "$ref": "#/definitions/StringM<1024>"
-    }
-  },
-  "unevaluatedProperties": false,
-  "definitions": {
-    "StringM<1024>": {
       "type": "string",
       "maxLength": 1024
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

@@ -14,13 +14,15 @@
       "type": "string"
     },
     "doc": {
-      "$ref": "#/definitions/StringM<1024>"
+      "type": "string",
+      "maxLength": 1024
     },
     "location": {
       "$ref": "#/definitions/ScSpecEventParamLocationV0"
     },
     "name": {
-      "$ref": "#/definitions/StringM<30>"
+      "type": "string",
+      "maxLength": 30
     },
     "type": {
       "$ref": "#/definitions/ScSpecTypeDef"
@@ -224,7 +226,8 @@
       ],
       "properties": {
         "name": {
-          "$ref": "#/definitions/StringM<1024>"
+          "type": "string",
+          "maxLength": 1024
         }
       }
     },
@@ -239,14 +242,6 @@
           "$ref": "#/definitions/ScSpecTypeDef"
         }
       }
-    },
-    "StringM<1024>": {
-      "type": "string",
-      "maxLength": 1024
-    },
-    "StringM<30>": {
-      "type": "string",
-      "maxLength": 30
     }
   }
 }

@@ -13,10 +13,12 @@
       "type": "string"
     },
     "doc": {
-      "$ref": "#/definitions/StringM<1024>"
+      "type": "string",
+      "maxLength": 1024
     },
     "name": {
-      "$ref": "#/definitions/StringM<60>"
+      "type": "string",
+      "maxLength": 60
     },
     "value": {
       "type": "integer",
@@ -24,15 +26,5 @@
       "minimum": 0.0
     }
   },
-  "unevaluatedProperties": false,
-  "definitions": {
-    "StringM<1024>": {
-      "type": "string",
-      "maxLength": 1024
-    },
-    "StringM<60>": {
-      "type": "string",
-      "maxLength": 60
-    }
-  }
+  "unevaluatedProperties": false
 }

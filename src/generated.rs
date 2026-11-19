@@ -2177,6 +2177,10 @@ impl<const MAX: u32> schemars::JsonSchema for StringM<MAX> {
         format!("StringM<{MAX}>")
     }
 
+    fn is_referenceable() -> bool {
+        false
+    }
+
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
         let schema = String::json_schema(gen);
         if let schemars::schema::Schema::Object(mut schema) = schema {

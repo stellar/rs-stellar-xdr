@@ -31,16 +31,14 @@
       ],
       "properties": {
         "key": {
-          "$ref": "#/definitions/StringM<4294967295>"
+          "type": "string",
+          "maxLength": 4294967295
         },
         "val": {
-          "$ref": "#/definitions/StringM<4294967295>"
+          "type": "string",
+          "maxLength": 4294967295
         }
       }
-    },
-    "StringM<4294967295>": {
-      "type": "string",
-      "maxLength": 4294967295
     }
   }
 }

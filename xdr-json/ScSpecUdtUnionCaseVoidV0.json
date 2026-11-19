@@ -12,21 +12,13 @@
       "type": "string"
     },
     "doc": {
-      "$ref": "#/definitions/StringM<1024>"
-    },
-    "name": {
-      "$ref": "#/definitions/StringM<60>"
-    }
-  },
-  "unevaluatedProperties": false,
-  "definitions": {
-    "StringM<1024>": {
       "type": "string",
       "maxLength": 1024
     },
-    "StringM<60>": {
+    "name": {
       "type": "string",
       "maxLength": 60
     }
-  }
+  },
+  "unevaluatedProperties": false
 }

@@ -41,6 +41,9 @@ serde_json = "1.0.89"
 bytes-lit = "0.0.5"
 rand = "0.9.0"
 
+# A very strict json schema parser used to test that the generated JSON schemas will work with a variety of parsers.
+jsonschema = { version = "0.30", default-features = false }
+
 [features]
 default = ["std"]
 std = ["alloc", "dep:sha2"]

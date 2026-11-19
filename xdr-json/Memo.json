@@ -16,7 +16,8 @@
       ],
       "properties": {
         "text": {
-          "$ref": "#/definitions/StringM<28>"
+          "description": "Byte string, not UTF-8, of at most 28 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 28 characters.",
+          "type": "string"
         }
       }
     },
@@ -67,11 +68,5 @@
       "type": "string"
     }
   },
-  "unevaluatedProperties": false,
-  "definitions": {
-    "StringM<28>": {
-      "type": "string",
-      "maxLength": 28
-    }
-  }
+  "unevaluatedProperties": false
 }

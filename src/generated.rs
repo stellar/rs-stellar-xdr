@@ -28,7 +28,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-contract-config-setting.x",
-        "56eb21162887b96ec423cab36e924ab085d52f885b7d41bcd3cd040e8dfe616d",
+        "63e548e5cab4823747325bc370760c7437a026f13b389de809e52542ecd41d2f",
     ),
     (
         "xdr/Stellar-contract-env-meta.x",
@@ -44,7 +44,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-contract.x",
-        "b87e9474002c0a089a8aa6f4c4e76e74fa497a7c20e3656532f0ac7762374e4e",
+        "7f8a55a7d03c35979fc540f9bd14873668d6970adb6957323b485838114a7da2",
     ),
     (
         "xdr/Stellar-exporter.x",
@@ -60,7 +60,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-ledger.x",
-        "b6dec791414821d0bae7a11abb4a6b6143ce3e09d0030c580c9ece1815418b13",
+        "35c1d96aa2f39e737c3088e8b35bdf2099bed35f3959934a0552b76d92cdf9c5",
     ),
     (
         "xdr/Stellar-overlay.x",
@@ -72,7 +72,7 @@ pub const XDR_FILES_SHA256: [(&str, &str); 13] = [
     ),
     (
         "xdr/Stellar-types.x",
-        "1bf41da09307489c04c454d9081a3ddcd52d04ed9af173abeb308fe4907dc590",
+        "be1f32162c58275273ae2805a57bb69ec2fdb9ccc2313556f42bf08b9763e757",
     ),
 ];
 
@@ -449,6 +449,29 @@ impl<L> Limited<L> {
         } else {
             Err(Error::DepthLimitExceeded)
         }
+    }
+
+    /// Calls the given function with a `Limited` whose reader is capped to
+    /// reading at most `len` bytes from this one's reader, sharing all other
+    /// state such as limits. Any changes the function makes to that state are
+    /// kept, whether the function succeeds or fails.
+    pub(crate) fn with_len_cap<T, F>(&mut self, len: u64, f: F) -> Result<T, Error>
+    where
+        L: Read,
+        F: FnOnce(&mut Limited<std::io::Take<&mut L>>) -> Result<T, Error>,
+    {
+        let Limited { inner, limits } = self;
+        let mut capped = Limited {
+            inner: inner.take(len),
+            limits: limits.clone(),
+        };
+        let res = f(&mut capped);
+        let Limited {
+            inner: _,
+            limits: capped_limits,
+        } = capped;
+        *limits = capped_limits;
+        res
     }
 }
 
@@ -2154,14 +2177,19 @@ impl<const MAX: u32> schemars::JsonSchema for StringM<MAX> {
         format!("StringM<{MAX}>")
     }
 
+    fn is_referenceable() -> bool {
+        false
+    }
+
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
         let schema = String::json_schema(gen);
         if let schemars::schema::Schema::Object(mut schema) = schema {
-            let string = *schema.string.unwrap_or_default().clone();
-            schema.string = Some(Box::new(schemars::schema::StringValidation {
-                max_length: Some(MAX),
-                ..string
-            }));
+            // maxLength is omitted because bytes are escaped (SEP-51), so the
+            // JSON length doesn't map to the XDR length. The XDR byte limit is
+            // stated in the description instead.
+            schema.metadata().description = Some(format!(
+                "Byte string, not UTF-8, of at most {MAX} bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than {MAX} characters."
+            ));
             schema.into()
         } else {
             schema
@@ -2289,6 +2317,54 @@ impl<const MAX: u32> AsRef<[u8]> for StringM<MAX> {
     #[must_use]
     fn as_ref(&self) -> &[u8] {
         self.0
+    }
+}
+
+impl<const MAX: u32> PartialEq<[u8]> for StringM<MAX> {
+    fn eq(&self, other: &[u8]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const MAX: u32> PartialEq<&[u8]> for StringM<MAX> {
+    fn eq(&self, other: &&[u8]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<[u8; N]> for StringM<MAX> {
+    fn eq(&self, other: &[u8; N]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<&[u8; N]> for StringM<MAX> {
+    fn eq(&self, other: &&[u8; N]) -> bool {
+        self.0[..] == other[..]
+    }
+}
+
+impl<const MAX: u32> PartialEq<StringM<MAX>> for [u8] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
+    }
+}
+
+impl<const MAX: u32> PartialEq<StringM<MAX>> for &[u8] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<StringM<MAX>> for [u8; N] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
+    }
+}
+
+impl<const N: usize, const MAX: u32> PartialEq<StringM<MAX>> for &[u8; N] {
+    fn eq(&self, other: &StringM<MAX>) -> bool {
+        self[..] == other.0[..]
     }
 }
 
@@ -2522,11 +2598,25 @@ where
         //  - Bits 0-30 contain the byte length of the fragment data that
         //    follows the header.
         let header = u32::read_xdr(r)?;
-        // TODO: Use the length and cap the length we'll read from `r`.
         let last_record = header >> 31 == 1;
+        let len = u64::from(header & 0x7fff_ffff);
         if last_record {
-            // Read the record in the frame.
-            Ok(Self(T::read_xdr(r)?))
+            // Read the record in the frame, capping the read at the length in
+            // the header so that the record cannot read into the next frame.
+            r.with_len_cap(len, |r| {
+                let t = T::read_xdr(r)?;
+                // Discard any bytes remaining in the frame that the record
+                // didn't consume so that the reader is positioned at the next
+                // frame. This matches the behaviour of the xdrpp parser used by
+                // stellar-core.
+                let remaining = r.inner.limit();
+                let discarded = std::io::copy(&mut r.inner, &mut std::io::sink())?;
+                if discarded != remaining {
+                    return Err(Error::Io(std::io::ErrorKind::UnexpectedEof.into()));
+                }
+                r.consume_len(usize::try_from(remaining).map_err(|_| Error::LengthLimitExceeded)?)?;
+                Ok(Self(t))
+            })
         } else {
             // TODO: Support reading those additional frames for the same
             // record.
@@ -3273,6 +3363,35 @@ mod test {
             <BytesM<3> as ReadXdr>::read_xdr(&mut lr),
             Err(Error::LengthLimitExceeded)
         );
+    }
+
+    #[test]
+    fn stringm_eq_byte_strings() {
+        let v = StringM::<3>::try_from("123").unwrap();
+        assert_eq!(v, *b"123");
+        assert_eq!(v, b"123");
+        assert_eq!(v, b"123"[..]);
+        assert_eq!(v, &b"123"[..]);
+        assert_ne!(v, *b"124");
+        assert_ne!(v, b"124");
+        assert_ne!(v, b"124"[..]);
+        assert_ne!(v, &b"124"[..]);
+        assert_ne!(v, b"12");
+        assert_ne!(v, &b"1234"[..]);
+        assert_ne!(v, b"");
+        assert_ne!(StringM::<3>::default(), b"1");
+        assert_eq!(*b"123", v);
+        assert_eq!(b"123", v);
+        assert_eq!(b"123"[..], v);
+        assert_eq!(&b"123"[..], v);
+        assert_ne!(*b"124", v);
+        assert_ne!(b"124", v);
+        assert_ne!(b"124"[..], v);
+        assert_ne!(&b"124"[..], v);
+        assert_ne!(b"12", v);
+        assert_ne!(&b"1234"[..], v);
+        assert_ne!(b"", v);
+        assert_ne!(b"1", StringM::<3>::default());
     }
 
     #[test]

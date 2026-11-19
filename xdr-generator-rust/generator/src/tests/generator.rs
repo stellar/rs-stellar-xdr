@@ -428,3 +428,45 @@ fn test_no_const_form_for_heap_free_types() {
     assert_not_contains(&output, "pub struct Flat {");
     assert_contains(&output, "pub use super::Flat;");
 }
+
+#[test]
+fn test_enum_member_starting_with_digit_has_json_name_and_alias() {
+    let output = generate_from_xdr(
+        r"
+        enum Width {
+            WIDTH_8_BIT = 0,
+            WIDTH_16_BIT = 1
+        };
+    ",
+    );
+    assert_contains(
+        &output,
+        r#"pub enum Width {
+    #[cfg_attr(feature = "alloc", default)]
+    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(rename = "8_bit", alias = "w8_bit"))]
+    W8Bit = 0,
+    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde(rename = "16_bit", alias = "w16_bit"))]
+    W16Bit = 1,
+}"#,
+    );
+}
+
+#[test]
+fn test_enum_member_not_starting_with_digit_has_no_rename() {
+    let output = generate_from_xdr(
+        r"
+        enum Color {
+            COLOR_RED = 0,
+            COLOR_GREEN = 1
+        };
+    ",
+    );
+    assert_contains(
+        &output,
+        r#"pub enum Color {
+    #[cfg_attr(feature = "alloc", default)]
+    Red = 0,
+    Green = 1,
+}"#,
+    );
+}

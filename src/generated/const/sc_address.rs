@@ -60,7 +60,6 @@ impl ConstWriter<'_> {
             ScAddress::LiquidityPool(value) => {
                 self.write_type_pool_id(value);
             }
-            #[cfg(feature = "cap_0084_muxed_contract")]
             ScAddress::MuxedContract(value) => {
                 self.write_type_muxed_contract(value);
             }

@@ -1,6 +1,5 @@
 #![cfg(feature = "std")]
 
-#[cfg(feature = "cap_0084_muxed_contract")]
 use crate::MuxedContract;
 use crate::{
     AccountId, AssetCode, AssetCode12, AssetCode4, ClaimableBalanceId, ContractId, Error, Hash,
@@ -547,7 +546,6 @@ fn sc_address_from_str_with_claimable_balance() {
 const MUXED_CONTRACT_STRKEY: &str =
     "WA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCIA6IG";
 
-#[cfg(feature = "cap_0084_muxed_contract")]
 const MUXED_CONTRACT: MuxedContract = MuxedContract {
     id: 123_456,
     contract_id: ContractId(Hash([
@@ -557,13 +555,11 @@ const MUXED_CONTRACT: MuxedContract = MuxedContract {
     ])),
 };
 
-#[cfg(feature = "cap_0084_muxed_contract")]
 #[test]
 fn muxed_contract_to_string() {
     assert_eq!(MUXED_CONTRACT.to_string(), MUXED_CONTRACT_STRKEY);
 }
 
-#[cfg(feature = "cap_0084_muxed_contract")]
 #[test]
 fn muxed_contract_from_str() {
     assert_eq!(
@@ -572,14 +568,13 @@ fn muxed_contract_from_str() {
     );
 }
 
-#[cfg(feature = "cap_0084_muxed_contract")]
 #[test]
 fn muxed_contract_from_str_with_contract() {
     let v = MuxedContract::from_str("CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE");
     assert_eq!(v, Err(Error::Invalid));
 }
 
-#[cfg(all(feature = "cap_0084_muxed_contract", feature = "serde"))]
+#[cfg(feature = "serde")]
 #[test]
 fn muxed_contract_json() {
     let json = serde_json::to_string(&MUXED_CONTRACT).unwrap();
@@ -597,34 +592,25 @@ fn muxed_contract_json() {
     );
 }
 
-#[cfg(feature = "cap_0084_muxed_contract")]
 #[test]
 fn sc_address_to_string_with_muxed_contract() {
     let s = ScAddress::MuxedContract(MUXED_CONTRACT).to_string();
     assert_eq!(s, MUXED_CONTRACT_STRKEY);
 }
 
-#[cfg(feature = "cap_0084_muxed_contract")]
 #[test]
 fn sc_address_from_str_with_muxed_contract() {
     let v = ScAddress::from_str(MUXED_CONTRACT_STRKEY);
     assert_eq!(v, Ok(ScAddress::MuxedContract(MUXED_CONTRACT)));
 }
 
-#[cfg(all(feature = "cap_0084_muxed_contract", feature = "serde"))]
+#[cfg(feature = "serde")]
 #[test]
 fn sc_address_json_with_muxed_contract() {
     let a = ScAddress::MuxedContract(MUXED_CONTRACT);
     let json = serde_json::to_string(&a).unwrap();
     assert_eq!(json, format!("\"{MUXED_CONTRACT_STRKEY}\""));
     assert_eq!(serde_json::from_str::<ScAddress>(&json).unwrap(), a);
-}
-
-#[cfg(not(feature = "cap_0084_muxed_contract"))]
-#[test]
-fn sc_address_from_str_with_muxed_contract_without_feature() {
-    let v = ScAddress::from_str(MUXED_CONTRACT_STRKEY);
-    assert_eq!(v, Err(Error::Invalid));
 }
 
 #[test]

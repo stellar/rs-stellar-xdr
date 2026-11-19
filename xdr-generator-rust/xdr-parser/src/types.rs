@@ -56,27 +56,6 @@ impl TypeInfo {
         }
     }
 
-    /// If `type_` is a `Type::Ident` that refers to a typedef whose underlying
-    /// type is a builtin, return that builtin type.
-    ///
-    /// `type_name_fn` is used to convert the ident name to the target language's
-    /// type name for lookup in the definitions map.
-    pub fn resolve_typedef_to_builtin_with<'a>(
-        &'a self,
-        type_: &Type,
-        type_name_fn: &dyn Fn(&str) -> String,
-    ) -> Option<&'a Type> {
-        if let Type::Ident(name) = type_ {
-            let target_name = type_name_fn(name);
-            if let Some(Definition::Typedef(t)) = self.definitions.get(&target_name) {
-                if is_builtin_type(&t.type_) {
-                    return Some(&t.type_);
-                }
-            }
-        }
-        None
-    }
-
     /// Convenience: resolve typedef to builtin using a provided naming function.
     /// This is the backward-compatible version that uses `rust_type_name` internally.
     #[must_use]

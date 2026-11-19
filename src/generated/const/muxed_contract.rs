@@ -1,7 +1,6 @@
 #[allow(unused_imports, clippy::wildcard_imports)]
 use super::*;
 
-#[cfg(feature = "cap_0084_muxed_contract")]
 impl MuxedContract {
     /// The exact XDR-encoded length of this value, in bytes.
     ///
@@ -40,7 +39,6 @@ impl MuxedContract {
 }
 
 impl ConstWriter<'_> {
-    #[cfg(feature = "cap_0084_muxed_contract")]
     /// Serializes a [`MuxedContract`], mirroring `<MuxedContract as WriteXdr>::write_xdr`.
     pub const fn write_type_muxed_contract(&mut self, v: &MuxedContract) {
         self.write_u64(v.id);

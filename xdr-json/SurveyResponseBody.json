@@ -89,13 +89,10 @@
           "type": "string"
         },
         "version_str": {
-          "$ref": "#/definitions/StringM<100>"
+          "description": "Byte string, not UTF-8, of at most 100 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 100 characters.",
+          "type": "string"
         }
       }
-    },
-    "StringM<100>": {
-      "type": "string",
-      "maxLength": 100
     },
     "TimeSlicedNodeData": {
       "description": "TimeSlicedNodeData is an XDR Struct defined as:\n\n```text struct TimeSlicedNodeData { uint32 addedAuthenticatedPeers; uint32 droppedAuthenticatedPeers; uint32 totalInboundPeerCount; uint32 totalOutboundPeerCount;\n\n// SCP stats uint32 p75SCPFirstToSelfLatencyMs; uint32 p75SCPSelfToOtherLatencyMs;\n\n// How many times the node lost sync in the time slice uint32 lostSyncCount;\n\n// Config data bool isValidator; uint32 maxInboundPeerCount; uint32 maxOutboundPeerCount; }; ```",

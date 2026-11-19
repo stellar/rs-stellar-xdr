@@ -270,11 +270,7 @@
     },
     "String32": {
       "description": "String32 is an XDR Typedef defined as:\n\n```text typedef string string32<32>; ```",
-      "$ref": "#/definitions/StringM<32>"
-    },
-    "StringM<32>": {
-      "type": "string",
-      "maxLength": 32
+      "type": "string"
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defined as:\n\n```text typedef uint64 TimePoint; ```",

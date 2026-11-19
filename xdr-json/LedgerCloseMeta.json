@@ -4063,7 +4063,8 @@
           ],
           "properties": {
             "text": {
-              "$ref": "#/definitions/StringM<28>"
+              "description": "Byte string, not UTF-8, of at most 28 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 28 characters.",
+              "type": "string"
             }
           }
         },
@@ -5493,11 +5494,11 @@
     },
     "ScString": {
       "description": "ScString is an XDR Typedef defined as:\n\n```text typedef string SCString<>; ```",
-      "$ref": "#/definitions/StringM<4294967295>"
+      "type": "string"
     },
     "ScSymbol": {
       "description": "ScSymbol is an XDR Typedef defined as:\n\n```text typedef string SCSymbol<SCSYMBOL_LIMIT>; ```",
-      "$ref": "#/definitions/StringM<32>"
+      "type": "string"
     },
     "ScVal": {
       "description": "ScVal is an XDR Union defined as:\n\n```text union SCVal switch (SCValType type) {\n\ncase SCV_BOOL: bool b; case SCV_VOID: void; case SCV_ERROR: SCError error;\n\ncase SCV_U32: uint32 u32; case SCV_I32: int32 i32;\n\ncase SCV_U64: uint64 u64; case SCV_I64: int64 i64; case SCV_TIMEPOINT: TimePoint timepoint; case SCV_DURATION: Duration duration;\n\ncase SCV_U128: UInt128Parts u128; case SCV_I128: Int128Parts i128;\n\ncase SCV_U256: UInt256Parts u256; case SCV_I256: Int256Parts i256;\n\ncase SCV_BYTES: SCBytes bytes; case SCV_STRING: SCString str; case SCV_SYMBOL: SCSymbol sym;\n\n// Vec and Map are recursive so need to live // behind an option, due to xdrpp limitations. case SCV_VEC: SCVec *vec; case SCV_MAP: SCMap *map;\n\ncase SCV_ADDRESS: SCAddress address;\n\n// Special SCVals reserved for system-constructed contract-data // ledger keys, not generally usable elsewhere. case SCV_CONTRACT_INSTANCE: SCContractInstance instance; case SCV_LEDGER_KEY_CONTRACT_INSTANCE: void; case SCV_LEDGER_KEY_NONCE: SCNonceKey nonce_key;\n\ncase SCV_EXECUTABLE_TAG: SCString executable_tag; }; ```",
@@ -6731,7 +6732,7 @@
       }
     },
     "StellarValue": {
-      "description": "StellarValue is an XDR Struct defined as:\n\n```text struct StellarValue { Hash txSetHash;      // transaction set to apply to previous ledger TimePoint closeTime; // network close time\n\n// upgrades to apply to the previous ledger (usually empty) // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop // unknown steps during consensus if needed. // see notes below on 'LedgerUpgrade' for more detail // max size is dictated by number of upgrade types (+ room for future) UpgradeType upgrades<6>;\n\n// reserved for future use union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; case STELLAR_VALUE_EMPTY_TX_SET: struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedValue; #ifdef MS_CLOSE_TIME case STELLAR_VALUE_SIGNED_MS: struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 LedgerCloseValueSignature lcValueSignature; } signedMsValue; case STELLAR_VALUE_EMPTY_TX_SET_MS: struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedMsValue; #endif // MS_CLOSE_TIME } ext; }; ```",
+      "description": "StellarValue is an XDR Struct defined as:\n\n```text struct StellarValue { Hash txSetHash;      // transaction set to apply to previous ledger TimePoint closeTime; // network close time\n\n// upgrades to apply to the previous ledger (usually empty) // this is a vector of encoded 'LedgerUpgrade' so that nodes can drop // unknown steps during consensus if needed. // see notes below on 'LedgerUpgrade' for more detail // max size is dictated by number of upgrade types (+ room for future) UpgradeType upgrades<6>;\n\n// reserved for future use union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; case STELLAR_VALUE_EMPTY_TX_SET: struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedValue; case STELLAR_VALUE_SIGNED_MS: struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 LedgerCloseValueSignature lcValueSignature; } signedMsValue; case STELLAR_VALUE_EMPTY_TX_SET_MS: struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedMsValue; } ext; }; ```",
       "type": "object",
       "required": [
         "close_time",
@@ -6763,7 +6764,7 @@
       }
     },
     "StellarValueExt": {
-      "description": "StellarValueExt is an XDR NestedUnion defined as:\n\n```text union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; case STELLAR_VALUE_EMPTY_TX_SET: struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedValue; #ifdef MS_CLOSE_TIME case STELLAR_VALUE_SIGNED_MS: struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 LedgerCloseValueSignature lcValueSignature; } signedMsValue; case STELLAR_VALUE_EMPTY_TX_SET_MS: struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedMsValue; #endif // MS_CLOSE_TIME } ```",
+      "description": "StellarValueExt is an XDR NestedUnion defined as:\n\n```text union switch (StellarValueType v) { case STELLAR_VALUE_BASIC: void; case STELLAR_VALUE_SIGNED: LedgerCloseValueSignature lcValueSignature; case STELLAR_VALUE_EMPTY_TX_SET: struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedValue; case STELLAR_VALUE_SIGNED_MS: struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 LedgerCloseValueSignature lcValueSignature; } signedMsValue; case STELLAR_VALUE_EMPTY_TX_SET_MS: struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } proposedMsValue; } ```",
       "oneOf": [
         {
           "type": "string",
@@ -6792,8 +6793,68 @@
               "$ref": "#/definitions/StellarValueProposedValue"
             }
           }
+        },
+        {
+          "type": "object",
+          "required": [
+            "signed_ms"
+          ],
+          "properties": {
+            "signed_ms": {
+              "$ref": "#/definitions/StellarValueSignedMsValue"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "empty_tx_set_ms"
+          ],
+          "properties": {
+            "empty_tx_set_ms": {
+              "$ref": "#/definitions/StellarValueProposedMsValue"
+            }
+          }
         }
       ]
+    },
+    "StellarValueProposedMsValue": {
+      "description": "StellarValueProposedMsValue is an XDR NestedStruct defined as:\n\n```text struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } ```",
+      "type": "object",
+      "required": [
+        "close_time_ms",
+        "lc_value_signature",
+        "previous_ledger_hash",
+        "previous_ledger_version",
+        "tx_set_hash"
+      ],
+      "properties": {
+        "close_time_ms": {
+          "$ref": "#/definitions/TimePointMs"
+        },
+        "lc_value_signature": {
+          "$ref": "#/definitions/LedgerCloseValueSignature"
+        },
+        "previous_ledger_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        },
+        "previous_ledger_version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "tx_set_hash": {
+          "type": "string",
+          "maxLength": 64,
+          "minLength": 64,
+          "contentEncoding": "hex",
+          "contentMediaType": "application/binary"
+        }
+      }
     },
     "StellarValueProposedValue": {
       "description": "StellarValueProposedValue is an XDR NestedStruct defined as:\n\n```text struct { Hash txSetHash; Hash previousLedgerHash; uint32 previousLedgerVersion; LedgerCloseValueSignature lcValueSignature; } ```",
@@ -6829,29 +6890,29 @@
         }
       }
     },
+    "StellarValueSignedMsValue": {
+      "description": "StellarValueSignedMsValue is an XDR NestedStruct defined as:\n\n```text struct { TimePointMs closeTimeMs; // closeTime == closeTimeMs / 1000 LedgerCloseValueSignature lcValueSignature; } ```",
+      "type": "object",
+      "required": [
+        "close_time_ms",
+        "lc_value_signature"
+      ],
+      "properties": {
+        "close_time_ms": {
+          "$ref": "#/definitions/TimePointMs"
+        },
+        "lc_value_signature": {
+          "$ref": "#/definitions/LedgerCloseValueSignature"
+        }
+      }
+    },
     "String32": {
       "description": "String32 is an XDR Typedef defined as:\n\n```text typedef string string32<32>; ```",
-      "$ref": "#/definitions/StringM<32>"
+      "type": "string"
     },
     "String64": {
       "description": "String64 is an XDR Typedef defined as:\n\n```text typedef string string64<64>; ```",
-      "$ref": "#/definitions/StringM<64>"
-    },
-    "StringM<28>": {
-      "type": "string",
-      "maxLength": 28
-    },
-    "StringM<32>": {
-      "type": "string",
-      "maxLength": 32
-    },
-    "StringM<4294967295>": {
-      "type": "string",
-      "maxLength": 4294967295
-    },
-    "StringM<64>": {
-      "type": "string",
-      "maxLength": 64
+      "type": "string"
     },
     "TimeBounds": {
       "description": "TimeBounds is an XDR Struct defined as:\n\n```text struct TimeBounds { TimePoint minTime; TimePoint maxTime; // 0 here means no maxTime }; ```",
@@ -6871,6 +6932,10 @@
     },
     "TimePoint": {
       "description": "TimePoint is an XDR Typedef defined as:\n\n```text typedef uint64 TimePoint; ```",
+      "type": "string"
+    },
+    "TimePointMs": {
+      "description": "TimePointMs is an XDR Typedef defined as:\n\n```text typedef uint64 TimePointMs; ```",
       "type": "string"
     },
     "Transaction": {

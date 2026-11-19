@@ -1,5 +1,6 @@
 mod account_conversions;
 mod arbitrary;
+mod bool;
 mod const_types;
 mod const_writer;
 mod default;

@@ -19,8 +19,8 @@ use crate::output::{
     ConstToXdrTemplate, ConstTypeOutput, ConstUnionArmOutput, ConstUnionOutput,
     ConstWriterMethodOutput, ConstWriterOutput, DefinitionOutput, DefinitionTemplate, EnumOutput,
     EnumStructMemberOutput, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput,
-    TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput,
-    TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
+    TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefNewtypeOutput,
+    UnionArmOutput, UnionOutput,
 };
 use crate::types::{const_type, resolve_type, size_to_u32_string, type_ref};
 

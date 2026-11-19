@@ -1,12 +1,9 @@
 #![cfg(feature = "alloc")]
 
-use crate::{Hash, TransactionEnvelope, Uint32};
+use crate::{Hash, TransactionEnvelope};
 
 #[test]
 fn default() {
-    let v = Uint32::default();
-    assert_eq!(v, 0);
-
     let v = Hash::default();
     assert_eq!(v, Hash([0; 32]));
 

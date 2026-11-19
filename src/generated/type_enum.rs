@@ -458,10 +458,6 @@ pub enum TypeVariant {
     TransactionResultExt,
     Hash,
     Uint256,
-    Uint32,
-    Int32,
-    Uint64,
-    Int64,
     TimePoint,
     Duration,
     TimePointMs,
@@ -942,10 +938,6 @@ impl TypeVariant {
         TypeVariant::TransactionResultExt,
         TypeVariant::Hash,
         TypeVariant::Uint256,
-        TypeVariant::Uint32,
-        TypeVariant::Int32,
-        TypeVariant::Uint64,
-        TypeVariant::Int64,
         TypeVariant::TimePoint,
         TypeVariant::Duration,
         TypeVariant::TimePointMs,
@@ -1432,10 +1424,6 @@ impl TypeVariant {
         "TransactionResultExt",
         "Hash",
         "Uint256",
-        "Uint32",
-        "Int32",
-        "Uint64",
-        "Int64",
         "TimePoint",
         "Duration",
         "TimePointMs",
@@ -1944,10 +1932,6 @@ impl TypeVariant {
             Self::TransactionResultExt => "TransactionResultExt",
             Self::Hash => "Hash",
             Self::Uint256 => "Uint256",
-            Self::Uint32 => "Uint32",
-            Self::Int32 => "Int32",
-            Self::Uint64 => "Uint64",
-            Self::Int64 => "Int64",
             Self::TimePoint => "TimePoint",
             Self::Duration => "Duration",
             Self::TimePointMs => "TimePointMs",
@@ -2663,10 +2647,6 @@ impl TypeVariant {
             Self::TransactionResultExt => gen.into_root_schema_for::<TransactionResultExt>(),
             Self::Hash => gen.into_root_schema_for::<Hash>(),
             Self::Uint256 => gen.into_root_schema_for::<Uint256>(),
-            Self::Uint32 => gen.into_root_schema_for::<Uint32>(),
-            Self::Int32 => gen.into_root_schema_for::<Int32>(),
-            Self::Uint64 => gen.into_root_schema_for::<Uint64>(),
-            Self::Int64 => gen.into_root_schema_for::<Int64>(),
             Self::TimePoint => gen.into_root_schema_for::<TimePoint>(),
             Self::Duration => gen.into_root_schema_for::<Duration>(),
             Self::TimePointMs => gen.into_root_schema_for::<TimePointMs>(),
@@ -3205,10 +3185,6 @@ impl core::str::FromStr for TypeVariant {
             "TransactionResultExt" => Ok(Self::TransactionResultExt),
             "Hash" => Ok(Self::Hash),
             "Uint256" => Ok(Self::Uint256),
-            "Uint32" => Ok(Self::Uint32),
-            "Int32" => Ok(Self::Int32),
-            "Uint64" => Ok(Self::Uint64),
-            "Int64" => Ok(Self::Int64),
             "TimePoint" => Ok(Self::TimePoint),
             "Duration" => Ok(Self::Duration),
             "TimePointMs" => Ok(Self::TimePointMs),
@@ -3701,10 +3677,6 @@ pub enum Type {
     TransactionResultExt(Box<TransactionResultExt>),
     Hash(Box<Hash>),
     Uint256(Box<Uint256>),
-    Uint32(Box<Uint32>),
-    Int32(Box<Int32>),
-    Uint64(Box<Uint64>),
-    Int64(Box<Int64>),
     TimePoint(Box<TimePoint>),
     Duration(Box<Duration>),
     TimePointMs(Box<TimePointMs>),
@@ -4185,10 +4157,6 @@ impl Type {
         TypeVariant::TransactionResultExt,
         TypeVariant::Hash,
         TypeVariant::Uint256,
-        TypeVariant::Uint32,
-        TypeVariant::Int32,
-        TypeVariant::Uint64,
-        TypeVariant::Int64,
         TypeVariant::TimePoint,
         TypeVariant::Duration,
         TypeVariant::TimePointMs,
@@ -4675,10 +4643,6 @@ impl Type {
         "TransactionResultExt",
         "Hash",
         "Uint256",
-        "Uint32",
-        "Int32",
-        "Uint64",
-        "Int64",
         "TimePoint",
         "Duration",
         "TimePointMs",
@@ -6706,18 +6670,6 @@ impl Type {
             }
             TypeVariant::Uint256 => {
                 r.with_limited_depth(|r| Ok(Self::Uint256(Box::new(Uint256::read_xdr(r)?))))
-            }
-            TypeVariant::Uint32 => {
-                r.with_limited_depth(|r| Ok(Self::Uint32(Box::new(Uint32::read_xdr(r)?))))
-            }
-            TypeVariant::Int32 => {
-                r.with_limited_depth(|r| Ok(Self::Int32(Box::new(Int32::read_xdr(r)?))))
-            }
-            TypeVariant::Uint64 => {
-                r.with_limited_depth(|r| Ok(Self::Uint64(Box::new(Uint64::read_xdr(r)?))))
-            }
-            TypeVariant::Int64 => {
-                r.with_limited_depth(|r| Ok(Self::Int64(Box::new(Int64::read_xdr(r)?))))
             }
             TypeVariant::TimePoint => {
                 r.with_limited_depth(|r| Ok(Self::TimePoint(Box::new(TimePoint::read_xdr(r)?))))
@@ -8807,22 +8759,6 @@ impl Type {
             TypeVariant::Uint256 => Box::new(
                 ReadXdrIter::<_, Uint256>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint256(Box::new(t)))),
-            ),
-            TypeVariant::Uint32 => Box::new(
-                ReadXdrIter::<_, Uint32>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Uint32(Box::new(t)))),
-            ),
-            TypeVariant::Int32 => Box::new(
-                ReadXdrIter::<_, Int32>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Int32(Box::new(t)))),
-            ),
-            TypeVariant::Uint64 => Box::new(
-                ReadXdrIter::<_, Uint64>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Uint64(Box::new(t)))),
-            ),
-            TypeVariant::Int64 => Box::new(
-                ReadXdrIter::<_, Int64>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Int64(Box::new(t)))),
             ),
             TypeVariant::TimePoint => Box::new(
                 ReadXdrIter::<_, TimePoint>::new(&mut r.inner, r.limits.clone())
@@ -11195,22 +11131,6 @@ impl Type {
                 ReadXdrIter::<_, Frame<Uint256>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint256(Box::new(t.0)))),
             ),
-            TypeVariant::Uint32 => Box::new(
-                ReadXdrIter::<_, Frame<Uint32>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Uint32(Box::new(t.0)))),
-            ),
-            TypeVariant::Int32 => Box::new(
-                ReadXdrIter::<_, Frame<Int32>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Int32(Box::new(t.0)))),
-            ),
-            TypeVariant::Uint64 => Box::new(
-                ReadXdrIter::<_, Frame<Uint64>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Uint64(Box::new(t.0)))),
-            ),
-            TypeVariant::Int64 => Box::new(
-                ReadXdrIter::<_, Frame<Int64>>::new(&mut r.inner, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Int64(Box::new(t.0)))),
-            ),
             TypeVariant::TimePoint => Box::new(
                 ReadXdrIter::<_, Frame<TimePoint>>::new(&mut r.inner, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimePoint(Box::new(t.0)))),
@@ -13164,22 +13084,6 @@ impl Type {
                 ReadXdrIter::<_, Uint256>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::Uint256(Box::new(t)))),
             ),
-            TypeVariant::Uint32 => Box::new(
-                ReadXdrIter::<_, Uint32>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Uint32(Box::new(t)))),
-            ),
-            TypeVariant::Int32 => Box::new(
-                ReadXdrIter::<_, Int32>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Int32(Box::new(t)))),
-            ),
-            TypeVariant::Uint64 => Box::new(
-                ReadXdrIter::<_, Uint64>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Uint64(Box::new(t)))),
-            ),
-            TypeVariant::Int64 => Box::new(
-                ReadXdrIter::<_, Int64>::new(dec, r.limits.clone())
-                    .map(|r| r.map(|t| Self::Int64(Box::new(t)))),
-            ),
             TypeVariant::TimePoint => Box::new(
                 ReadXdrIter::<_, TimePoint>::new(dec, r.limits.clone())
                     .map(|r| r.map(|t| Self::TimePoint(Box::new(t)))),
@@ -14576,10 +14480,6 @@ impl Type {
             ))),
             TypeVariant::Hash => Ok(Self::Hash(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::Uint256 => Ok(Self::Uint256(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::Uint32 => Ok(Self::Uint32(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::Int32 => Ok(Self::Int32(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::Uint64 => Ok(Self::Uint64(Box::new(serde_json::from_reader(r)?))),
-            TypeVariant::Int64 => Ok(Self::Int64(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::Duration => Ok(Self::Duration(Box::new(serde_json::from_reader(r)?))),
             TypeVariant::TimePointMs => {
@@ -16081,18 +15981,6 @@ impl Type {
             TypeVariant::Uint256 => Ok(Self::Uint256(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
-            TypeVariant::Uint32 => Ok(Self::Uint32(Box::new(serde::de::Deserialize::deserialize(
-                r,
-            )?))),
-            TypeVariant::Int32 => Ok(Self::Int32(Box::new(serde::de::Deserialize::deserialize(
-                r,
-            )?))),
-            TypeVariant::Uint64 => Ok(Self::Uint64(Box::new(serde::de::Deserialize::deserialize(
-                r,
-            )?))),
-            TypeVariant::Int64 => Ok(Self::Int64(Box::new(serde::de::Deserialize::deserialize(
-                r,
-            )?))),
             TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(
                 serde::de::Deserialize::deserialize(r)?,
             ))),
@@ -18498,26 +18386,6 @@ impl Type {
             })
             .map(|t| Self::Uint256(Box::new(t)))
             .map_err(Error::Json),
-            TypeVariant::Uint32 => serde_ignored::deserialize(r, |path| {
-                ignored.borrow_mut().push(path.to_string());
-            })
-            .map(|t| Self::Uint32(Box::new(t)))
-            .map_err(Error::Json),
-            TypeVariant::Int32 => serde_ignored::deserialize(r, |path| {
-                ignored.borrow_mut().push(path.to_string());
-            })
-            .map(|t| Self::Int32(Box::new(t)))
-            .map_err(Error::Json),
-            TypeVariant::Uint64 => serde_ignored::deserialize(r, |path| {
-                ignored.borrow_mut().push(path.to_string());
-            })
-            .map(|t| Self::Uint64(Box::new(t)))
-            .map_err(Error::Json),
-            TypeVariant::Int64 => serde_ignored::deserialize(r, |path| {
-                ignored.borrow_mut().push(path.to_string());
-            })
-            .map(|t| Self::Int64(Box::new(t)))
-            .map_err(Error::Json),
             TypeVariant::TimePoint => serde_ignored::deserialize(r, |path| {
                 ignored.borrow_mut().push(path.to_string());
             })
@@ -19949,10 +19817,6 @@ impl Type {
             ))),
             TypeVariant::Hash => Ok(Self::Hash(Box::new(Hash::arbitrary(u)?))),
             TypeVariant::Uint256 => Ok(Self::Uint256(Box::new(Uint256::arbitrary(u)?))),
-            TypeVariant::Uint32 => Ok(Self::Uint32(Box::new(Uint32::arbitrary(u)?))),
-            TypeVariant::Int32 => Ok(Self::Int32(Box::new(Int32::arbitrary(u)?))),
-            TypeVariant::Uint64 => Ok(Self::Uint64(Box::new(Uint64::arbitrary(u)?))),
-            TypeVariant::Int64 => Ok(Self::Int64(Box::new(Int64::arbitrary(u)?))),
             TypeVariant::TimePoint => Ok(Self::TimePoint(Box::new(TimePoint::arbitrary(u)?))),
             TypeVariant::Duration => Ok(Self::Duration(Box::new(Duration::arbitrary(u)?))),
             TypeVariant::TimePointMs => Ok(Self::TimePointMs(Box::new(TimePointMs::arbitrary(u)?))),
@@ -20662,10 +20526,6 @@ impl Type {
             TypeVariant::TransactionResultExt => Self::TransactionResultExt(Box::default()),
             TypeVariant::Hash => Self::Hash(Box::default()),
             TypeVariant::Uint256 => Self::Uint256(Box::default()),
-            TypeVariant::Uint32 => Self::Uint32(Box::default()),
-            TypeVariant::Int32 => Self::Int32(Box::default()),
-            TypeVariant::Uint64 => Self::Uint64(Box::default()),
-            TypeVariant::Int64 => Self::Int64(Box::default()),
             TypeVariant::TimePoint => Self::TimePoint(Box::default()),
             TypeVariant::Duration => Self::Duration(Box::default()),
             TypeVariant::TimePointMs => Self::TimePointMs(Box::default()),
@@ -21154,10 +21014,6 @@ impl Type {
             Self::TransactionResultExt(ref v) => v.as_ref(),
             Self::Hash(ref v) => v.as_ref(),
             Self::Uint256(ref v) => v.as_ref(),
-            Self::Uint32(ref v) => v.as_ref(),
-            Self::Int32(ref v) => v.as_ref(),
-            Self::Uint64(ref v) => v.as_ref(),
-            Self::Int64(ref v) => v.as_ref(),
             Self::TimePoint(ref v) => v.as_ref(),
             Self::Duration(ref v) => v.as_ref(),
             Self::TimePointMs(ref v) => v.as_ref(),
@@ -21670,10 +21526,6 @@ impl Type {
             Self::TransactionResultExt(_) => "TransactionResultExt",
             Self::Hash(_) => "Hash",
             Self::Uint256(_) => "Uint256",
-            Self::Uint32(_) => "Uint32",
-            Self::Int32(_) => "Int32",
-            Self::Uint64(_) => "Uint64",
-            Self::Int64(_) => "Int64",
             Self::TimePoint(_) => "TimePoint",
             Self::Duration(_) => "Duration",
             Self::TimePointMs(_) => "TimePointMs",
@@ -22236,10 +22088,6 @@ impl Type {
             Self::TransactionResultExt(_) => TypeVariant::TransactionResultExt,
             Self::Hash(_) => TypeVariant::Hash,
             Self::Uint256(_) => TypeVariant::Uint256,
-            Self::Uint32(_) => TypeVariant::Uint32,
-            Self::Int32(_) => TypeVariant::Int32,
-            Self::Uint64(_) => TypeVariant::Uint64,
-            Self::Int64(_) => TypeVariant::Int64,
             Self::TimePoint(_) => TypeVariant::TimePoint,
             Self::Duration(_) => TypeVariant::Duration,
             Self::TimePointMs(_) => TypeVariant::TimePointMs,
@@ -22740,10 +22588,6 @@ impl WriteXdr for Type {
             Self::TransactionResultExt(v) => v.write_xdr(w),
             Self::Hash(v) => v.write_xdr(w),
             Self::Uint256(v) => v.write_xdr(w),
-            Self::Uint32(v) => v.write_xdr(w),
-            Self::Int32(v) => v.write_xdr(w),
-            Self::Uint64(v) => v.write_xdr(w),
-            Self::Int64(v) => v.write_xdr(w),
             Self::TimePoint(v) => v.write_xdr(w),
             Self::Duration(v) => v.write_xdr(w),
             Self::TimePointMs(v) => v.write_xdr(w),

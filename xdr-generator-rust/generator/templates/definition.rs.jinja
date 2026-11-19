@@ -8,8 +8,6 @@ use super::*;
 {% include "enum.rs.jinja" %}
 {%- when DefinitionOutput::Union(u) %}
 {% include "union.rs.jinja" %}
-{%- when DefinitionOutput::TypedefAlias(t) %}
-{% include "typedef_alias.rs.jinja" %}
 {%- when DefinitionOutput::TypedefNewtype(t) %}
 {% include "typedef_newtype.rs.jinja" %}
 {%- when DefinitionOutput::Const(c) %}

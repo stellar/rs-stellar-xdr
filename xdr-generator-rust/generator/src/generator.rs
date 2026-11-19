@@ -19,10 +19,23 @@ use crate::output::{
     ConstToXdrTemplate, ConstTypeOutput, ConstUnionArmOutput, ConstUnionOutput,
     ConstWriterMethodOutput, ConstWriterOutput, DefinitionOutput, DefinitionTemplate, EnumOutput,
     EnumStructMemberOutput, ModTemplate, ModuleEntry, StructMemberOutput, StructOutput,
-    TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput, TypedefAliasOutput,
+    TypeEnumDefinitionTemplate, TypeEnumEntry, TypeEnumOutput,
     TypedefNewtypeOutput, UnionArmOutput, UnionOutput,
 };
-use crate::types::{base_type_ref, const_type, resolve_type, size_to_u32_string, type_ref};
+use crate::types::{const_type, resolve_type, size_to_u32_string, type_ref};
+
+/// The spec without typedefs of builtin scalars, such as `typedef int int32;`,
+/// which get no type of their own because everywhere they are used the builtin
+/// Rust type, such as `i32`, is used instead.
+fn without_builtin_typedefs(spec: &XdrSpec) -> XdrSpec {
+    let keep = |d: &Definition| !matches!(d, Definition::Typedef(t) if is_builtin_type(&t.type_));
+    let mut spec = spec.clone();
+    spec.definitions.retain(keep);
+    for ns in &mut spec.namespaces {
+        ns.definitions.retain(keep);
+    }
+    spec
+}
 
 pub struct RustGenerator {
     options: RustOptions,
@@ -74,6 +87,7 @@ impl RustGenerator {
         output_dir: &std::path::Path,
         mut write: impl FnMut(&std::path::Path, &str) -> std::io::Result<()>,
     ) -> Result<(), Box<dyn std::error::Error>> {
+        let spec = &without_builtin_typedefs(spec);
         let header = include_str!("../header.rs");
         let const_header = include_str!("../const_header.rs");
         let (mut modules, definitions, const_modules) = self.generate_modules(spec);
@@ -567,24 +581,6 @@ impl RustGenerator {
         cfg: Option<String>,
     ) -> (DefinitionOutput, ConstDefinitionOutput) {
         let name = type_name(&t.name);
-
-        if is_builtin_type(&t.type_) {
-            // A transparent alias to a builtin is served by the builtin's own
-            // encoding, so it has none of its own.
-            return (
-                DefinitionOutput::TypedefAlias(TypedefAliasOutput {
-                    name,
-                    source_comment: source_comment(&t.source, "Typedef"),
-                    type_ref: base_type_ref(&t.type_, None),
-                    cfg,
-                }),
-                ConstDefinitionOutput {
-                    type_def: None,
-                    const_to_xdr: String::new(),
-                },
-            );
-        }
-
         let custom_default = self.options.custom_default_impl.contains(&name);
         let custom_str = self.options.custom_str_impl.contains(&name);
         let no_display_fromstr = self.options.no_display_fromstr.contains(&name);

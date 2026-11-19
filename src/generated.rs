@@ -367,7 +367,7 @@ pub struct Limits {
     pub depth: u32,
 
     /// Defines the maximum number of bytes that will be read or written.
-    pub len: usize,
+    pub len: u64,
 }
 
 #[cfg(feature = "std")]
@@ -376,7 +376,7 @@ impl Limits {
     pub fn none() -> Self {
         Self {
             depth: u32::MAX,
-            len: usize::MAX,
+            len: u64::MAX,
         }
     }
 
@@ -389,7 +389,7 @@ impl Limits {
     }
 
     #[must_use]
-    pub fn len(len: usize) -> Self {
+    pub fn len(len: u64) -> Self {
         Limits {
             len,
             ..Limits::none()
@@ -424,6 +424,17 @@ impl<L> Limited<L> {
     /// If the length would consume more length than the remaining length limit
     /// allows.
     pub(crate) fn consume_len(&mut self, len: usize) -> Result<(), Error> {
+        let len = u64::try_from(len).map_err(|_| Error::LengthLimitExceeded)?;
+        self.consume_len_u64(len)
+    }
+
+    /// Consume the given length from the internal remaining length limit.
+    ///
+    /// ### Errors
+    ///
+    /// If the length would consume more length than the remaining length limit
+    /// allows.
+    pub(crate) fn consume_len_u64(&mut self, len: u64) -> Result<(), Error> {
         if let Some(len) = self.limits.len.checked_sub(len) {
             self.limits.len = len;
             Ok(())
@@ -2613,7 +2624,7 @@ where
                 if discarded != remaining {
                     return Err(Error::Io(std::io::ErrorKind::UnexpectedEof.into()));
                 }
-                r.consume_len(usize::try_from(remaining).map_err(|_| Error::LengthLimitExceeded)?)?;
+                r.consume_len_u64(remaining)?;
                 Ok(Self(t))
             })
         } else {
@@ -2972,6 +2983,21 @@ mod test {
             Err(Error::DepthLimitExceeded) => (),
             _ => panic!("expected DepthLimitExceeded got {res:?}"),
         }
+    }
+
+    #[test]
+    fn length_limited_read_write_beyond_u32() {
+        // Limits larger than u32::MAX are representable on all platforms,
+        // including those with a 32-bit usize.
+        let len = u64::from(u32::MAX) + 8;
+        let v = 123i32;
+        let mut buf = Limited::new(Vec::new(), Limits::len(len));
+        v.write_xdr(&mut buf).unwrap();
+        assert_eq!(buf.limits.len, len - 4);
+        let mut lr = Limited::new(Cursor::new(buf.inner.as_slice()), Limits::len(len));
+        let v_back: i32 = ReadXdr::read_xdr(&mut lr).unwrap();
+        assert_eq!(lr.limits.len, len - 4);
+        assert_eq!(v, v_back);
     }
 
     #[test]

@@ -89,8 +89,8 @@
           "type": "string"
         },
         "version_str": {
-          "type": "string",
-          "maxLength": 100
+          "description": "Byte string, not UTF-8, of at most 100 bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than 100 characters.",
+          "type": "string"
         }
       }
     }

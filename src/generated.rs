@@ -2196,11 +2196,12 @@ impl<const MAX: u32> schemars::JsonSchema for StringM<MAX> {
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
         let schema = String::json_schema(gen);
         if let schemars::schema::Schema::Object(mut schema) = schema {
-            let string = *schema.string.unwrap_or_default().clone();
-            schema.string = Some(Box::new(schemars::schema::StringValidation {
-                max_length: Some(MAX),
-                ..string
-            }));
+            // maxLength is omitted because bytes are escaped (SEP-51), so the
+            // JSON length doesn't map to the XDR length. The XDR byte limit is
+            // stated in the description instead.
+            schema.metadata().description = Some(format!(
+                "Byte string, not UTF-8, of at most {MAX} bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than {MAX} characters."
+            ));
             schema.into()
         } else {
             schema

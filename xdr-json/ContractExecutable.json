@@ -64,8 +64,7 @@
     },
     "ScString": {
       "description": "ScString is an XDR Typedef defined as:\n\n```text typedef string SCString<>; ```",
-      "type": "string",
-      "maxLength": 4294967295
+      "type": "string"
     }
   }
 }

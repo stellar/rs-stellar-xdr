@@ -36,6 +36,7 @@ pub(crate) fn type_ref(type_: &Type, parent_type: Option<&str>, type_info: &Type
 }
 
 /// Get the base Rust type reference (without Box wrapping).
+#[cfg(test)]
 pub(crate) fn base_type_ref(type_: &Type, type_info: Option<&TypeInfo>) -> String {
     TypeMapping::new(type_, type_info, None).base_type_ref()
 }

@@ -233,7 +233,6 @@ pub enum DefinitionOutput {
     Struct(StructOutput),
     Enum(EnumOutput),
     Union(UnionOutput),
-    TypedefAlias(TypedefAliasOutput),
     TypedefNewtype(TypedefNewtypeOutput),
     Const(ConstOutput),
 }
@@ -298,13 +297,6 @@ pub struct UnionArmOutput {
     pub type_ref: Option<String>,
     pub turbofish_type: Option<String>,
     pub serde_as_type: Option<String>,
-    pub cfg: Option<String>,
-}
-
-pub struct TypedefAliasOutput {
-    pub name: String,
-    pub source_comment: String,
-    pub type_ref: String,
     pub cfg: Option<String>,
 }
 

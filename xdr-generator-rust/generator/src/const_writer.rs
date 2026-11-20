@@ -394,16 +394,14 @@ impl Collector<'_> {
         }
     }
 
-    /// The method serializing one definition, or `None` for definitions that
-    /// are not written (consts, and typedefs of builtin scalars, which are
-    /// transparent Rust aliases served by the underlying scalar's method).
+    /// The method serializing one definition, or `None` for consts, which are
+    /// not written.
     fn definition_method(&mut self, def: &Definition) -> Option<ConstWriterMethodOutput> {
         let name = type_name(def.name());
         let cfg = def.cfg().map(CfgExpr::render);
 
         let body = match def {
             Definition::Const(_) => return None,
-            Definition::Typedef(t) if is_builtin_type(&t.type_) => return None,
             Definition::Typedef(t) => {
                 ConstWriterBody::Struct(vec![self.encode(&t.type_, "v.0", false, None, 0)])
             }

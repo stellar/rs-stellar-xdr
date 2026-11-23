@@ -117,141 +117,42 @@ fn test_serde_der_vecm_enforces_max() {
 }
 
 #[test]
+#[rustfmt::skip]
 fn test_serde_inline_opaque_uses_sep51_hex() {
     let v = PeerAddressIp::IPv4([0xab, 0xcd, 0xef, 0x01]);
-    assert_eq!(
-        serde_json::to_string(&v).map_err(|e| e.to_string()),
-        Ok(r#"{"i_pv4":"abcdef01"}"#.to_string())
-    );
-    assert_eq!(
-        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":"abcdef01"}"#).map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
-    assert_eq!(
-        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":[171,205,239,1]}"#)
-            .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"i_pv4":"abcdef01"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":"abcdef01"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":[171,205,239,1]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
     let v = PeerAddressIp::IPv6([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
-    assert_eq!(
-        serde_json::to_string(&v).map_err(|e| e.to_string()),
-        Ok(r#"{"i_pv6":"00000000000000000000000000000001"}"#.to_string())
-    );
-    assert_eq!(
-        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv6":"00000000000000000000000000000001"}"#)
-            .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
-    assert_eq!(
-        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv6":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]}"#)
-            .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"i_pv6":"00000000000000000000000000000001"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<PeerAddressIp>(r#"{"i_pv6":"00000000000000000000000000000001"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<PeerAddressIp>(r#"{"i_pv6":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
     let v = ShortHashSeed { seed: [0xab; 16] };
-    assert_eq!(
-        serde_json::to_string(&v).map_err(|e| e.to_string()),
-        Ok(r#"{"seed":"abababababababababababababababab"}"#.to_string())
-    );
-    assert_eq!(
-        serde_json::from_str::<ShortHashSeed>(r#"{"seed":"abababababababababababababababab"}"#)
-            .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
-    assert_eq!(
-        serde_json::from_str::<ShortHashSeed>(
-            r#"{"seed":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#
-        )
-        .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"seed":"abababababababababababababababab"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<ShortHashSeed>(r#"{"seed":"abababababababababababababababab"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<ShortHashSeed>(r#"{"seed":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
     let v = Curve25519Public { key: [0xab; 32] };
-    assert_eq!(
-        serde_json::to_string(&v).map_err(|e| e.to_string()),
-        Ok(
-            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
-                .to_string()
-        )
-    );
-    assert_eq!(
-        serde_json::from_str::<Curve25519Public>(
-            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
-        )
-        .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
-    assert_eq!(
-        serde_json::from_str::<Curve25519Public>(
-            r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#
-        )
-        .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<Curve25519Public>(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<Curve25519Public>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
     let v = Curve25519Secret { key: [0xab; 32] };
-    assert_eq!(
-        serde_json::to_string(&v).map_err(|e| e.to_string()),
-        Ok(
-            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
-                .to_string()
-        )
-    );
-    assert_eq!(
-        serde_json::from_str::<Curve25519Secret>(
-            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
-        )
-        .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
-    assert_eq!(
-        serde_json::from_str::<Curve25519Secret>(
-            r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#
-        )
-        .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<Curve25519Secret>(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<Curve25519Secret>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
     let v = HmacSha256Key { key: [0xab; 32] };
-    assert_eq!(
-        serde_json::to_string(&v).map_err(|e| e.to_string()),
-        Ok(
-            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
-                .to_string()
-        )
-    );
-    assert_eq!(
-        serde_json::from_str::<HmacSha256Key>(
-            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
-        )
-        .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
-    assert_eq!(
-        serde_json::from_str::<HmacSha256Key>(
-            r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#
-        )
-        .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<HmacSha256Key>(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<HmacSha256Key>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
     let v = HmacSha256Mac { mac: [0xab; 32] };
-    assert_eq!(
-        serde_json::to_string(&v).map_err(|e| e.to_string()),
-        Ok(
-            r#"{"mac":"abababababababababababababababababababababababababababababababab"}"#
-                .to_string()
-        )
-    );
-    assert_eq!(
-        serde_json::from_str::<HmacSha256Mac>(
-            r#"{"mac":"abababababababababababababababababababababababababababababababab"}"#
-        )
-        .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
-    assert_eq!(
-        serde_json::from_str::<HmacSha256Mac>(
-            r#"{"mac":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#
-        )
-        .map_err(|e| e.to_string()),
-        Ok(v.clone())
-    );
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"mac":"abababababababababababababababababababababababababababababababab"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<HmacSha256Mac>(r#"{"mac":"abababababababababababababababababababababababababababababababab"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<HmacSha256Mac>(r#"{"mac":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
 }
 
 #[test]

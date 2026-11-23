@@ -22,6 +22,7 @@ use super::*;
 )]
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 pub struct HmacSha256Mac {
+    #[cfg_attr(all(feature = "serde", feature = "alloc"), serde_as(as = "ArrayOrHex"))]
     pub mac: [u8; 32],
 }
 

@@ -11,14 +11,11 @@
       "type": "string"
     },
     "seed": {
-      "type": "array",
-      "items": {
-        "type": "integer",
-        "format": "uint8",
-        "minimum": 0.0
-      },
-      "maxItems": 16,
-      "minItems": 16
+      "type": "string",
+      "maxLength": 32,
+      "minLength": 32,
+      "contentEncoding": "hex",
+      "contentMediaType": "application/binary"
     }
   },
   "unevaluatedProperties": false

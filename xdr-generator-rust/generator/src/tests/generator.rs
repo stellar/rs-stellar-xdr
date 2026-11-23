@@ -4,12 +4,18 @@ use crate::generator::RustGenerator;
 use crate::options::RustOptions;
 
 fn generate_from_xdr(xdr: &str) -> String {
+    generate_from_xdr_with_options(
+        xdr,
+        RustOptions {
+            custom_default_impl: HashSet::new(),
+            custom_str_impl: HashSet::new(),
+            no_display_fromstr: HashSet::new(),
+        },
+    )
+}
+
+fn generate_from_xdr_with_options(xdr: &str, options: RustOptions) -> String {
     let spec = xdr_parser::parser::parse(xdr).unwrap();
-    let options = RustOptions {
-        custom_default_impl: HashSet::new(),
-        custom_str_impl: HashSet::new(),
-        no_display_fromstr: HashSet::new(),
-    };
     let generator = RustGenerator::new(&spec, options);
     let mut output = String::new();
     let module_file = std::path::Path::new("generated.rs");
@@ -427,6 +433,95 @@ fn test_no_const_form_for_heap_free_types() {
     );
     assert_not_contains(&output, "pub struct Flat {");
     assert_contains(&output, "pub use super::Flat;");
+}
+
+#[test]
+fn test_inline_fixed_opaque_serializes_as_hex() {
+    // Fixed length opaque declared inline is a plain byte array, so its
+    // field or arm gets the adapter that writes it as hex.
+    let output = generate_from_xdr(
+        r"
+        struct Foo { opaque b[4]; };
+        union Bar switch (int v) { case 0: opaque c[16]; };
+    ",
+    );
+    assert_contains(
+        &output,
+        r#"    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "ArrayOrHex")
+    )]
+    pub b: [u8; 4],"#,
+    );
+    assert_contains(
+        &output,
+        r#"    V0(
+        #[cfg_attr(
+            all(feature = "serde", feature = "alloc"),
+            serde_as(as = "ArrayOrHex")
+        )]
+        [u8; 16],
+    ),"#,
+    );
+}
+
+#[test]
+fn test_typedef_fixed_opaque_serializes_through_display() {
+    // A typedef of fixed length opaque is a newtype with its own hex
+    // Display/FromStr, so it gets no serde_as adapter, and neither do fields
+    // of that type.
+    let output = generate_from_xdr(
+        r"
+        typedef opaque Foo[4];
+        struct Bar { Foo f; };
+    ",
+    );
+    assert_contains(&output, "pub struct Foo(pub [u8; 4]);");
+    // The output includes the header, which defines the adapter itself.
+    assert_not_contains(&output, r#"serde_as(as = "ArrayOrHex")"#);
+}
+
+#[test]
+fn test_typedef_fixed_opaque_with_custom_str_has_no_adapter() {
+    // A typedef with a custom string impl serializes through that impl.
+    let output = generate_from_xdr_with_options(
+        r"
+        typedef opaque Foo[4];
+    ",
+        RustOptions {
+            custom_default_impl: HashSet::new(),
+            custom_str_impl: HashSet::from(["Foo".to_string()]),
+            no_display_fromstr: HashSet::new(),
+        },
+    );
+    assert_contains(&output, "pub struct Foo(pub [u8; 4]);");
+    assert_not_contains(&output, r#"serde_as(as = "ArrayOrHex")"#);
+}
+
+#[test]
+fn test_typedef_fixed_opaque_without_display_fromstr_serializes_as_hex() {
+    // A typedef without its own Display/FromStr has nothing to serialize
+    // through, so its inner array gets the adapter that writes it as hex.
+    let output = generate_from_xdr_with_options(
+        r"
+        typedef opaque Foo[4];
+    ",
+        RustOptions {
+            custom_default_impl: HashSet::new(),
+            custom_str_impl: HashSet::new(),
+            no_display_fromstr: HashSet::from(["Foo".to_string()]),
+        },
+    );
+    assert_contains(
+        &output,
+        r#"pub struct Foo(
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "ArrayOrHex")
+    )]
+    pub [u8; 4],
+);"#,
+    );
 }
 
 #[test]

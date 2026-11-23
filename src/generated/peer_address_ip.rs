@@ -26,8 +26,13 @@ use super::*;
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[allow(clippy::large_enum_variant)]
 pub enum PeerAddressIp {
-    IPv4([u8; 4]),
-    IPv6([u8; 16]),
+    IPv4(
+        #[cfg_attr(all(feature = "serde", feature = "alloc"), serde_as(as = "ArrayOrHex"))] [u8; 4],
+    ),
+    IPv6(
+        #[cfg_attr(all(feature = "serde", feature = "alloc"), serde_as(as = "ArrayOrHex"))]
+        [u8; 16],
+    ),
 }
 
 #[cfg(feature = "alloc")]

@@ -2390,11 +2390,7 @@ pub use super::Hash;
 #[allow(unused_imports)]
 pub use hash::*;
 mod uint256;
-pub use super::Int32;
-pub use super::Int64;
 pub use super::Uint256;
-pub use super::Uint32;
-pub use super::Uint64;
 #[allow(unused_imports)]
 pub use uint256::*;
 mod time_point;

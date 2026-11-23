@@ -289,7 +289,7 @@ pub struct Limits {
     pub depth: u32,
 
     /// Defines the maximum number of bytes that will be read or written.
-    pub len: usize,
+    pub len: u64,
 }
 
 #[cfg(feature = "std")]
@@ -298,7 +298,7 @@ impl Limits {
     pub fn none() -> Self {
         Self {
             depth: u32::MAX,
-            len: usize::MAX,
+            len: u64::MAX,
         }
     }
 
@@ -311,7 +311,7 @@ impl Limits {
     }
 
     #[must_use]
-    pub fn len(len: usize) -> Self {
+    pub fn len(len: u64) -> Self {
         Limits {
             len,
             ..Limits::none()
@@ -345,13 +345,25 @@ impl<L> Limited<L> {
     ///
     /// If the length would consume more length than the remaining length limit
     /// allows.
-    pub(crate) fn consume_len(&mut self, len: usize) -> Result<(), Error> {
+    pub(crate) fn consume_len(&mut self, len: u64) -> Result<(), Error> {
         if let Some(len) = self.limits.len.checked_sub(len) {
             self.limits.len = len;
             Ok(())
         } else {
             Err(Error::LengthLimitExceeded)
         }
+    }
+
+    /// Consume the given `usize` length from the internal remaining length
+    /// limit.
+    ///
+    /// ### Errors
+    ///
+    /// If the length would consume more length than the remaining length limit
+    /// allows.
+    pub(crate) fn consume_len_usize(&mut self, len: usize) -> Result<(), Error> {
+        let len = u64::try_from(len).map_err(|_| Error::LengthLimitExceeded)?;
+        self.consume_len(len)
     }
 
     /// Consumes a single depth for the duration of the given function.
@@ -371,6 +383,29 @@ impl<L> Limited<L> {
         } else {
             Err(Error::DepthLimitExceeded)
         }
+    }
+
+    /// Calls the given function with a `Limited` whose reader is capped to
+    /// reading at most `len` bytes from this one's reader, sharing all other
+    /// state such as limits. Any changes the function makes to that state are
+    /// kept, whether the function succeeds or fails.
+    pub(crate) fn with_len_cap<T, F>(&mut self, len: u64, f: F) -> Result<T, Error>
+    where
+        L: Read,
+        F: FnOnce(&mut Limited<std::io::Take<&mut L>>) -> Result<T, Error>,
+    {
+        let Limited { inner, limits } = self;
+        let mut capped = Limited {
+            inner: inner.take(len),
+            limits: limits.clone(),
+        };
+        let res = f(&mut capped);
+        let Limited {
+            inner: _,
+            limits: capped_limits,
+        } = capped;
+        *limits = capped_limits;
+        res
     }
 }
 
@@ -707,7 +742,7 @@ impl ReadXdr for i32 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         let mut b = [0u8; 4];
         r.with_limited_depth(|r| {
-            r.consume_len(b.len())?;
+            r.consume_len_usize(b.len())?;
             r.read_exact(&mut b)?;
             Ok(i32::from_be_bytes(b))
         })
@@ -719,7 +754,7 @@ impl WriteXdr for i32 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         let b: [u8; 4] = self.to_be_bytes();
         w.with_limited_depth(|w| {
-            w.consume_len(b.len())?;
+            w.consume_len_usize(b.len())?;
             Ok(w.write_all(&b)?)
         })
     }
@@ -730,7 +765,7 @@ impl ReadXdr for u32 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         let mut b = [0u8; 4];
         r.with_limited_depth(|r| {
-            r.consume_len(b.len())?;
+            r.consume_len_usize(b.len())?;
             r.read_exact(&mut b)?;
             Ok(u32::from_be_bytes(b))
         })
@@ -742,7 +777,7 @@ impl WriteXdr for u32 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         let b: [u8; 4] = self.to_be_bytes();
         w.with_limited_depth(|w| {
-            w.consume_len(b.len())?;
+            w.consume_len_usize(b.len())?;
             Ok(w.write_all(&b)?)
         })
     }
@@ -753,7 +788,7 @@ impl ReadXdr for i64 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         let mut b = [0u8; 8];
         r.with_limited_depth(|r| {
-            r.consume_len(b.len())?;
+            r.consume_len_usize(b.len())?;
             r.read_exact(&mut b)?;
             Ok(i64::from_be_bytes(b))
         })
@@ -765,7 +800,7 @@ impl WriteXdr for i64 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         let b: [u8; 8] = self.to_be_bytes();
         w.with_limited_depth(|w| {
-            w.consume_len(b.len())?;
+            w.consume_len_usize(b.len())?;
             Ok(w.write_all(&b)?)
         })
     }
@@ -776,7 +811,7 @@ impl ReadXdr for u64 {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         let mut b = [0u8; 8];
         r.with_limited_depth(|r| {
-            r.consume_len(b.len())?;
+            r.consume_len_usize(b.len())?;
             r.read_exact(&mut b)?;
             Ok(u64::from_be_bytes(b))
         })
@@ -788,7 +823,7 @@ impl WriteXdr for u64 {
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         let b: [u8; 8] = self.to_be_bytes();
         w.with_limited_depth(|w| {
-            w.consume_len(b.len())?;
+            w.consume_len_usize(b.len())?;
             Ok(w.write_all(&b)?)
         })
     }
@@ -827,8 +862,11 @@ impl ReadXdr for bool {
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
             let i = u32::read_xdr(r)?;
-            let b = i == 1;
-            Ok(b)
+            match i {
+                0 => Ok(false),
+                1 => Ok(true),
+                _ => Err(Error::Invalid),
+            }
         })
     }
 }
@@ -907,9 +945,9 @@ impl<const N: usize> ReadXdr for [u8; N] {
     #[cfg(feature = "std")]
     fn read_xdr<R: Read>(r: &mut Limited<R>) -> Result<Self, Error> {
         r.with_limited_depth(|r| {
-            r.consume_len(N)?;
+            r.consume_len_usize(N)?;
             let padding = pad_len(N);
-            r.consume_len(padding)?;
+            r.consume_len_usize(padding)?;
             let mut arr = [0u8; N];
             r.read_exact(&mut arr)?;
             let pad = &mut [0u8; 3][..padding];
@@ -926,9 +964,9 @@ impl<const N: usize> WriteXdr for [u8; N] {
     #[cfg(feature = "std")]
     fn write_xdr<W: Write>(&self, w: &mut Limited<W>) -> Result<(), Error> {
         w.with_limited_depth(|w| {
-            w.consume_len(N)?;
+            w.consume_len_usize(N)?;
             let padding = pad_len(N);
-            w.consume_len(padding)?;
+            w.consume_len_usize(padding)?;
             w.write_all(self)?;
             w.write_all(&[0u8; 3][..padding])?;
             Ok(())
@@ -1451,9 +1489,9 @@ impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
                 return Err(Error::LengthExceedsMax);
             }
 
-            r.consume_len(len as usize)?;
+            r.consume_len(len.into())?;
             let padding = pad_len(len as usize);
-            r.consume_len(padding)?;
+            r.consume_len_usize(padding)?;
 
             let mut vec = vec![0u8; len as usize];
             r.read_exact(&mut vec)?;
@@ -1476,9 +1514,9 @@ impl<const MAX: u32> WriteXdr for VecM<u8, MAX> {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
             len.write_xdr(w)?;
 
-            w.consume_len(self.len())?;
+            w.consume_len_usize(self.len())?;
             let padding = pad_len(self.len());
-            w.consume_len(padding)?;
+            w.consume_len_usize(padding)?;
 
             w.write_all(&self.0)?;
 
@@ -1925,9 +1963,9 @@ impl<const MAX: u32> ReadXdr for BytesM<MAX> {
                 return Err(Error::LengthExceedsMax);
             }
 
-            r.consume_len(len as usize)?;
+            r.consume_len(len.into())?;
             let padding = pad_len(len as usize);
-            r.consume_len(padding)?;
+            r.consume_len_usize(padding)?;
 
             let mut vec = vec![0u8; len as usize];
             r.read_exact(&mut vec)?;
@@ -1950,9 +1988,9 @@ impl<const MAX: u32> WriteXdr for BytesM<MAX> {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
             len.write_xdr(w)?;
 
-            w.consume_len(self.len())?;
+            w.consume_len_usize(self.len())?;
             let padding = pad_len(self.len());
-            w.consume_len(padding)?;
+            w.consume_len_usize(padding)?;
 
             w.write_all(&self.0)?;
 
@@ -2070,14 +2108,19 @@ impl<const MAX: u32> schemars::JsonSchema for StringM<MAX> {
         format!("StringM<{MAX}>")
     }
 
+    fn is_referenceable() -> bool {
+        false
+    }
+
     fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
         let schema = String::json_schema(gen);
         if let schemars::schema::Schema::Object(mut schema) = schema {
-            let string = *schema.string.unwrap_or_default().clone();
-            schema.string = Some(Box::new(schemars::schema::StringValidation {
-                max_length: Some(MAX),
-                ..string
-            }));
+            // maxLength is omitted because bytes are escaped (SEP-51), so the
+            // JSON length doesn't map to the XDR length. The XDR byte limit is
+            // stated in the description instead.
+            schema.metadata().description = Some(format!(
+                "Byte string, not UTF-8, of at most {MAX} bytes, escaped per SEP-51: printable ASCII (0x20-0x7e) is unchanged, except backslash as \\\\; NUL, tab, LF and CR as \\0, \\t, \\n and \\r; any other byte as \\xNN. The escaped string may be longer than {MAX} characters."
+            ));
             schema.into()
         } else {
             schema
@@ -2399,9 +2442,9 @@ impl<const MAX: u32> ReadXdr for StringM<MAX> {
                 return Err(Error::LengthExceedsMax);
             }
 
-            r.consume_len(len as usize)?;
+            r.consume_len(len.into())?;
             let padding = pad_len(len as usize);
-            r.consume_len(padding)?;
+            r.consume_len_usize(padding)?;
 
             let mut vec = vec![0u8; len as usize];
             r.read_exact(&mut vec)?;
@@ -2424,9 +2467,9 @@ impl<const MAX: u32> WriteXdr for StringM<MAX> {
             let len: u32 = self.len().try_into().map_err(|_| Error::LengthExceedsMax)?;
             len.write_xdr(w)?;
 
-            w.consume_len(self.len())?;
+            w.consume_len_usize(self.len())?;
             let padding = pad_len(self.len());
-            w.consume_len(padding)?;
+            w.consume_len_usize(padding)?;
 
             w.write_all(&self.0)?;
 
@@ -2486,11 +2529,25 @@ where
         //  - Bits 0-30 contain the byte length of the fragment data that
         //    follows the header.
         let header = u32::read_xdr(r)?;
-        // TODO: Use the length and cap the length we'll read from `r`.
         let last_record = header >> 31 == 1;
+        let len = u64::from(header & 0x7fff_ffff);
         if last_record {
-            // Read the record in the frame.
-            Ok(Self(T::read_xdr(r)?))
+            // Read the record in the frame, capping the read at the length in
+            // the header so that the record cannot read into the next frame.
+            r.with_len_cap(len, |r| {
+                let t = T::read_xdr(r)?;
+                // Discard any bytes remaining in the frame that the record
+                // didn't consume so that the reader is positioned at the next
+                // frame. This matches the behaviour of the xdrpp parser used by
+                // stellar-core.
+                let remaining = r.inner.limit();
+                let discarded = std::io::copy(&mut r.inner, &mut std::io::sink())?;
+                if discarded != remaining {
+                    return Err(Error::Io(std::io::ErrorKind::UnexpectedEof.into()));
+                }
+                r.consume_len(remaining)?;
+                Ok(Self(t))
+            })
         } else {
             // TODO: Support reading those additional frames for the same
             // record.
@@ -2954,6 +3011,21 @@ mod test {
             Err(Error::DepthLimitExceeded) => (),
             _ => panic!("expected DepthLimitExceeded got {res:?}"),
         }
+    }
+
+    #[test]
+    fn length_limited_read_write_beyond_u32() {
+        // Limits larger than u32::MAX are representable on all platforms,
+        // including those with a 32-bit usize.
+        let len = u64::from(u32::MAX) + 8;
+        let v = 123i32;
+        let mut buf = Limited::new(Vec::new(), Limits::len(len));
+        v.write_xdr(&mut buf).unwrap();
+        assert_eq!(buf.limits.len, len - 4);
+        let mut lr = Limited::new(Cursor::new(buf.inner.as_slice()), Limits::len(len));
+        let v_back: i32 = ReadXdr::read_xdr(&mut lr).unwrap();
+        assert_eq!(lr.limits.len, len - 4);
+        assert_eq!(v, v_back);
     }
 
     #[test]

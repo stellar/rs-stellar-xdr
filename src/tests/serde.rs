@@ -164,3 +164,25 @@ fn test_serde_der_inline_opaque_rejects_invalid() {
         );
     }
 }
+
+#[test]
+fn test_serde_enum_member_starting_with_digit() -> Result<(), Box<dyn std::error::Error>> {
+    use crate::BinaryFuseFilterType;
+    for (v, s) in [
+        (BinaryFuseFilterType::B8Bit, "\"8_bit\""),
+        (BinaryFuseFilterType::B16Bit, "\"16_bit\""),
+        (BinaryFuseFilterType::B32Bit, "\"32_bit\""),
+    ] {
+        assert_eq!(serde_json::to_string(&v)?, s);
+        assert_eq!(serde_json::from_str::<BinaryFuseFilterType>(s)?, v);
+    }
+    // The names used before the rename are still accepted.
+    for (v, s) in [
+        (BinaryFuseFilterType::B8Bit, "\"b8_bit\""),
+        (BinaryFuseFilterType::B16Bit, "\"b16_bit\""),
+        (BinaryFuseFilterType::B32Bit, "\"b32_bit\""),
+    ] {
+        assert_eq!(serde_json::from_str::<BinaryFuseFilterType>(s)?, v);
+    }
+    Ok(())
+}

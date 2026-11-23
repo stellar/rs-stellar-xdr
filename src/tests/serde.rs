@@ -120,109 +120,146 @@ fn test_serde_der_vecm_enforces_max() {
 fn test_serde_inline_opaque_uses_sep51_hex() {
     let v = PeerAddressIp::IPv4([0xab, 0xcd, 0xef, 0x01]);
     assert_eq!(
-        serde_json::to_string(&v).unwrap(),
-        r#"{"i_pv4":"abcdef01"}"#
+        serde_json::to_string(&v).map_err(|e| e.to_string()),
+        Ok(r#"{"i_pv4":"abcdef01"}"#.to_string())
     );
     assert_eq!(
-        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":"abcdef01"}"#).unwrap(),
-        v
+        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":"abcdef01"}"#).map_err(|e| e.to_string()),
+        Ok(v.clone())
     );
     assert_eq!(
-        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":[171,205,239,1]}"#).unwrap(),
-        v
+        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":[171,205,239,1]}"#)
+            .map_err(|e| e.to_string()),
+        Ok(v.clone())
     );
     let v = PeerAddressIp::IPv6([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
     assert_eq!(
-        serde_json::to_string(&v).unwrap(),
-        r#"{"i_pv6":"00000000000000000000000000000001"}"#
+        serde_json::to_string(&v).map_err(|e| e.to_string()),
+        Ok(r#"{"i_pv6":"00000000000000000000000000000001"}"#.to_string())
     );
     assert_eq!(
         serde_json::from_str::<PeerAddressIp>(r#"{"i_pv6":"00000000000000000000000000000001"}"#)
-            .unwrap(),
-        v
+            .map_err(|e| e.to_string()),
+        Ok(v.clone())
     );
     assert_eq!(
         serde_json::from_str::<PeerAddressIp>(r#"{"i_pv6":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]}"#)
-            .unwrap(),
-        v
+            .map_err(|e| e.to_string()),
+        Ok(v.clone())
     );
     let v = ShortHashSeed { seed: [0xab; 16] };
     assert_eq!(
-        serde_json::to_string(&v).unwrap(),
-        r#"{"seed":"abababababababababababababababab"}"#
+        serde_json::to_string(&v).map_err(|e| e.to_string()),
+        Ok(r#"{"seed":"abababababababababababababababab"}"#.to_string())
     );
     assert_eq!(
         serde_json::from_str::<ShortHashSeed>(r#"{"seed":"abababababababababababababababab"}"#)
-            .unwrap(),
-        v
+            .map_err(|e| e.to_string()),
+        Ok(v.clone())
     );
     assert_eq!(
         serde_json::from_str::<ShortHashSeed>(
             r#"{"seed":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#
         )
-        .unwrap(),
-        v
+        .map_err(|e| e.to_string()),
+        Ok(v.clone())
     );
     let v = Curve25519Public { key: [0xab; 32] };
     assert_eq!(
-        serde_json::to_string(&v).unwrap(),
-        r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+        serde_json::to_string(&v).map_err(|e| e.to_string()),
+        Ok(
+            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+                .to_string()
+        )
     );
     assert_eq!(
         serde_json::from_str::<Curve25519Public>(
             r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
         )
-        .unwrap(),
-        v
+        .map_err(|e| e.to_string()),
+        Ok(v.clone())
     );
-    assert_eq!(serde_json::from_str::<Curve25519Public>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).unwrap(), v);
+    assert_eq!(
+        serde_json::from_str::<Curve25519Public>(
+            r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#
+        )
+        .map_err(|e| e.to_string()),
+        Ok(v.clone())
+    );
     let v = Curve25519Secret { key: [0xab; 32] };
     assert_eq!(
-        serde_json::to_string(&v).unwrap(),
-        r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+        serde_json::to_string(&v).map_err(|e| e.to_string()),
+        Ok(
+            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+                .to_string()
+        )
     );
     assert_eq!(
         serde_json::from_str::<Curve25519Secret>(
             r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
         )
-        .unwrap(),
-        v
+        .map_err(|e| e.to_string()),
+        Ok(v.clone())
     );
-    assert_eq!(serde_json::from_str::<Curve25519Secret>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).unwrap(), v);
+    assert_eq!(
+        serde_json::from_str::<Curve25519Secret>(
+            r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#
+        )
+        .map_err(|e| e.to_string()),
+        Ok(v.clone())
+    );
     let v = HmacSha256Key { key: [0xab; 32] };
     assert_eq!(
-        serde_json::to_string(&v).unwrap(),
-        r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+        serde_json::to_string(&v).map_err(|e| e.to_string()),
+        Ok(
+            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+                .to_string()
+        )
     );
     assert_eq!(
         serde_json::from_str::<HmacSha256Key>(
             r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
         )
-        .unwrap(),
-        v
+        .map_err(|e| e.to_string()),
+        Ok(v.clone())
     );
-    assert_eq!(serde_json::from_str::<HmacSha256Key>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).unwrap(), v);
+    assert_eq!(
+        serde_json::from_str::<HmacSha256Key>(
+            r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#
+        )
+        .map_err(|e| e.to_string()),
+        Ok(v.clone())
+    );
     let v = HmacSha256Mac { mac: [0xab; 32] };
     assert_eq!(
-        serde_json::to_string(&v).unwrap(),
-        r#"{"mac":"abababababababababababababababababababababababababababababababab"}"#
+        serde_json::to_string(&v).map_err(|e| e.to_string()),
+        Ok(
+            r#"{"mac":"abababababababababababababababababababababababababababababababab"}"#
+                .to_string()
+        )
     );
     assert_eq!(
         serde_json::from_str::<HmacSha256Mac>(
             r#"{"mac":"abababababababababababababababababababababababababababababababab"}"#
         )
-        .unwrap(),
-        v
+        .map_err(|e| e.to_string()),
+        Ok(v.clone())
     );
-    assert_eq!(serde_json::from_str::<HmacSha256Mac>(r#"{"mac":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).unwrap(), v);
+    assert_eq!(
+        serde_json::from_str::<HmacSha256Mac>(
+            r#"{"mac":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#
+        )
+        .map_err(|e| e.to_string()),
+        Ok(v.clone())
+    );
 }
 
 #[test]
 fn test_serde_der_inline_opaque_accepts_any_case_hex() {
     for json in [r#"{"i_pv4":"ABCDEF01"}"#, r#"{"i_pv4":"AbCdEf01"}"#] {
         assert_eq!(
-            serde_json::from_str::<PeerAddressIp>(json).unwrap(),
-            PeerAddressIp::IPv4([0xab, 0xcd, 0xef, 0x01]),
+            serde_json::from_str::<PeerAddressIp>(json).map_err(|e| e.to_string()),
+            Ok(PeerAddressIp::IPv4([0xab, 0xcd, 0xef, 0x01])),
             "{json}"
         );
     }
@@ -237,8 +274,14 @@ fn test_serde_inline_opaque_nested() {
     };
     let json =
         r#"{"ip":{"i_pv6":"00000000000000000000000000000001"},"port":11625,"num_failures":2}"#;
-    assert_eq!(serde_json::to_string(&pa).unwrap(), json);
-    assert_eq!(serde_json::from_str::<PeerAddress>(json).unwrap(), pa);
+    assert_eq!(
+        serde_json::to_string(&pa).map_err(|e| e.to_string()),
+        Ok(json.to_string())
+    );
+    assert_eq!(
+        serde_json::from_str::<PeerAddress>(json).map_err(|e| e.to_string()),
+        Ok(pa.clone())
+    );
 
     let msg = AuthenticatedMessage::V0(AuthenticatedMessageV0 {
         sequence: 1,
@@ -246,10 +289,13 @@ fn test_serde_inline_opaque_nested() {
         mac: HmacSha256Mac { mac: [0xab; 32] },
     });
     let json = r#"{"v0":{"sequence":"1","message":{"peers":[{"ip":{"i_pv6":"00000000000000000000000000000001"},"port":11625,"num_failures":2}]},"mac":{"mac":"abababababababababababababababababababababababababababababababab"}}}"#;
-    assert_eq!(serde_json::to_string(&msg).unwrap(), json);
     assert_eq!(
-        serde_json::from_str::<AuthenticatedMessage>(json).unwrap(),
-        msg
+        serde_json::to_string(&msg).map_err(|e| e.to_string()),
+        Ok(json.to_string())
+    );
+    assert_eq!(
+        serde_json::from_str::<AuthenticatedMessage>(json).map_err(|e| e.to_string()),
+        Ok(msg.clone())
     );
 }
 
@@ -318,10 +364,8 @@ fn test_serde_der_inline_opaque_rejects_invalid() {
         ),
     ] {
         assert_eq!(
-            serde_json::from_str::<PeerAddressIp>(json)
-                .unwrap_err()
-                .to_string(),
-            err,
+            serde_json::from_str::<PeerAddressIp>(json).map_err(|e| e.to_string()),
+            Err(err.to_string()),
             "{json}"
         );
     }

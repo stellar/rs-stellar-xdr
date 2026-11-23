@@ -49,3 +49,53 @@ fn stringm_json_validates_against_xdr_json_schema() {
         .collect();
     assert_eq!(errors, Vec::<String>::new());
 }
+
+// JSON the crate emits for arbitrary values of every type must validate
+// against that type's published JSON schema.
+#[cfg(all(feature = "arbitrary", feature = "type_enum", feature = "serde_json"))]
+#[test]
+fn arbitrary_json_validates_against_xdr_json_schema() {
+    use crate::{Type, TypeVariant};
+    use arbitrary::Unstructured;
+    use rand::{rngs::StdRng, RngCore, SeedableRng};
+
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("xdr-json");
+    // Each type is independent, so check them in parallel.
+    let failures: Vec<String> = std::thread::scope(|scope| {
+        let handles: Vec<_> = TypeVariant::VARIANTS
+            .into_iter()
+            // Only exists with the test_feature feature, so has no published
+            // schema.
+            .filter(|v| v.name() != "TestNextType")
+            .map(|v| {
+                let dir = &dir;
+                scope.spawn(move || {
+                    let mut failures = Vec::new();
+                    let mut rng = StdRng::seed_from_u64(v as u64);
+                    let mut bytes = vec![0u8; 10_240];
+                    let path = dir.join(format!("{}.json", v.name()));
+                    let schema: serde_json::Value =
+                        serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+                    let validator = jsonschema::draft201909::new(&schema).unwrap();
+                    for _ in 0..10 {
+                        rng.fill_bytes(&mut bytes);
+                        let Ok(value) = Type::arbitrary(v, &mut Unstructured::new(&bytes)) else {
+                            continue;
+                        };
+                        let json = serde_json::to_value(&value).unwrap();
+                        let error = validator.iter_errors(&json).next().map(|e| e.to_string());
+                        if let Some(e) = error {
+                            failures.push(format!("{}: {e}: {json}", v.name()));
+                        }
+                    }
+                    failures
+                })
+            })
+            .collect();
+        handles
+            .into_iter()
+            .flat_map(|h| h.join().unwrap())
+            .collect()
+    });
+    assert!(failures.is_empty(), "{failures:#?}");
+}

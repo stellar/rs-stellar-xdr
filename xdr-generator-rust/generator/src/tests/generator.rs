@@ -4,12 +4,18 @@ use crate::generator::RustGenerator;
 use crate::options::RustOptions;
 
 fn generate_from_xdr(xdr: &str) -> String {
+    generate_from_xdr_with_options(
+        xdr,
+        RustOptions {
+            custom_default_impl: HashSet::new(),
+            custom_str_impl: HashSet::new(),
+            no_display_fromstr: HashSet::new(),
+        },
+    )
+}
+
+fn generate_from_xdr_with_options(xdr: &str, options: RustOptions) -> String {
     let spec = xdr_parser::parser::parse(xdr).unwrap();
-    let options = RustOptions {
-        custom_default_impl: HashSet::new(),
-        custom_str_impl: HashSet::new(),
-        no_display_fromstr: HashSet::new(),
-    };
     let generator = RustGenerator::new(&spec, options);
     let mut output = String::new();
     let module_file = std::path::Path::new("generated.rs");
@@ -473,6 +479,49 @@ fn test_typedef_fixed_opaque_serializes_through_display() {
     assert_contains(&output, "pub struct Foo(pub [u8; 4]);");
     // The output includes the header, which defines the adapter itself.
     assert_not_contains(&output, r#"serde_as(as = "ArrayOrHex")"#);
+}
+
+#[test]
+fn test_typedef_fixed_opaque_with_custom_str_has_no_adapter() {
+    // A typedef with a custom string impl serializes through that impl.
+    let output = generate_from_xdr_with_options(
+        r"
+        typedef opaque Foo[4];
+    ",
+        RustOptions {
+            custom_default_impl: HashSet::new(),
+            custom_str_impl: HashSet::from(["Foo".to_string()]),
+            no_display_fromstr: HashSet::new(),
+        },
+    );
+    assert_contains(&output, "pub struct Foo(pub [u8; 4]);");
+    assert_not_contains(&output, r#"serde_as(as = "ArrayOrHex")"#);
+}
+
+#[test]
+fn test_typedef_fixed_opaque_without_display_fromstr_serializes_as_hex() {
+    // A typedef without its own Display/FromStr has nothing to serialize
+    // through, so its inner array gets the adapter that writes it as hex.
+    let output = generate_from_xdr_with_options(
+        r"
+        typedef opaque Foo[4];
+    ",
+        RustOptions {
+            custom_default_impl: HashSet::new(),
+            custom_str_impl: HashSet::new(),
+            no_display_fromstr: HashSet::from(["Foo".to_string()]),
+        },
+    );
+    assert_contains(
+        &output,
+        r#"pub struct Foo(
+    #[cfg_attr(
+        all(feature = "serde", feature = "alloc"),
+        serde_as(as = "ArrayOrHex")
+    )]
+    pub [u8; 4],
+);"#,
+    );
 }
 
 #[test]

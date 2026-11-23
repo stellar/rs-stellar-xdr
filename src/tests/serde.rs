@@ -3,7 +3,9 @@
 use crate::{BytesM, Hash, StringM, VecM};
 
 use crate::{
-    AccountId, ContractEvent, ContractEventType, Curve25519Public, Int128Parts, PeerAddressIp,
+    AccountId, AuthenticatedMessage, AuthenticatedMessageV0, ContractEvent, ContractEventType,
+    Curve25519Public, Curve25519Secret, HmacSha256Key, HmacSha256Mac, Int128Parts, PeerAddress,
+    PeerAddressIp, ShortHashSeed, StellarMessage,
 };
 
 use std::str::FromStr;
@@ -115,52 +117,212 @@ fn test_serde_der_vecm_enforces_max() {
 }
 
 #[test]
-fn test_serde_inline_opaque_uses_sep51_hex() -> Result<(), Box<dyn std::error::Error>> {
-    let ip = PeerAddressIp::IPv4([0xab, 0xcd, 0xef, 0x01]);
-
-    let json = r#"{"i_pv4":"abcdef01"}"#;
-    let legacy_json = r#"{"i_pv4":[171,205,239,1]}"#;
-
-    assert_eq!(serde_json::to_string(&ip)?, json);
-
-    assert_eq!(serde_json::from_str::<PeerAddressIp>(json)?, ip);
+fn test_serde_inline_opaque_uses_sep51_hex() {
+    let v = PeerAddressIp::IPv4([0xab, 0xcd, 0xef, 0x01]);
     assert_eq!(
-        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":"ABCDEF01"}"#)?,
-        ip
+        serde_json::to_string(&v).unwrap(),
+        r#"{"i_pv4":"abcdef01"}"#
     );
+    assert_eq!(
+        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":"abcdef01"}"#).unwrap(),
+        v
+    );
+    assert_eq!(
+        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":[171,205,239,1]}"#).unwrap(),
+        v
+    );
+    let v = PeerAddressIp::IPv6([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
+    assert_eq!(
+        serde_json::to_string(&v).unwrap(),
+        r#"{"i_pv6":"00000000000000000000000000000001"}"#
+    );
+    assert_eq!(
+        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv6":"00000000000000000000000000000001"}"#)
+            .unwrap(),
+        v
+    );
+    assert_eq!(
+        serde_json::from_str::<PeerAddressIp>(r#"{"i_pv6":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]}"#)
+            .unwrap(),
+        v
+    );
+    let v = ShortHashSeed { seed: [0xab; 16] };
+    assert_eq!(
+        serde_json::to_string(&v).unwrap(),
+        r#"{"seed":"abababababababababababababababab"}"#
+    );
+    assert_eq!(
+        serde_json::from_str::<ShortHashSeed>(r#"{"seed":"abababababababababababababababab"}"#)
+            .unwrap(),
+        v
+    );
+    assert_eq!(
+        serde_json::from_str::<ShortHashSeed>(
+            r#"{"seed":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#
+        )
+        .unwrap(),
+        v
+    );
+    let v = Curve25519Public { key: [0xab; 32] };
+    assert_eq!(
+        serde_json::to_string(&v).unwrap(),
+        r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+    );
+    assert_eq!(
+        serde_json::from_str::<Curve25519Public>(
+            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+        )
+        .unwrap(),
+        v
+    );
+    assert_eq!(serde_json::from_str::<Curve25519Public>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).unwrap(), v);
+    let v = Curve25519Secret { key: [0xab; 32] };
+    assert_eq!(
+        serde_json::to_string(&v).unwrap(),
+        r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+    );
+    assert_eq!(
+        serde_json::from_str::<Curve25519Secret>(
+            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+        )
+        .unwrap(),
+        v
+    );
+    assert_eq!(serde_json::from_str::<Curve25519Secret>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).unwrap(), v);
+    let v = HmacSha256Key { key: [0xab; 32] };
+    assert_eq!(
+        serde_json::to_string(&v).unwrap(),
+        r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+    );
+    assert_eq!(
+        serde_json::from_str::<HmacSha256Key>(
+            r#"{"key":"abababababababababababababababababababababababababababababababab"}"#
+        )
+        .unwrap(),
+        v
+    );
+    assert_eq!(serde_json::from_str::<HmacSha256Key>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).unwrap(), v);
+    let v = HmacSha256Mac { mac: [0xab; 32] };
+    assert_eq!(
+        serde_json::to_string(&v).unwrap(),
+        r#"{"mac":"abababababababababababababababababababababababababababababababab"}"#
+    );
+    assert_eq!(
+        serde_json::from_str::<HmacSha256Mac>(
+            r#"{"mac":"abababababababababababababababababababababababababababababababab"}"#
+        )
+        .unwrap(),
+        v
+    );
+    assert_eq!(serde_json::from_str::<HmacSha256Mac>(r#"{"mac":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).unwrap(), v);
+}
 
-    assert_eq!(serde_json::from_str::<PeerAddressIp>(legacy_json)?, ip);
+#[test]
+fn test_serde_der_inline_opaque_accepts_any_case_hex() {
+    for json in [r#"{"i_pv4":"ABCDEF01"}"#, r#"{"i_pv4":"AbCdEf01"}"#] {
+        assert_eq!(
+            serde_json::from_str::<PeerAddressIp>(json).unwrap(),
+            PeerAddressIp::IPv4([0xab, 0xcd, 0xef, 0x01]),
+            "{json}"
+        );
+    }
+}
 
-    let key = Curve25519Public { key: [0xab; 32] };
-    let key_json = format!(r#"{{"key":"{}"}}"#, "ab".repeat(32));
-    assert_eq!(serde_json::to_string(&key)?, key_json);
-    assert_eq!(serde_json::from_str::<Curve25519Public>(&key_json)?, key);
+#[test]
+fn test_serde_inline_opaque_nested() {
+    let pa = PeerAddress {
+        ip: PeerAddressIp::IPv6([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+        port: 11625,
+        num_failures: 2,
+    };
+    let json =
+        r#"{"ip":{"i_pv6":"00000000000000000000000000000001"},"port":11625,"num_failures":2}"#;
+    assert_eq!(serde_json::to_string(&pa).unwrap(), json);
+    assert_eq!(serde_json::from_str::<PeerAddress>(json).unwrap(), pa);
 
-    Ok(())
+    let msg = AuthenticatedMessage::V0(AuthenticatedMessageV0 {
+        sequence: 1,
+        message: StellarMessage::Peers(vec![pa].try_into().unwrap()),
+        mac: HmacSha256Mac { mac: [0xab; 32] },
+    });
+    let json = r#"{"v0":{"sequence":"1","message":{"peers":[{"ip":{"i_pv6":"00000000000000000000000000000001"},"port":11625,"num_failures":2}]},"mac":{"mac":"abababababababababababababababababababababababababababababababab"}}}"#;
+    assert_eq!(serde_json::to_string(&msg).unwrap(), json);
+    assert_eq!(
+        serde_json::from_str::<AuthenticatedMessage>(json).unwrap(),
+        msg
+    );
 }
 
 #[test]
 fn test_serde_der_inline_opaque_rejects_invalid() {
-    for json in [
-        r#"{"i_pv4":"010203"}"#,
-        r#"{"i_pv4":"0102030405"}"#,
-        r#"{"i_pv4":"0102030"}"#,
-        r#"{"i_pv4":"0102030g"}"#,
-        r#"{"i_pv4":[1,2,3]}"#,
-        r#"{"i_pv4":[1,2,3,4,5]}"#,
-        r#"{"i_pv4":[1,2,3,256]}"#,
-        r#"{"i_pv4":1}"#,
+    for (json, err) in [
+        (
+            r#"{"i_pv4":"010203"}"#,
+            r#"invalid value: string "010203", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 17"#,
+        ),
+        (
+            r#"{"i_pv4":"0102030405"}"#,
+            r#"invalid value: string "0102030405", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 21"#,
+        ),
+        (
+            r#"{"i_pv4":"0102030"}"#,
+            r#"invalid value: string "0102030", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 18"#,
+        ),
+        (
+            r#"{"i_pv4":"0102030g"}"#,
+            r#"invalid value: string "0102030g", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 19"#,
+        ),
+        (
+            r#"{"i_pv4":""}"#,
+            r#"invalid value: string "", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 11"#,
+        ),
+        (
+            r#"{"i_pv4":"0x01020304"}"#,
+            r#"invalid value: string "0x01020304", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 21"#,
+        ),
+        (
+            r#"{"i_pv4":" 01020304"}"#,
+            r#"invalid value: string " 01020304", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 20"#,
+        ),
+        (
+            r#"{"i_pv4":"01020304 "}"#,
+            r#"invalid value: string "01020304 ", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 20"#,
+        ),
+        (
+            r#"{"i_pv4":"000102030405060708090a0b0c0d0e0f"}"#,
+            r#"invalid value: string "000102030405060708090a0b0c0d0e0f", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 43"#,
+        ),
+        (
+            r#"{"i_pv4":[1,2,3]}"#,
+            r"invalid length 3, expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 16",
+        ),
+        (
+            r#"{"i_pv4":[1,2,3,4,5]}"#,
+            r"invalid length 5, expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 20",
+        ),
+        (
+            r#"{"i_pv4":[1,2,3,256]}"#,
+            r"invalid value: integer `256`, expected u8 at line 1 column 19",
+        ),
+        (
+            r#"{"i_pv4":1}"#,
+            r"invalid type: integer `1`, expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 10",
+        ),
+        (
+            r#"{"i_pv6":"01020304"}"#,
+            r#"invalid value: string "01020304", expected a hex string encoding 16 bytes or an array of 16 integers at line 1 column 19"#,
+        ),
+        (
+            r#"{"i_pv6":[1,2,3,4]}"#,
+            r"invalid length 4, expected a hex string encoding 16 bytes or an array of 16 integers at line 1 column 18",
+        ),
     ] {
-        let result = serde_json::from_str::<PeerAddressIp>(json);
-        assert!(result.is_err(), "{json} decoded to {result:?}");
-    }
-
-    for json in [r#"{"i_pv4":"010203"}"#, r#"{"i_pv4":[1,2,3]}"#] {
-        let err = serde_json::from_str::<PeerAddressIp>(json).unwrap_err();
-        assert!(
-            err.to_string()
-                .contains("expected a hex string encoding 4 bytes or an array of 4 integers"),
-            "{json}: {err}"
+        assert_eq!(
+            serde_json::from_str::<PeerAddressIp>(json)
+                .unwrap_err()
+                .to_string(),
+            err,
+            "{json}"
         );
     }
 }

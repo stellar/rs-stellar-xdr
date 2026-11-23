@@ -2780,6 +2780,9 @@ impl<'de, const N: usize> serde_with::DeserializeAs<'de, [u8; N]> for ArrayOrHex
                         .next_element()?
                         .ok_or_else(|| serde::de::Error::invalid_length(i, &self))?;
                 }
+                if seq.next_element::<serde::de::IgnoredAny>()?.is_some() {
+                    return Err(serde::de::Error::invalid_length(N + 1, &self));
+                }
                 Ok(bytes)
             }
         }

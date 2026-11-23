@@ -2881,7 +2881,18 @@ impl<const N: usize> serde_with::SerializeAs<[u8; N]> for ArrayOrHex {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&hex::encode(source))
+        struct Hex<'a>(&'a [u8]);
+
+        impl core::fmt::Display for Hex<'_> {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                for b in self.0 {
+                    write!(f, "{b:02x}")?;
+                }
+                Ok(())
+            }
+        }
+
+        serializer.collect_str(&Hex(source))
     }
 }
 

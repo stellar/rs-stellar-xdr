@@ -37,8 +37,9 @@
 //! ```
 //!
 //! With the `type_enum` and `serde_json` features, pass the deserializer to
-//! `Type::deserialize_json` to read a type chosen at runtime. Without the limit,
-//! values nested deeply enough can overflow the stack while being read, and
-//! also when being cloned, compared, or dropped.
+//! `Type::deserialize_json` to read a type chosen at runtime.
+//!
+//! **Warning:** Without the limit, values nested deeply enough can overflow the
+//! stack while being read, and also when being cloned, compared, or dropped.
 //!
 //! [SEP-51]: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0051.md

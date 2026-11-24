@@ -37,7 +37,25 @@
 //! ```
 //!
 //! With the `type_enum` and `serde_json` features, pass the deserializer to
-//! `Type::deserialize_json` to read a type chosen at runtime.
+//! `Type::deserialize_json` to read a type chosen at runtime:
+//!
+//! ```
+//! # #[cfg(all(feature = "type_enum", feature = "serde_json"))]
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! use stellar_xdr::{Type, TypeVariant};
+//!
+//! let depth = 100;
+//! let json = format!("{}\"void\"{}", r#"{"vec":["#.repeat(depth), "]}".repeat(depth));
+//!
+//! let mut de = serde_json::Deserializer::from_str(&json);
+//! de.disable_recursion_limit();
+//! let t = Type::deserialize_json(TypeVariant::ScVal, &mut de)?;
+//! de.end()?;
+//! # Ok(())
+//! # }
+//! # #[cfg(not(all(feature = "type_enum", feature = "serde_json")))]
+//! # fn main() {}
+//! ```
 //!
 //! **Warning:** Without the limit, values nested deeply enough can overflow the
 //! stack while being read, and also when being cloned, compared, or dropped.

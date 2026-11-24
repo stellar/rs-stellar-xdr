@@ -12,12 +12,10 @@
 //! wherever the type is nested, such as in
 //! [`SignerKey::Ed25519SignedPayload`][crate::SignerKey::Ed25519SignedPayload].
 //! 2. Deeply nested values – serde_json stops reading JSON nested more than 128
-//! levels deep by default, and a nested value can use more than one JSON level
-//! per level of nesting, such as two for each [`ScVal::Vec`][crate::ScVal::Vec].
-//! Values nested that deep can be written to XDR-JSON but not read back with
-//! the default limit. To read them, enable serde_json's `unbounded_depth`
-//! feature, and deserialize with a deserializer that has the recursion limit
-//! disabled:
+//! levels deep by default. Values nested that deep can be written to XDR-JSON
+//! but not read back with the default limit. To read them, enable serde_json's
+//! `unbounded_depth` feature, and deserialize with a deserializer that has the
+//! recursion limit disabled:
 //!
 //! ```
 //! # #[cfg(feature = "serde")]

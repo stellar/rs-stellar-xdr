@@ -13228,8 +13228,9 @@ impl Type {
 
     /// Reads a value of the type from JSON.
     ///
-    /// JSON nested more than 128 levels deep is rejected. To read deeper JSON,
-    /// see [`Type::deserialize_json`].
+    /// Uses a serde_json deserializer with its default recursion limit, which
+    /// rejects JSON nested more than 128 levels deep. To read deeper JSON, see
+    /// [`Type::deserialize_json`].
     #[cfg(all(feature = "std", feature = "serde_json"))]
     #[allow(clippy::too_many_lines)]
     pub fn from_json(v: TypeVariant, r: impl Read) -> Result<Self, Error> {
@@ -16092,8 +16093,9 @@ impl Type {
     /// Reads a value of the type from JSON, collecting the paths of any fields
     /// in the JSON that were ignored.
     ///
-    /// JSON nested more than 128 levels deep is rejected. To read deeper JSON,
-    /// see [`Type::deserialize_json_collecting_ignored_fields`].
+    /// Uses a serde_json deserializer with its default recursion limit, which
+    /// rejects JSON nested more than 128 levels deep. To read deeper JSON, see
+    /// [`Type::deserialize_json_collecting_ignored_fields`].
     #[cfg(feature = "serde_ignored")]
     pub fn from_json_collecting_ignored_fields(
         v: TypeVariant,
@@ -16108,8 +16110,8 @@ impl Type {
     /// Reads a value of the type from JSON using the deserializer, collecting
     /// the paths of any fields in the JSON that were ignored.
     ///
-    /// To read JSON nested more than 128 levels deep, disable the recursion
-    /// limit on the deserializer, see [`Type::deserialize_json`].
+    /// To read JSON nested deeper than serde_json's default recursion limit,
+    /// disable the limit on the deserializer, see [`Type::deserialize_json`].
     #[cfg(feature = "serde_ignored")]
     #[allow(clippy::too_many_lines)]
     pub fn deserialize_json_collecting_ignored_fields<'r, R: serde_json::de::Read<'r>>(

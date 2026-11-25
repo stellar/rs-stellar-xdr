@@ -93,25 +93,20 @@ macro_rules! run_x {
                 match self.input_format {
                     InputFormat::Json => match self.output_format {
                         OutputFormat::Single => {
-                            let (t, ignored) =
-                                crate::Type::from_json_collecting_ignored_fields(r#type, f)?;
-                            check_ignored_fields(&ignored)?;
+                            let t = read_json(r#type, f)?;
                             let l = crate::Limits::none();
                             stdout()
                                 .write_all(&t.to_xdr(l)?)
                                 .map_err(Error::WriteOutput)?;
                         }
                         OutputFormat::SingleBase64 => {
-                            let (t, ignored) =
-                                crate::Type::from_json_collecting_ignored_fields(r#type, f)?;
-                            check_ignored_fields(&ignored)?;
+                            let t = read_json(r#type, f)?;
                             let l = crate::Limits::none();
                             writeln!(stdout(), "{}", t.to_xdr_base64(l)?)
                                 .map_err(Error::WriteOutput)?
                         }
                         OutputFormat::Stream => {
-                            let mut de =
-                                serde_json::Deserializer::new(serde_json::de::IoRead::new(f));
+                            let mut de = json_deserializer(f);
                             loop {
                                 let (t, ignored) = match crate::Type::deserialize_json_collecting_ignored_fields(r#type, &mut de) {
                                     Ok(r) => r,
@@ -158,4 +153,42 @@ fn check_ignored_fields(ignored: &[String]) -> Result<(), Error> {
         return Ok(());
     }
     Err(Error::UnknownFields(ignored.to_vec()))
+}
+
+/// Returns a JSON deserializer with no recursion limit, so that deeply nested
+/// values that were written as JSON can be read back.
+fn json_deserializer<R: std::io::Read>(
+    r: R,
+) -> serde_json::Deserializer<serde_json::de::IoRead<R>> {
+    let mut de = serde_json::Deserializer::from_reader(r);
+    de.disable_recursion_limit();
+    de
+}
+
+/// Reads a single value of the type from JSON with no recursion limit.
+fn read_json(v: crate::TypeVariant, r: impl std::io::Read) -> Result<crate::Type, Error> {
+    let mut de = json_deserializer(r);
+    let (t, ignored) = crate::Type::deserialize_json_collecting_ignored_fields(v, &mut de)?;
+    de.end().map_err(crate::Error::Json)?;
+    check_ignored_fields(&ignored)?;
+    Ok(t)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{ScVal, ScVec, Type, TypeVariant};
+
+    #[test]
+    fn read_json_deeper_than_default_recursion_limit() {
+        // Each ScVal::Vec level uses two JSON levels, so 100 levels is deeper
+        // than serde_json's default recursion limit of 128.
+        let mut v = ScVal::Void;
+        for _ in 0..100 {
+            v = ScVal::Vec(Some(ScVec(vec![v].try_into().unwrap())));
+        }
+        let json = serde_json::to_string(&v).unwrap();
+        let t = read_json(TypeVariant::ScVal, json.as_bytes()).unwrap();
+        assert_eq!(t, Type::ScVal(Box::new(v)));
+    }
 }

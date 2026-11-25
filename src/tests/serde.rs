@@ -2,7 +2,11 @@
 
 use crate::{BytesM, Hash, StringM, VecM};
 
-use crate::{AccountId, ContractEvent, ContractEventType, Int128Parts};
+use crate::{
+    AccountId, AuthenticatedMessage, AuthenticatedMessageV0, ContractEvent, ContractEventType,
+    Curve25519Public, Curve25519Secret, HmacSha256Key, HmacSha256Mac, Int128Parts, PeerAddress,
+    PeerAddressIp, ShortHashSeed, StellarMessage,
+};
 
 use std::str::FromStr;
 
@@ -110,6 +114,162 @@ fn test_serde_der_vecm_enforces_max() {
         VecM::<u32, 2>::try_from(vec![1, 2]).unwrap()
     );
     assert!(serde_json::from_str::<VecM<u32, 2>>("[1,2,3]").is_err());
+}
+
+#[test]
+#[rustfmt::skip]
+fn test_serde_inline_opaque_uses_sep51_hex() {
+    let v = PeerAddressIp::IPv4([0xab, 0xcd, 0xef, 0x01]);
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"i_pv4":"abcdef01"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":"abcdef01"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<PeerAddressIp>(r#"{"i_pv4":[171,205,239,1]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
+    let v = PeerAddressIp::IPv6([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"i_pv6":"00000000000000000000000000000001"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<PeerAddressIp>(r#"{"i_pv6":"00000000000000000000000000000001"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<PeerAddressIp>(r#"{"i_pv6":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
+    let v = ShortHashSeed { seed: [0xab; 16] };
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"seed":"abababababababababababababababab"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<ShortHashSeed>(r#"{"seed":"abababababababababababababababab"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<ShortHashSeed>(r#"{"seed":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
+    let v = Curve25519Public { key: [0xab; 32] };
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<Curve25519Public>(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<Curve25519Public>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
+    let v = Curve25519Secret { key: [0xab; 32] };
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<Curve25519Secret>(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<Curve25519Secret>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
+    let v = HmacSha256Key { key: [0xab; 32] };
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<HmacSha256Key>(r#"{"key":"abababababababababababababababababababababababababababababababab"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<HmacSha256Key>(r#"{"key":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+
+    let v = HmacSha256Mac { mac: [0xab; 32] };
+    assert_eq!(serde_json::to_string(&v).map_err(|e| e.to_string()), Ok(r#"{"mac":"abababababababababababababababababababababababababababababababab"}"#.to_string()));
+    assert_eq!(serde_json::from_str::<HmacSha256Mac>(r#"{"mac":"abababababababababababababababababababababababababababababababab"}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+    assert_eq!(serde_json::from_str::<HmacSha256Mac>(r#"{"mac":[171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171,171]}"#).map_err(|e| e.to_string()), Ok(v.clone()));
+}
+
+#[test]
+fn test_serde_der_inline_opaque_accepts_any_case_hex() {
+    for json in [r#"{"i_pv4":"ABCDEF01"}"#, r#"{"i_pv4":"AbCdEf01"}"#] {
+        assert_eq!(
+            serde_json::from_str::<PeerAddressIp>(json).map_err(|e| e.to_string()),
+            Ok(PeerAddressIp::IPv4([0xab, 0xcd, 0xef, 0x01])),
+            "{json}"
+        );
+    }
+}
+
+#[test]
+fn test_serde_inline_opaque_nested() {
+    let pa = PeerAddress {
+        ip: PeerAddressIp::IPv6([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+        port: 11625,
+        num_failures: 2,
+    };
+    let json =
+        r#"{"ip":{"i_pv6":"00000000000000000000000000000001"},"port":11625,"num_failures":2}"#;
+    assert_eq!(
+        serde_json::to_string(&pa).map_err(|e| e.to_string()),
+        Ok(json.to_string())
+    );
+    assert_eq!(
+        serde_json::from_str::<PeerAddress>(json).map_err(|e| e.to_string()),
+        Ok(pa.clone())
+    );
+
+    let msg = AuthenticatedMessage::V0(AuthenticatedMessageV0 {
+        sequence: 1,
+        message: StellarMessage::Peers(vec![pa].try_into().unwrap()),
+        mac: HmacSha256Mac { mac: [0xab; 32] },
+    });
+    let json = r#"{"v0":{"sequence":"1","message":{"peers":[{"ip":{"i_pv6":"00000000000000000000000000000001"},"port":11625,"num_failures":2}]},"mac":{"mac":"abababababababababababababababababababababababababababababababab"}}}"#;
+    assert_eq!(
+        serde_json::to_string(&msg).map_err(|e| e.to_string()),
+        Ok(json.to_string())
+    );
+    assert_eq!(
+        serde_json::from_str::<AuthenticatedMessage>(json).map_err(|e| e.to_string()),
+        Ok(msg.clone())
+    );
+}
+
+#[test]
+fn test_serde_der_inline_opaque_rejects_invalid() {
+    for (json, err) in [
+        (
+            r#"{"i_pv4":"010203"}"#,
+            r#"invalid value: string "010203", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 17"#,
+        ),
+        (
+            r#"{"i_pv4":"0102030405"}"#,
+            r#"invalid value: string "0102030405", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 21"#,
+        ),
+        (
+            r#"{"i_pv4":"0102030"}"#,
+            r#"invalid value: string "0102030", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 18"#,
+        ),
+        (
+            r#"{"i_pv4":"0102030g"}"#,
+            r#"invalid value: string "0102030g", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 19"#,
+        ),
+        (
+            r#"{"i_pv4":""}"#,
+            r#"invalid value: string "", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 11"#,
+        ),
+        (
+            r#"{"i_pv4":"0x01020304"}"#,
+            r#"invalid value: string "0x01020304", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 21"#,
+        ),
+        (
+            r#"{"i_pv4":" 01020304"}"#,
+            r#"invalid value: string " 01020304", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 20"#,
+        ),
+        (
+            r#"{"i_pv4":"01020304 "}"#,
+            r#"invalid value: string "01020304 ", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 20"#,
+        ),
+        (
+            r#"{"i_pv4":"000102030405060708090a0b0c0d0e0f"}"#,
+            r#"invalid value: string "000102030405060708090a0b0c0d0e0f", expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 43"#,
+        ),
+        (
+            r#"{"i_pv4":[1,2,3]}"#,
+            r"invalid length 3, expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 16",
+        ),
+        (
+            r#"{"i_pv4":[1,2,3,4,5]}"#,
+            r"invalid length 5, expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 20",
+        ),
+        (
+            r#"{"i_pv4":[1,2,3,256]}"#,
+            r"invalid value: integer `256`, expected u8 at line 1 column 19",
+        ),
+        (
+            r#"{"i_pv4":1}"#,
+            r"invalid type: integer `1`, expected a hex string encoding 4 bytes or an array of 4 integers at line 1 column 10",
+        ),
+        (
+            r#"{"i_pv6":"01020304"}"#,
+            r#"invalid value: string "01020304", expected a hex string encoding 16 bytes or an array of 16 integers at line 1 column 19"#,
+        ),
+        (
+            r#"{"i_pv6":[1,2,3,4]}"#,
+            r"invalid length 4, expected a hex string encoding 16 bytes or an array of 16 integers at line 1 column 18",
+        ),
+    ] {
+        assert_eq!(
+            serde_json::from_str::<PeerAddressIp>(json).map_err(|e| e.to_string()),
+            Err(err.to_string()),
+            "{json}"
+        );
+    }
 }
 
 #[test]

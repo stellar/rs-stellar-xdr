@@ -144,8 +144,9 @@ mod tests {
     }
 
     #[test]
-    fn compare_each_input_format() {
-        // ScBytes values of 1 and 5 bytes.
+    fn valid_single_file_is_accepted_by_input_size() {
+        // ScBytes values of 1 and 5 bytes, that exactly fill the length limit
+        // derived from the size of each file.
         let left = std::env::temp_dir().join(format!(
             "stellar-xdr-cli-test-{:016x}",
             rand::random::<u64>()
@@ -172,8 +173,12 @@ mod tests {
         std::fs::remove_file(left).unwrap();
         std::fs::remove_file(right).unwrap();
         r.unwrap();
+    }
 
-        // The same values base64 encoded.
+    #[test]
+    fn valid_single_base64_file_is_accepted_by_input_size() {
+        // ScBytes values of 1 and 5 bytes base64 encoded, that fit within the
+        // length limit derived from the size of each file.
         let left = std::env::temp_dir().join(format!(
             "stellar-xdr-cli-test-{:016x}",
             rand::random::<u64>()

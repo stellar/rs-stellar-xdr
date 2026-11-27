@@ -100,35 +100,77 @@ pub fn serde_json_value_to_text(v: serde_json::Value) -> Option<String> {
 mod tests {
     use super::*;
 
-    #[cfg(any(unix, windows))]
-    fn assert_handle_len_of_file_and_pipe() {
+    #[cfg(unix)]
+    #[test]
+    fn handle_len_of_file_is_its_size_unix() {
         let path = std::env::temp_dir().join(format!(
             "stellar-xdr-cli-test-{:016x}",
             rand::random::<u64>()
         ));
         std::fs::write(&path, [1, 2, 3, 4, 5]).unwrap();
         let file = File::open(&path).unwrap();
-        assert_eq!(handle_len(&file), Some(5));
-        drop(file);
-        std::fs::write(&path, []).unwrap();
-        let file = File::open(&path).unwrap();
-        assert_eq!(handle_len(&file), None);
+        let len = handle_len(&file);
         drop(file);
         std::fs::remove_file(path).unwrap();
-
-        let (reader, _writer) = std::io::pipe().unwrap();
-        assert_eq!(handle_len(&reader), None);
+        assert_eq!(len, Some(5));
     }
 
     #[cfg(unix)]
     #[test]
-    fn handle_len_unix() {
-        assert_handle_len_of_file_and_pipe();
+    fn handle_len_of_empty_file_is_unknown_unix() {
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(&path, []).unwrap();
+        let file = File::open(&path).unwrap();
+        let len = handle_len(&file);
+        drop(file);
+        std::fs::remove_file(path).unwrap();
+        assert_eq!(len, None);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn handle_len_of_pipe_is_unknown_unix() {
+        let (reader, _writer) = std::io::pipe().unwrap();
+        assert_eq!(handle_len(&reader), None);
     }
 
     #[cfg(windows)]
     #[test]
-    fn handle_len_windows() {
-        assert_handle_len_of_file_and_pipe();
+    fn handle_len_of_file_is_its_size_windows() {
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(&path, [1, 2, 3, 4, 5]).unwrap();
+        let file = File::open(&path).unwrap();
+        let len = handle_len(&file);
+        drop(file);
+        std::fs::remove_file(path).unwrap();
+        assert_eq!(len, Some(5));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn handle_len_of_empty_file_is_unknown_windows() {
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(&path, []).unwrap();
+        let file = File::open(&path).unwrap();
+        let len = handle_len(&file);
+        drop(file);
+        std::fs::remove_file(path).unwrap();
+        assert_eq!(len, None);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn handle_len_of_pipe_is_unknown_windows() {
+        let (reader, _writer) = std::io::pipe().unwrap();
+        assert_eq!(handle_len(&reader), None);
     }
 }

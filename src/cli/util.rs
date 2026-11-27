@@ -3,9 +3,13 @@ use std::fs::File;
 use std::io::{stdin, Cursor, Error as IoError, Read};
 use std::path::Path;
 
-pub fn parse_input(input: &[OsString]) -> Result<Vec<Box<dyn Read>>, IoError> {
+/// A reader of an input, along with the size in bytes of the input when the
+/// size is known ahead of reading it.
+pub type Input = (Box<dyn Read>, Option<u64>);
+
+pub fn parse_input(input: &[OsString]) -> Result<Vec<Input>, IoError> {
     if input.is_empty() {
-        Ok(vec![Box::new(stdin())])
+        Ok(vec![(Box::new(stdin()), stdin_len())])
     } else {
         Ok(input
             .iter()
@@ -13,12 +17,63 @@ pub fn parse_input(input: &[OsString]) -> Result<Vec<Box<dyn Read>>, IoError> {
                 let exist = Path::new(input).try_exists();
                 if let Ok(true) = exist {
                     let file = File::open(input)?;
-                    Ok::<Box<dyn Read>, IoError>(Box::new(file) as Box<dyn Read>)
+                    let len = file_len(&file);
+                    Ok::<_, IoError>((Box::new(file) as Box<dyn Read>, len))
                 } else {
-                    Ok(Box::new(Cursor::new(input.clone().into_encoded_bytes())) as Box<dyn Read>)
+                    let bytes = input.clone().into_encoded_bytes();
+                    let len = u64::try_from(bytes.len()).ok();
+                    Ok((Box::new(Cursor::new(bytes)) as Box<dyn Read>, len))
                 }
             })
             .collect::<Result<Vec<_>, _>>()?)
+    }
+}
+
+/// Returns the size of the file if it is a regular file.
+///
+/// Pipes, FIFOs, and other special files have no known size and return
+/// `None`. Regular files reporting a zero size also return `None`, because
+/// some special filesystems (e.g. procfs) report zero for non-empty files.
+pub fn file_len(file: &File) -> Option<u64> {
+    let metadata = file.metadata().ok()?;
+    (metadata.is_file() && metadata.len() > 0).then_some(metadata.len())
+}
+
+/// Returns the size of stdin if it is a regular file, such as when it is
+/// redirected from a file.
+pub fn stdin_len() -> Option<u64> {
+    #[cfg(unix)]
+    {
+        use std::os::fd::AsFd;
+        let fd = stdin().as_fd().try_clone_to_owned().ok()?;
+        file_len(&File::from(fd))
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::io::AsHandle;
+        let handle = stdin().as_handle().try_clone_to_owned().ok()?;
+        file_len(&File::from(handle))
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        None
+    }
+}
+
+/// Returns the limits to use when decoding XDR from an input of the given
+/// size.
+///
+/// Decoded XDR is never larger than the input it is decoded from, so when the
+/// size of the input is known the length limit is set to it. This causes
+/// lengths declared in the XDR that exceed the input to be rejected before
+/// any memory is allocated for them.
+pub fn limits(len: Option<u64>) -> crate::Limits {
+    match len {
+        Some(len) => crate::Limits {
+            len,
+            ..crate::Limits::none()
+        },
+        None => crate::Limits::none(),
     }
 }
 

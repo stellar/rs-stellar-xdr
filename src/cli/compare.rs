@@ -8,6 +8,8 @@ use std::{
 
 use clap::{Args, ValueEnum};
 
+use crate::cli::util;
+
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("unknown type {0}, choose one of {1:?}")]
@@ -60,28 +62,30 @@ macro_rules! run_x {
         fn $f(&self) -> Result<(), Error> {
             let f1 = File::open(&self.left).map_err(Error::ReadFile)?;
             let f2 = File::open(&self.right).map_err(Error::ReadFile)?;
+            let l1 = util::limits(util::file_len(&f1));
+            let l2 = util::limits(util::file_len(&f2));
             let r#type = crate::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::TypeVariant::VARIANTS_STR)
             })?;
             let (t1, t2) = match self.input {
                 InputFormat::Single => {
                     let t1 = {
-                        let mut l1 = crate::Limited::new(f1, crate::Limits::none());
+                        let mut l1 = crate::Limited::new(f1, l1);
                         crate::Type::read_xdr_to_end(r#type, &mut l1)?
                     };
                     let t2 = {
-                        let mut l = crate::Limited::new(f2, crate::Limits::none());
+                        let mut l = crate::Limited::new(f2, l2);
                         crate::Type::read_xdr_to_end(r#type, &mut l)?
                     };
                     (t1, t2)
                 }
                 InputFormat::SingleBase64 => {
                     let t1 = {
-                        let mut l = crate::Limited::new(f1, crate::Limits::none());
+                        let mut l = crate::Limited::new(f1, l1);
                         crate::Type::read_xdr_base64_to_end(r#type, &mut l)?
                     };
                     let t2 = {
-                        let mut l = crate::Limited::new(f2, crate::Limits::none());
+                        let mut l = crate::Limited::new(f2, l2);
                         crate::Type::read_xdr_base64_to_end(r#type, &mut l)?
                     };
                     (t1, t2)
@@ -110,4 +114,32 @@ impl Cmd {
     }
 
     run_x!(run_inner);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn huge_length_in_file_is_rejected_by_input_size() {
+        // A ScBytes value whose length prefix declares 0xFFFFFFF0 bytes but
+        // that is followed by no data.
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-compare-test-{}-huge",
+            std::process::id()
+        ));
+        std::fs::write(&path, [0xFF, 0xFF, 0xFF, 0xF0]).unwrap();
+        let r = Cmd {
+            left: path.clone(),
+            right: path.clone(),
+            r#type: "ScBytes".to_string(),
+            input: InputFormat::Single,
+        }
+        .run();
+        std::fs::remove_file(path).unwrap();
+        assert!(
+            matches!(r, Err(Error::ReadXdr(crate::Error::LengthLimitExceeded))),
+            "{r:?}"
+        );
+    }
 }

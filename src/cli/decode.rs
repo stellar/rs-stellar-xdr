@@ -72,32 +72,32 @@ macro_rules! run_x {
             let r#type = crate::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::TypeVariant::VARIANTS_STR)
             })?;
-            for f in &mut input {
+            for (f, len) in &mut input {
                 match self.input_format {
                     InputFormat::Single => {
-                        let mut l = crate::Limited::new(f, crate::Limits::none());
+                        let mut l = crate::Limited::new(f, util::limits(*len));
                         let t = crate::Type::read_xdr_to_end(r#type, &mut l)?;
                         self.out(&t)?;
                     }
                     InputFormat::SingleBase64 => {
-                        let mut l = crate::Limited::new(f, crate::Limits::none());
+                        let mut l = crate::Limited::new(f, util::limits(*len));
                         let t = crate::Type::read_xdr_base64_to_end(r#type, &mut l)?;
                         self.out(&t)?;
                     }
                     InputFormat::Stream => {
-                        let mut l = crate::Limited::new(f, crate::Limits::none());
+                        let mut l = crate::Limited::new(f, util::limits(*len));
                         for t in crate::Type::read_xdr_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamBase64 => {
-                        let mut l = crate::Limited::new(f, crate::Limits::none());
+                        let mut l = crate::Limited::new(f, util::limits(*len));
                         for t in crate::Type::read_xdr_base64_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamFramed => {
-                        let mut l = crate::Limited::new(f, crate::Limits::none());
+                        let mut l = crate::Limited::new(f, util::limits(*len));
                         for t in crate::Type::read_xdr_framed_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
@@ -139,5 +139,130 @@ impl Cmd {
         };
         writeln!(stdout(), "{text}").map_err(Error::WriteOutput)?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{BytesM, Limits, ScBytes, WriteXdr};
+    use base64::Engine as _;
+    use std::path::PathBuf;
+
+    // A ScBytes value whose length prefix declares 0xFFFFFFF0 bytes but that is
+    // followed by no data.
+    const HUGE_LEN: [u8; 4] = [0xFF, 0xFF, 0xFF, 0xF0];
+
+    fn temp_file(name: &str, contents: &[u8]) -> PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-decode-test-{}-{name}",
+            std::process::id()
+        ));
+        std::fs::write(&path, contents).unwrap();
+        path
+    }
+
+    fn decode(input: impl Into<OsString>, input_format: InputFormat) -> Result<(), Error> {
+        Cmd {
+            input: vec![input.into()],
+            r#type: "ScBytes".to_string(),
+            input_format,
+            output_format: OutputFormat::Json,
+        }
+        .run()
+    }
+
+    fn sc_bytes_xdr(len: u8) -> Vec<u8> {
+        let v = ScBytes(BytesM::try_from(vec![len; len.into()]).unwrap());
+        v.to_xdr(Limits::none()).unwrap()
+    }
+
+    fn framed(xdr: &[u8]) -> Vec<u8> {
+        let header = 0x8000_0000 | u32::try_from(xdr.len()).unwrap();
+        let mut bytes = header.to_be_bytes().to_vec();
+        bytes.extend_from_slice(xdr);
+        bytes
+    }
+
+    fn base64(bytes: &[u8]) -> Vec<u8> {
+        base64::engine::general_purpose::STANDARD
+            .encode(bytes)
+            .into_bytes()
+    }
+
+    fn assert_length_limit_exceeded(r: &Result<(), Error>) {
+        assert!(
+            matches!(r, Err(Error::ReadXdr(crate::Error::LengthLimitExceeded))),
+            "{r:?}"
+        );
+    }
+
+    #[test]
+    fn huge_length_in_file_is_rejected_by_input_size() {
+        let path = temp_file("huge-single", &HUGE_LEN);
+        assert_length_limit_exceeded(&decode(&path, InputFormat::Single));
+        assert_length_limit_exceeded(&decode(&path, InputFormat::Stream));
+        std::fs::remove_file(path).unwrap();
+
+        let path = temp_file("huge-single-base64", &base64(&HUGE_LEN));
+        assert_length_limit_exceeded(&decode(&path, InputFormat::SingleBase64));
+        assert_length_limit_exceeded(&decode(&path, InputFormat::StreamBase64));
+        std::fs::remove_file(path).unwrap();
+
+        let path = temp_file("huge-stream-framed", &framed(&HUGE_LEN));
+        assert_length_limit_exceeded(&decode(&path, InputFormat::StreamFramed));
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn huge_length_inline_is_rejected_by_input_size() {
+        let input = String::from_utf8(base64(&HUGE_LEN)).unwrap();
+        assert_length_limit_exceeded(&decode(input.clone(), InputFormat::SingleBase64));
+        assert_length_limit_exceeded(&decode(input, InputFormat::StreamBase64));
+    }
+
+    #[test]
+    fn decode_each_input_format() {
+        let xdr = sc_bytes_xdr(5);
+        for (name, input_format, contents) in [
+            ("single", InputFormat::Single, xdr.clone()),
+            ("single-base64", InputFormat::SingleBase64, base64(&xdr)),
+            ("stream", InputFormat::Stream, xdr.clone()),
+            ("stream-base64", InputFormat::StreamBase64, base64(&xdr)),
+            ("stream-framed", InputFormat::StreamFramed, framed(&xdr)),
+        ] {
+            let path = temp_file(name, &contents);
+            decode(&path, input_format).unwrap();
+            std::fs::remove_file(path).unwrap();
+        }
+        let inline = String::from_utf8(base64(&xdr)).unwrap();
+        decode(inline.clone(), InputFormat::SingleBase64).unwrap();
+        decode(inline, InputFormat::StreamBase64).unwrap();
+    }
+
+    #[test]
+    fn decode_multi_item_stream_fully() {
+        // The length limit is shared by all items in a stream, so the items
+        // must together fit within the size of the input.
+        let items = [sc_bytes_xdr(1), sc_bytes_xdr(5), sc_bytes_xdr(9)];
+        let stream = items.concat();
+        let framed_stream: Vec<u8> = items.iter().flat_map(|i| framed(i)).collect();
+        for (name, input_format, contents) in [
+            ("multi-stream", InputFormat::Stream, stream.clone()),
+            (
+                "multi-stream-base64",
+                InputFormat::StreamBase64,
+                base64(&stream),
+            ),
+            (
+                "multi-stream-framed",
+                InputFormat::StreamFramed,
+                framed_stream,
+            ),
+        ] {
+            let path = temp_file(name, &contents);
+            decode(&path, input_format).unwrap();
+            std::fs::remove_file(path).unwrap();
+        }
     }
 }

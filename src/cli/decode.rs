@@ -72,32 +72,32 @@ macro_rules! run_x {
             let r#type = crate::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::TypeVariant::VARIANTS_STR)
             })?;
-            for (f, len) in &mut input {
+            for (f, limits) in &mut input {
                 match self.input_format {
                     InputFormat::Single => {
-                        let mut l = crate::Limited::new(f, util::limits(*len));
+                        let mut l = crate::Limited::new(f, limits.clone());
                         let t = crate::Type::read_xdr_to_end(r#type, &mut l)?;
                         self.out(&t)?;
                     }
                     InputFormat::SingleBase64 => {
-                        let mut l = crate::Limited::new(f, util::limits(*len));
+                        let mut l = crate::Limited::new(f, limits.clone());
                         let t = crate::Type::read_xdr_base64_to_end(r#type, &mut l)?;
                         self.out(&t)?;
                     }
                     InputFormat::Stream => {
-                        let mut l = crate::Limited::new(f, util::limits(*len));
+                        let mut l = crate::Limited::new(f, limits.clone());
                         for t in crate::Type::read_xdr_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamBase64 => {
-                        let mut l = crate::Limited::new(f, util::limits(*len));
+                        let mut l = crate::Limited::new(f, limits.clone());
                         for t in crate::Type::read_xdr_base64_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
                     }
                     InputFormat::StreamFramed => {
-                        let mut l = crate::Limited::new(f, util::limits(*len));
+                        let mut l = crate::Limited::new(f, limits.clone());
                         for t in crate::Type::read_xdr_framed_iter(r#type, &mut l) {
                             self.out(&t?)?;
                         }
@@ -147,20 +147,10 @@ mod tests {
     use super::*;
     use crate::{BytesM, Limits, ScBytes, WriteXdr};
     use base64::Engine as _;
-    use std::path::PathBuf;
 
     // A ScBytes value whose length prefix declares 0xFFFFFFF0 bytes but that is
     // followed by no data.
     const HUGE_LEN: [u8; 4] = [0xFF, 0xFF, 0xFF, 0xF0];
-
-    fn temp_file(name: &str, contents: &[u8]) -> PathBuf {
-        let path = std::env::temp_dir().join(format!(
-            "stellar-xdr-cli-decode-test-{}-{name}",
-            std::process::id()
-        ));
-        std::fs::write(&path, contents).unwrap();
-        path
-    }
 
     fn decode(input: impl Into<OsString>, input_format: InputFormat) -> Result<(), Error> {
         Cmd {
@@ -199,17 +189,17 @@ mod tests {
 
     #[test]
     fn huge_length_in_file_is_rejected_by_input_size() {
-        let path = temp_file("huge-single", &HUGE_LEN);
+        let path = util::temp_file(&HUGE_LEN);
         assert_length_limit_exceeded(&decode(&path, InputFormat::Single));
         assert_length_limit_exceeded(&decode(&path, InputFormat::Stream));
         std::fs::remove_file(path).unwrap();
 
-        let path = temp_file("huge-single-base64", &base64(&HUGE_LEN));
+        let path = util::temp_file(&base64(&HUGE_LEN));
         assert_length_limit_exceeded(&decode(&path, InputFormat::SingleBase64));
         assert_length_limit_exceeded(&decode(&path, InputFormat::StreamBase64));
         std::fs::remove_file(path).unwrap();
 
-        let path = temp_file("huge-stream-framed", &framed(&HUGE_LEN));
+        let path = util::temp_file(&framed(&HUGE_LEN));
         assert_length_limit_exceeded(&decode(&path, InputFormat::StreamFramed));
         std::fs::remove_file(path).unwrap();
     }
@@ -224,14 +214,14 @@ mod tests {
     #[test]
     fn decode_each_input_format() {
         let xdr = sc_bytes_xdr(5);
-        for (name, input_format, contents) in [
-            ("single", InputFormat::Single, xdr.clone()),
-            ("single-base64", InputFormat::SingleBase64, base64(&xdr)),
-            ("stream", InputFormat::Stream, xdr.clone()),
-            ("stream-base64", InputFormat::StreamBase64, base64(&xdr)),
-            ("stream-framed", InputFormat::StreamFramed, framed(&xdr)),
+        for (input_format, contents) in [
+            (InputFormat::Single, xdr.clone()),
+            (InputFormat::SingleBase64, base64(&xdr)),
+            (InputFormat::Stream, xdr.clone()),
+            (InputFormat::StreamBase64, base64(&xdr)),
+            (InputFormat::StreamFramed, framed(&xdr)),
         ] {
-            let path = temp_file(name, &contents);
+            let path = util::temp_file(&contents);
             decode(&path, input_format).unwrap();
             std::fs::remove_file(path).unwrap();
         }
@@ -247,20 +237,12 @@ mod tests {
         let items = [sc_bytes_xdr(1), sc_bytes_xdr(5), sc_bytes_xdr(9)];
         let stream = items.concat();
         let framed_stream: Vec<u8> = items.iter().flat_map(|i| framed(i)).collect();
-        for (name, input_format, contents) in [
-            ("multi-stream", InputFormat::Stream, stream.clone()),
-            (
-                "multi-stream-base64",
-                InputFormat::StreamBase64,
-                base64(&stream),
-            ),
-            (
-                "multi-stream-framed",
-                InputFormat::StreamFramed,
-                framed_stream,
-            ),
+        for (input_format, contents) in [
+            (InputFormat::Stream, stream.clone()),
+            (InputFormat::StreamBase64, base64(&stream)),
+            (InputFormat::StreamFramed, framed_stream),
         ] {
-            let path = temp_file(name, &contents);
+            let path = util::temp_file(&contents);
             decode(&path, input_format).unwrap();
             std::fs::remove_file(path).unwrap();
         }

@@ -57,28 +57,28 @@ pub enum OutputFormat {
 macro_rules! run_x {
     ($f:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let (input, len) = self.input()?;
+            let (input, limits) = self.input()?;
             let mut rr = ResetRead::new(input);
             let mut guessed = false;
             'variants: for v in crate::TypeVariant::VARIANTS {
                 rr.reset();
                 let count: usize = match self.input_format {
                     InputFormat::Single => {
-                        let mut l = crate::Limited::new(&mut rr, util::limits(len));
+                        let mut l = crate::Limited::new(&mut rr, limits.clone());
                         crate::Type::read_xdr_to_end(v, &mut l)
                             .ok()
                             .map(|_| 1)
                             .unwrap_or_default()
                     }
                     InputFormat::SingleBase64 => {
-                        let mut l = crate::Limited::new(&mut rr, util::limits(len));
+                        let mut l = crate::Limited::new(&mut rr, limits.clone());
                         crate::Type::read_xdr_base64_to_end(v, &mut l)
                             .ok()
                             .map(|_| 1)
                             .unwrap_or_default()
                     }
                     InputFormat::Stream => {
-                        let mut l = crate::Limited::new(&mut rr, util::limits(len));
+                        let mut l = crate::Limited::new(&mut rr, limits.clone());
                         let iter = crate::Type::read_xdr_iter(v, &mut l);
                         let iter = iter.take(self.certainty);
                         let mut count = 0;
@@ -91,7 +91,7 @@ macro_rules! run_x {
                         count
                     }
                     InputFormat::StreamBase64 => {
-                        let mut l = crate::Limited::new(&mut rr, util::limits(len));
+                        let mut l = crate::Limited::new(&mut rr, limits.clone());
                         let iter = crate::Type::read_xdr_base64_iter(v, &mut l);
                         let iter = iter.take(self.certainty);
                         let mut count = 0;
@@ -104,7 +104,7 @@ macro_rules! run_x {
                         count
                     }
                     InputFormat::StreamFramed => {
-                        let mut l = crate::Limited::new(&mut rr, util::limits(len));
+                        let mut l = crate::Limited::new(&mut rr, limits.clone());
                         let iter = crate::Type::read_xdr_framed_iter(v, &mut l);
                         let iter = iter.take(self.certainty);
                         let mut count = 0;

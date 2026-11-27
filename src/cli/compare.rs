@@ -62,8 +62,8 @@ macro_rules! run_x {
         fn $f(&self) -> Result<(), Error> {
             let f1 = File::open(&self.left).map_err(Error::ReadFile)?;
             let f2 = File::open(&self.right).map_err(Error::ReadFile)?;
-            let l1 = util::limits(util::file_len(&f1));
-            let l2 = util::limits(util::file_len(&f2));
+            let l1 = util::file_limits(&f1);
+            let l2 = util::file_limits(&f2);
             let r#type = crate::TypeVariant::from_str(&self.r#type).map_err(|_| {
                 Error::UnknownType(self.r#type.clone(), &crate::TypeVariant::VARIANTS_STR)
             })?;
@@ -124,11 +124,7 @@ mod tests {
     fn huge_length_in_file_is_rejected_by_input_size() {
         // A ScBytes value whose length prefix declares 0xFFFFFFF0 bytes but
         // that is followed by no data.
-        let path = std::env::temp_dir().join(format!(
-            "stellar-xdr-cli-compare-test-{}-huge",
-            std::process::id()
-        ));
-        std::fs::write(&path, [0xFF, 0xFF, 0xFF, 0xF0]).unwrap();
+        let path = util::temp_file(&[0xFF, 0xFF, 0xFF, 0xF0]);
         let r = Cmd {
             left: path.clone(),
             right: path.clone(),

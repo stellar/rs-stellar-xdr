@@ -3,11 +3,18 @@
 use crate::{BytesM, Error, Limited, Limits, ReadXdr, StringM, VecM};
 use std::io::{self, Cursor, Read};
 
-/// A reader that records the largest buffer it was asked to fill. Reads into a
-/// `Vec` are made into its spare capacity, so this shows how much the decoder
-/// had allocated ahead of the bytes it actually received.
+/// A reader that tracks how much memory the decoder allocated ahead of the data
+/// it had received.
+///
+/// The decoder can only ask a reader to fill a buffer it has already
+/// allocated, so the largest buffer passed to `read` is a lower bound on how
+/// much the decoder allocated before seeing the bytes to put in it. A decoder
+/// that allocates the declared length up front passes a buffer of that length.
+/// A decoder that grows its buffer as bytes arrive passes only small buffers.
 struct MaxBufReader {
     inner: Cursor<Vec<u8>>,
+    /// The largest buffer, in bytes, that the decoder has asked to be filled,
+    /// i.e. how much it had allocated ahead of the data it received.
     max_buf: usize,
 }
 

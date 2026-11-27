@@ -1,9 +1,9 @@
 use clap::{Args, ValueEnum};
 use std::cmp;
 use std::ffi::OsString;
-use std::fs::File;
-use std::io::{self, stdin, stdout, Cursor, Read, Write};
-use std::path::Path;
+use std::io::{self, stdout, Read, Write};
+
+use crate::cli::util;
 
 #[derive(thiserror::Error, Debug)]
 #[allow(clippy::enum_variant_names)]
@@ -57,27 +57,28 @@ pub enum OutputFormat {
 macro_rules! run_x {
     ($f:ident) => {
         fn $f(&self) -> Result<(), Error> {
-            let mut rr = ResetRead::new(self.input()?);
+            let (input, limits) = self.input()?;
+            let mut rr = ResetRead::new(input);
             let mut guessed = false;
             'variants: for v in crate::TypeVariant::VARIANTS {
                 rr.reset();
                 let count: usize = match self.input_format {
                     InputFormat::Single => {
-                        let mut l = crate::Limited::new(&mut rr, crate::Limits::none());
+                        let mut l = crate::Limited::new(&mut rr, limits.clone());
                         crate::Type::read_xdr_to_end(v, &mut l)
                             .ok()
                             .map(|_| 1)
                             .unwrap_or_default()
                     }
                     InputFormat::SingleBase64 => {
-                        let mut l = crate::Limited::new(&mut rr, crate::Limits::none());
+                        let mut l = crate::Limited::new(&mut rr, limits.clone());
                         crate::Type::read_xdr_base64_to_end(v, &mut l)
                             .ok()
                             .map(|_| 1)
                             .unwrap_or_default()
                     }
                     InputFormat::Stream => {
-                        let mut l = crate::Limited::new(&mut rr, crate::Limits::none());
+                        let mut l = crate::Limited::new(&mut rr, limits.clone());
                         let iter = crate::Type::read_xdr_iter(v, &mut l);
                         let iter = iter.take(self.certainty);
                         let mut count = 0;
@@ -90,7 +91,7 @@ macro_rules! run_x {
                         count
                     }
                     InputFormat::StreamBase64 => {
-                        let mut l = crate::Limited::new(&mut rr, crate::Limits::none());
+                        let mut l = crate::Limited::new(&mut rr, limits.clone());
                         let iter = crate::Type::read_xdr_base64_iter(v, &mut l);
                         let iter = iter.take(self.certainty);
                         let mut count = 0;
@@ -103,7 +104,7 @@ macro_rules! run_x {
                         count
                     }
                     InputFormat::StreamFramed => {
-                        let mut l = crate::Limited::new(&mut rr, crate::Limits::none());
+                        let mut l = crate::Limited::new(&mut rr, limits.clone());
                         let iter = crate::Type::read_xdr_framed_iter(v, &mut l);
                         let iter = iter.take(self.certainty);
                         let mut count = 0;
@@ -146,17 +147,9 @@ impl Cmd {
 
     run_x!(run_inner);
 
-    fn input(&self) -> Result<Box<dyn Read>, Error> {
-        if let Some(input) = &self.input {
-            let exist = Path::new(input).try_exists();
-            if let Ok(true) = exist {
-                Ok(Box::new(File::open(input).map_err(Error::ReadFile)?))
-            } else {
-                Ok(Box::new(Cursor::new(input.clone().into_encoded_bytes())))
-            }
-        } else {
-            Ok(Box::new(stdin()))
-        }
+    fn input(&self) -> Result<util::Input, Error> {
+        let mut input = util::parse_input(self.input.as_slice()).map_err(Error::ReadFile)?;
+        Ok(input.remove(0))
     }
 }
 

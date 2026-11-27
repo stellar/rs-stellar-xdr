@@ -42,17 +42,9 @@ pub fn file_len(file: &File) -> Option<u64> {
 /// Returns the size of stdin if it is a regular file, such as when it is
 /// redirected from a file.
 pub fn stdin_len() -> Option<u64> {
-    #[cfg(unix)]
+    #[cfg(any(unix, windows))]
     {
-        use std::os::fd::AsFd;
-        let fd = stdin().as_fd().try_clone_to_owned().ok()?;
-        file_len(&File::from(fd))
-    }
-    #[cfg(windows)]
-    {
-        use std::os::windows::io::AsHandle;
-        let handle = stdin().as_handle().try_clone_to_owned().ok()?;
-        file_len(&File::from(handle))
+        handle_len(&stdin())
     }
     #[cfg(not(any(unix, windows)))]
     {
@@ -60,21 +52,27 @@ pub fn stdin_len() -> Option<u64> {
     }
 }
 
-/// Returns the limits to use when decoding XDR from an input of the given
-/// size.
+/// Returns the size of the file behind the handle if it is a regular file.
+#[cfg(unix)]
+fn handle_len(handle: &impl std::os::fd::AsFd) -> Option<u64> {
+    let fd = handle.as_fd().try_clone_to_owned().ok()?;
+    file_len(&File::from(fd))
+}
+
+/// Returns the size of the file behind the handle if it is a regular file.
+#[cfg(windows)]
+fn handle_len(handle: &impl std::os::windows::io::AsHandle) -> Option<u64> {
+    let handle = handle.as_handle().try_clone_to_owned().ok()?;
+    file_len(&File::from(handle))
+}
+
+/// Returns the limits to use when decoding XDR from an input of the given size.
 ///
-/// Decoded XDR is never larger than the input it is decoded from, so when the
-/// size of the input is known the length limit is set to it. This causes
-/// lengths declared in the XDR that exceed the input to be rejected before
-/// any memory is allocated for them.
+/// Decoded XDR is never larger than the input it is decoded from, so a known
+/// size is used as the length limit, causing lengths declared in the XDR that
+/// exceed the input to be rejected before anything is allocated.
 pub fn limits(len: Option<u64>) -> crate::Limits {
-    match len {
-        Some(len) => crate::Limits {
-            len,
-            ..crate::Limits::none()
-        },
-        None => crate::Limits::none(),
-    }
+    len.map_or_else(crate::Limits::none, crate::Limits::len)
 }
 
 pub fn serde_json_value_to_text(v: serde_json::Value) -> Option<String> {
@@ -86,4 +84,41 @@ pub fn serde_json_value_to_text(v: serde_json::Value) -> Option<String> {
         serde_json::Value::Array(_) | serde_json::Value::Object(_) => None?,
     };
     Some(s)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(any(unix, windows))]
+    fn assert_handle_len_of_file_and_pipe() {
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-util-test-{}-handle-len",
+            std::process::id()
+        ));
+        std::fs::write(&path, [1, 2, 3, 4, 5]).unwrap();
+        let file = File::open(&path).unwrap();
+        assert_eq!(handle_len(&file), Some(5));
+        drop(file);
+        std::fs::write(&path, []).unwrap();
+        let file = File::open(&path).unwrap();
+        assert_eq!(handle_len(&file), None);
+        drop(file);
+        std::fs::remove_file(path).unwrap();
+
+        let (reader, _writer) = std::io::pipe().unwrap();
+        assert_eq!(handle_len(&reader), None);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn handle_len_unix() {
+        assert_handle_len_of_file_and_pipe();
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn handle_len_windows() {
+        assert_handle_len_of_file_and_pipe();
+    }
 }

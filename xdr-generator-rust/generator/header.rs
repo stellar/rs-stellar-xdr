@@ -1493,8 +1493,15 @@ impl<const MAX: u32> ReadXdr for VecM<u8, MAX> {
             let padding = pad_len(len as usize);
             r.consume_len_usize(padding)?;
 
-            let mut vec = vec![0u8; len as usize];
-            r.read_exact(&mut vec)?;
+            // Grow the buffer as bytes arrive rather than allocating the
+            // declared length up front, so that allocation is proportional to
+            // the input actually received.
+            let mut vec = Vec::new();
+            r.by_ref().take(len.into()).read_to_end(&mut vec)?;
+            if vec.len() != len as usize {
+                return Err(Error::Io(std::io::ErrorKind::UnexpectedEof.into()));
+            }
+            vec.shrink_to_fit();
 
             let pad = &mut [0u8; 3][..padding];
             r.read_exact(pad)?;
@@ -1967,8 +1974,15 @@ impl<const MAX: u32> ReadXdr for BytesM<MAX> {
             let padding = pad_len(len as usize);
             r.consume_len_usize(padding)?;
 
-            let mut vec = vec![0u8; len as usize];
-            r.read_exact(&mut vec)?;
+            // Grow the buffer as bytes arrive rather than allocating the
+            // declared length up front, so that allocation is proportional to
+            // the input actually received.
+            let mut vec = Vec::new();
+            r.by_ref().take(len.into()).read_to_end(&mut vec)?;
+            if vec.len() != len as usize {
+                return Err(Error::Io(std::io::ErrorKind::UnexpectedEof.into()));
+            }
+            vec.shrink_to_fit();
 
             let pad = &mut [0u8; 3][..padding];
             r.read_exact(pad)?;
@@ -2446,8 +2460,15 @@ impl<const MAX: u32> ReadXdr for StringM<MAX> {
             let padding = pad_len(len as usize);
             r.consume_len_usize(padding)?;
 
-            let mut vec = vec![0u8; len as usize];
-            r.read_exact(&mut vec)?;
+            // Grow the buffer as bytes arrive rather than allocating the
+            // declared length up front, so that allocation is proportional to
+            // the input actually received.
+            let mut vec = Vec::new();
+            r.by_ref().take(len.into()).read_to_end(&mut vec)?;
+            if vec.len() != len as usize {
+                return Err(Error::Io(std::io::ErrorKind::UnexpectedEof.into()));
+            }
+            vec.shrink_to_fit();
 
             let pad = &mut [0u8; 3][..padding];
             r.read_exact(pad)?;

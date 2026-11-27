@@ -124,7 +124,11 @@ mod tests {
     fn huge_length_in_file_is_rejected_by_input_size() {
         // A ScBytes value whose length prefix declares 0xFFFFFFF0 bytes but
         // that is followed by no data.
-        let path = util::temp_file(&[0xFF, 0xFF, 0xFF, 0xF0]);
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(&path, [0xFF, 0xFF, 0xFF, 0xF0]).unwrap();
         let r = Cmd {
             left: path.clone(),
             right: path.clone(),
@@ -137,5 +141,58 @@ mod tests {
             matches!(r, Err(Error::ReadXdr(crate::Error::LengthLimitExceeded))),
             "{r:?}"
         );
+    }
+
+    #[test]
+    fn compare_each_input_format() {
+        // ScBytes values of 1 and 5 bytes.
+        let left = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(&left, [0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00]).unwrap();
+        let right = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(
+            &right,
+            [
+                0x00, 0x00, 0x00, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x00, 0x00, 0x00,
+            ],
+        )
+        .unwrap();
+        let r = Cmd {
+            left: left.clone(),
+            right: right.clone(),
+            r#type: "ScBytes".to_string(),
+            input: InputFormat::Single,
+        }
+        .run();
+        std::fs::remove_file(left).unwrap();
+        std::fs::remove_file(right).unwrap();
+        r.unwrap();
+
+        // The same values base64 encoded.
+        let left = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(&left, "AAAAAQEAAAA=").unwrap();
+        let right = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(&right, "AAAABQUFBQUFAAAA").unwrap();
+        let r = Cmd {
+            left: left.clone(),
+            right: right.clone(),
+            r#type: "ScBytes".to_string(),
+            input: InputFormat::SingleBase64,
+        }
+        .run();
+        std::fs::remove_file(left).unwrap();
+        std::fs::remove_file(right).unwrap();
+        r.unwrap();
     }
 }

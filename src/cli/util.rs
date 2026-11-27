@@ -96,25 +96,17 @@ pub fn serde_json_value_to_text(v: serde_json::Value) -> Option<String> {
     Some(s)
 }
 
-/// Writes the contents to a new randomly named file in the temp directory,
-/// returning its path.
-#[cfg(test)]
-pub fn temp_file(contents: &[u8]) -> std::path::PathBuf {
-    let path = std::env::temp_dir().join(format!(
-        "stellar-xdr-cli-test-{:016x}",
-        rand::random::<u64>()
-    ));
-    std::fs::write(&path, contents).unwrap();
-    path
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[cfg(any(unix, windows))]
     fn assert_handle_len_of_file_and_pipe() {
-        let path = temp_file(&[1, 2, 3, 4, 5]);
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(&path, [1, 2, 3, 4, 5]).unwrap();
         let file = File::open(&path).unwrap();
         assert_eq!(handle_len(&file), Some(5));
         drop(file);

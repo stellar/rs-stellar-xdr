@@ -145,42 +145,112 @@ impl Cmd {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BytesM, Limits, ScBytes, WriteXdr};
-    use base64::Engine as _;
 
-    // A ScBytes value whose length prefix declares 0xFFFFFFF0 bytes but that is
-    // followed by no data.
-    const HUGE_LEN: [u8; 4] = [0xFF, 0xFF, 0xFF, 0xF0];
-
-    fn decode(input: impl Into<OsString>, input_format: InputFormat) -> Result<(), Error> {
-        Cmd {
-            input: vec![input.into()],
+    #[test]
+    fn huge_length_in_file_is_rejected_by_input_size() {
+        // A ScBytes value whose length prefix declares 0xFFFFFFF0 bytes but
+        // that is followed by no data.
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(&path, [0xFF, 0xFF, 0xFF, 0xF0]).unwrap();
+        let r = Cmd {
+            input: vec![path.clone().into()],
             r#type: "ScBytes".to_string(),
-            input_format,
+            input_format: InputFormat::Single,
             output_format: OutputFormat::Json,
         }
-        .run()
+        .run();
+        assert!(
+            matches!(r, Err(Error::ReadXdr(crate::Error::LengthLimitExceeded))),
+            "{r:?}"
+        );
+        let r = Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::Stream,
+            output_format: OutputFormat::Json,
+        }
+        .run();
+        assert!(
+            matches!(r, Err(Error::ReadXdr(crate::Error::LengthLimitExceeded))),
+            "{r:?}"
+        );
+        std::fs::remove_file(path).unwrap();
+
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+
+        std::fs::write(&path, b"////8A==").unwrap();
+        let r = Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::SingleBase64,
+            output_format: OutputFormat::Json,
+        }
+        .run();
+        assert!(
+            matches!(r, Err(Error::ReadXdr(crate::Error::LengthLimitExceeded))),
+            "{r:?}"
+        );
+        let r = Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::StreamBase64,
+            output_format: OutputFormat::Json,
+        }
+        .run();
+        assert!(
+            matches!(r, Err(Error::ReadXdr(crate::Error::LengthLimitExceeded))),
+            "{r:?}"
+        );
+        std::fs::remove_file(path).unwrap();
+
+        // Frame header for a last fragment of 4 bytes.
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(&path, [0x80, 0x00, 0x00, 0x04, 0xFF, 0xFF, 0xFF, 0xF0]).unwrap();
+        let r = Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::StreamFramed,
+            output_format: OutputFormat::Json,
+        }
+        .run();
+        assert!(
+            matches!(r, Err(Error::ReadXdr(crate::Error::LengthLimitExceeded))),
+            "{r:?}"
+        );
+        std::fs::remove_file(path).unwrap();
     }
 
-    fn sc_bytes_xdr(len: u8) -> Vec<u8> {
-        let v = ScBytes(BytesM::try_from(vec![len; len.into()]).unwrap());
-        v.to_xdr(Limits::none()).unwrap()
-    }
-
-    fn framed(xdr: &[u8]) -> Vec<u8> {
-        let header = 0x8000_0000 | u32::try_from(xdr.len()).unwrap();
-        let mut bytes = header.to_be_bytes().to_vec();
-        bytes.extend_from_slice(xdr);
-        bytes
-    }
-
-    fn base64(bytes: &[u8]) -> Vec<u8> {
-        base64::engine::general_purpose::STANDARD
-            .encode(bytes)
-            .into_bytes()
-    }
-
-    fn assert_length_limit_exceeded(r: &Result<(), Error>) {
+    #[test]
+    fn huge_length_inline_is_rejected_by_input_size() {
+        // A ScBytes value whose length prefix declares 0xFFFFFFF0 bytes but
+        // that is followed by no data, base64 encoded.
+        let r = Cmd {
+            input: vec!["////8A==".into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::SingleBase64,
+            output_format: OutputFormat::Json,
+        }
+        .run();
+        assert!(
+            matches!(r, Err(Error::ReadXdr(crate::Error::LengthLimitExceeded))),
+            "{r:?}"
+        );
+        let r = Cmd {
+            input: vec!["////8A==".into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::StreamBase64,
+            output_format: OutputFormat::Json,
+        }
+        .run();
         assert!(
             matches!(r, Err(Error::ReadXdr(crate::Error::LengthLimitExceeded))),
             "{r:?}"
@@ -188,63 +258,173 @@ mod tests {
     }
 
     #[test]
-    fn huge_length_in_file_is_rejected_by_input_size() {
-        let path = util::temp_file(&HUGE_LEN);
-        assert_length_limit_exceeded(&decode(&path, InputFormat::Single));
-        assert_length_limit_exceeded(&decode(&path, InputFormat::Stream));
-        std::fs::remove_file(path).unwrap();
-
-        let path = util::temp_file(&base64(&HUGE_LEN));
-        assert_length_limit_exceeded(&decode(&path, InputFormat::SingleBase64));
-        assert_length_limit_exceeded(&decode(&path, InputFormat::StreamBase64));
-        std::fs::remove_file(path).unwrap();
-
-        let path = util::temp_file(&framed(&HUGE_LEN));
-        assert_length_limit_exceeded(&decode(&path, InputFormat::StreamFramed));
-        std::fs::remove_file(path).unwrap();
-    }
-
-    #[test]
-    fn huge_length_inline_is_rejected_by_input_size() {
-        let input = String::from_utf8(base64(&HUGE_LEN)).unwrap();
-        assert_length_limit_exceeded(&decode(input.clone(), InputFormat::SingleBase64));
-        assert_length_limit_exceeded(&decode(input, InputFormat::StreamBase64));
-    }
-
-    #[test]
     fn decode_each_input_format() {
-        let xdr = sc_bytes_xdr(5);
-        for (input_format, contents) in [
-            (InputFormat::Single, xdr.clone()),
-            (InputFormat::SingleBase64, base64(&xdr)),
-            (InputFormat::Stream, xdr.clone()),
-            (InputFormat::StreamBase64, base64(&xdr)),
-            (InputFormat::StreamFramed, framed(&xdr)),
-        ] {
-            let path = util::temp_file(&contents);
-            decode(&path, input_format).unwrap();
-            std::fs::remove_file(path).unwrap();
+        // A ScBytes value of 5 bytes.
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(
+            &path,
+            [
+                0x00, 0x00, 0x00, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x00, 0x00, 0x00,
+            ],
+        )
+        .unwrap();
+        Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::Single,
+            output_format: OutputFormat::Json,
         }
-        let inline = String::from_utf8(base64(&xdr)).unwrap();
-        decode(inline.clone(), InputFormat::SingleBase64).unwrap();
-        decode(inline, InputFormat::StreamBase64).unwrap();
+        .run()
+        .unwrap();
+        Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::Stream,
+            output_format: OutputFormat::Json,
+        }
+        .run()
+        .unwrap();
+        std::fs::remove_file(path).unwrap();
+
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+
+        std::fs::write(&path, b"AAAABQUFBQUFAAAA").unwrap();
+        Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::SingleBase64,
+            output_format: OutputFormat::Json,
+        }
+        .run()
+        .unwrap();
+        Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::StreamBase64,
+            output_format: OutputFormat::Json,
+        }
+        .run()
+        .unwrap();
+        std::fs::remove_file(path).unwrap();
+
+        // Frame header for a last fragment of 12 bytes.
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(
+            &path,
+            [
+                0x80, 0x00, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x00,
+                0x00, 0x00,
+            ],
+        )
+        .unwrap();
+        Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::StreamFramed,
+            output_format: OutputFormat::Json,
+        }
+        .run()
+        .unwrap();
+        std::fs::remove_file(path).unwrap();
+
+        Cmd {
+            input: vec!["AAAABQUFBQUFAAAA".into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::SingleBase64,
+            output_format: OutputFormat::Json,
+        }
+        .run()
+        .unwrap();
+        Cmd {
+            input: vec!["AAAABQUFBQUFAAAA".into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::StreamBase64,
+            output_format: OutputFormat::Json,
+        }
+        .run()
+        .unwrap();
     }
 
     #[test]
     fn decode_multi_item_stream_fully() {
         // The length limit is shared by all items in a stream, so the items
-        // must together fit within the size of the input.
-        let items = [sc_bytes_xdr(1), sc_bytes_xdr(5), sc_bytes_xdr(9)];
-        let stream = items.concat();
-        let framed_stream: Vec<u8> = items.iter().flat_map(|i| framed(i)).collect();
-        for (input_format, contents) in [
-            (InputFormat::Stream, stream.clone()),
-            (InputFormat::StreamBase64, base64(&stream)),
-            (InputFormat::StreamFramed, framed_stream),
-        ] {
-            let path = util::temp_file(&contents);
-            decode(&path, input_format).unwrap();
-            std::fs::remove_file(path).unwrap();
+        // must together fit within the size of the input. The stream holds
+        // ScBytes values of 1, 5, and 9 bytes.
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(
+            &path,
+            [
+                0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, //
+                0x00, 0x00, 0x00, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x00, 0x00, 0x00, //
+                0x00, 0x00, 0x00, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x00,
+                0x00, 0x00,
+            ],
+        )
+        .unwrap();
+        Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::Stream,
+            output_format: OutputFormat::Json,
         }
+        .run()
+        .unwrap();
+        std::fs::remove_file(path).unwrap();
+
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+
+        std::fs::write(&path, b"AAAAAQEAAAAAAAAFBQUFBQUAAAAAAAAJCQkJCQkJCQkJAAAA").unwrap();
+        Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::StreamBase64,
+            output_format: OutputFormat::Json,
+        }
+        .run()
+        .unwrap();
+        std::fs::remove_file(path).unwrap();
+
+        // Each value is preceded by a frame header for a last fragment.
+        let path = std::env::temp_dir().join(format!(
+            "stellar-xdr-cli-test-{:016x}",
+            rand::random::<u64>()
+        ));
+        std::fs::write(
+            &path,
+            [
+                0x80, 0x00, 0x00, 0x08, //
+                0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, //
+                0x80, 0x00, 0x00, 0x0C, //
+                0x00, 0x00, 0x00, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x00, 0x00, 0x00, //
+                0x80, 0x00, 0x00, 0x10, //
+                0x00, 0x00, 0x00, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x09, 0x00,
+                0x00, 0x00,
+            ],
+        )
+        .unwrap();
+        Cmd {
+            input: vec![path.clone().into()],
+            r#type: "ScBytes".to_string(),
+            input_format: InputFormat::StreamFramed,
+            output_format: OutputFormat::Json,
+        }
+        .run()
+        .unwrap();
+        std::fs::remove_file(path).unwrap();
     }
 }
